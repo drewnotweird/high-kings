@@ -40,8 +40,8 @@ function Ember({ style, variant }: { style: React.CSSProperties; variant: number
     <div
       style={{
         position: 'absolute',
-        width: 1,
-        height: 7,
+        width: 0.5,
+        height: 14,
         borderRadius: 0,
         background: 'linear-gradient(to top, #ff8800, #ffdd80)',
         boxShadow: '0 0 2px 1px rgba(255,120,0,0.6)',
