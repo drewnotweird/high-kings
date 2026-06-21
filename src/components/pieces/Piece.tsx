@@ -79,9 +79,10 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: 
 
     if (!landed.current) {
       if (t < dropDelay) {
-        meshRef.current.position.y = DROP_FROM
+        meshRef.current.visible = false
         return
       }
+      meshRef.current.visible = true
       // Fast drop with slight overshoot bounce
       const progress = Math.min((t - dropDelay) / 0.35, 1)
       const eased = progress < 1
