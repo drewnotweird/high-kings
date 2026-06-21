@@ -37,17 +37,18 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
   // Lathe profile curves — Vector2(radius, height)
   const points = useMemo(() => {
     if (isKing) {
-      // Same profile as defender, scaled up ~1.5x
       return [
         new Vector2(0, 0),
-        new Vector2(0.36, 0),
-        new Vector2(0.42, 0.15),
-        new Vector2(0.33, 0.42),
-        new Vector2(0.30, 0.78),
-        new Vector2(0.33, 1.08),
-        new Vector2(0.27, 1.32),
-        new Vector2(0.18, 1.44),
-        new Vector2(0, 1.44),
+        new Vector2(0.44, 0),
+        new Vector2(0.50, 0.12),
+        new Vector2(0.40, 0.32),
+        new Vector2(0.34, 0.65),
+        new Vector2(0.36, 0.95),
+        new Vector2(0.34, 1.15),
+        new Vector2(0.30, 1.30),
+        new Vector2(0.22, 1.42),
+        new Vector2(0.10, 1.48),
+        new Vector2(0, 1.50),
       ]
     }
     if (isDefender) {
