@@ -1,14 +1,15 @@
 import { useMemo } from 'react'
-import { useTexture, RoundedBox } from '@react-three/drei'
+import { useTexture } from '@react-three/drei'
 import { RepeatWrapping } from 'three'
 import { BOARD_SIZE, isCorner, isThrone, attackerStarts, defenderStarts } from '../../game/hnefatafl'
 import type { ThemeConfig } from '../../lib/themes'
 
 const SQUARE_SIZE = 0.88
-const TILE_HEIGHT = 0.12
-const BEVEL = 0.04
+const TILE_HEIGHT = 0.16
 const BOARD_OFFSET = (BOARD_SIZE - 1) / 2
 const TILE_COUNT = 10
+// Ratio of tile side height to top width — used to keep stone grain scale consistent
+const SIDE_REPEAT_V = TILE_HEIGHT / SQUARE_SIZE
 
 function mulberry32(seed: number) {
   return function () {
@@ -48,7 +49,18 @@ export function Board({ theme }: BoardProps) {
     attacker: '/textures/tile-attacker.png',
   })
 
-  ;[...tileTextures, ...Object.values(overlays)].forEach(t => {
+  // Side textures: same stone grain but with V-repeat scaled to the tile's aspect ratio
+  // so the grain appears at the same physical scale on the side edges as on the top face.
+  const sideTextures = useMemo(() =>
+    tileTextures.map(t => {
+      const s = t.clone()
+      s.needsUpdate = true
+      s.wrapS = s.wrapT = RepeatWrapping
+      s.repeat.set(1, SIDE_REPEAT_V)
+      return s
+    }), [tileTextures])
+
+  ;[...Object.values(overlays)].forEach(t => {
     t.wrapS = t.wrapT = RepeatWrapping
   })
 
@@ -84,36 +96,40 @@ export function Board({ theme }: BoardProps) {
         />
       </mesh>
 
-      {squares.map(({ row, col, x, z, variantIdx, overlay }) => (
-        <group key={`${row}-${col}`} position={[x, 0, z]}>
-          <RoundedBox
-            args={[SQUARE_SIZE, TILE_HEIGHT, SQUARE_SIZE]}
-            radius={BEVEL}
-            smoothness={4}
-            receiveShadow
-          >
-            <meshStandardMaterial
-              map={tileTextures[variantIdx]}
-              roughness={theme.boardRoughness}
-              metalness={theme.boardMetalness}
-            />
-          </RoundedBox>
-
-          {overlay && (
-            <mesh position={[0, TILE_HEIGHT / 2 + 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[SQUARE_SIZE * 0.88, SQUARE_SIZE * 0.88]} />
-              <meshStandardMaterial
-                map={overlays[overlay]}
-                transparent
-                alphaTest={0.05}
-                roughness={0.8}
-                metalness={0}
-                depthWrite={false}
-              />
+      {squares.map(({ row, col, x, z, variantIdx, overlay }) => {
+        const topTex  = tileTextures[variantIdx]
+        const sideTex = sideTextures[variantIdx]
+        const mat = { roughness: theme.boardRoughness, metalness: theme.boardMetalness }
+        return (
+          <group key={`${row}-${col}`} position={[x, 0, z]}>
+            {/* BoxGeometry with per-face material array so sides get texture UVs */}
+            <mesh receiveShadow>
+              <boxGeometry args={[SQUARE_SIZE, TILE_HEIGHT, SQUARE_SIZE]} />
+              {/* BoxGeometry face order: +X, -X, +Y (top), -Y (bottom), +Z, -Z */}
+              <meshStandardMaterial attach="material-0" map={sideTex} {...mat} />
+              <meshStandardMaterial attach="material-1" map={sideTex} {...mat} />
+              <meshStandardMaterial attach="material-2" map={topTex}  {...mat} />
+              <meshStandardMaterial attach="material-3" color={theme.boardEdgeColor} {...mat} />
+              <meshStandardMaterial attach="material-4" map={sideTex} {...mat} />
+              <meshStandardMaterial attach="material-5" map={sideTex} {...mat} />
             </mesh>
-          )}
-        </group>
-      ))}
+
+            {overlay && (
+              <mesh position={[0, TILE_HEIGHT / 2 + 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <planeGeometry args={[SQUARE_SIZE * 0.88, SQUARE_SIZE * 0.88]} />
+                <meshStandardMaterial
+                  map={overlays[overlay]}
+                  transparent
+                  alphaTest={0.05}
+                  roughness={0.8}
+                  metalness={0}
+                  depthWrite={false}
+                />
+              </mesh>
+            )}
+          </group>
+        )
+      })}
     </group>
   )
 }
