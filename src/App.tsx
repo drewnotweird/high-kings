@@ -43,8 +43,8 @@ function Ember({ style, variant }: { style: React.CSSProperties; variant: number
         width: 0.5,
         height: 14,
         borderRadius: 0,
-        background: 'linear-gradient(to top, #ff8800, #ffdd80)',
-        boxShadow: '0 0 2px 1px rgba(255,120,0,0.6)',
+        background: 'linear-gradient(to top, rgba(255,136,0,0.6), rgba(255,221,128,0.4))',
+        boxShadow: '0 0 1px 0.5px rgba(255,120,0,0.3)',
         animation: `ember${variant} var(--dur) ease-in-out infinite`,
         ...style,
       }}
@@ -52,7 +52,7 @@ function Ember({ style, variant }: { style: React.CSSProperties; variant: number
   )
 }
 
-const embers = Array.from({ length: 30 }, (_, i) => {
+const embers = Array.from({ length: 12 }, (_, i) => {
   const r = (n: number) => (Math.random() - 0.5) * n
   const riseVal = -(280 + Math.random() * 320)
   const dx1Val = r(60), dx2Val = r(90), dx3Val = r(50)
@@ -67,7 +67,7 @@ const embers = Array.from({ length: 30 }, (_, i) => {
 
   return {
     id: i,
-    left: `${10 + (i / 30) * 80 + r(6)}%`,
+    left: `${10 + (i / 12) * 80 + r(6)}%`,
     bottom: `${5 + Math.random() * 18}%`,
     dur: `${0.7 + Math.random() * 1.1}s`,
     delay: `${-Math.random() * 8}s`,
