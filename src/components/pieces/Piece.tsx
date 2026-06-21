@@ -11,9 +11,9 @@ const BOARD_OFFSET = 5
 // Position is in local mesh space: -Z is the camera-facing surface (after PI rotation).
 // shieldZ should be slightly past the surface radius at that height.
 const SHIELD_DEFS = {
-  king:     { y: 0.65, z: -0.37, r: 0.22, thickness: 0.04 },
-  defender: { y: 0.44, z: -0.23, r: 0.15, thickness: 0.035 },
-  attacker: { y: 0.36, z: -0.28, r: 0.15, thickness: 0.035 },
+  king:     { y: 0.70, z: -0.37, r: 0.30, thickness: 0.05 },
+  defender: { y: 0.46, z: -0.23, r: 0.19, thickness: 0.04 },
+  attacker: { y: 0.38, z: -0.28, r: 0.20, thickness: 0.04 },
 }
 
 interface PieceProps {
@@ -139,10 +139,9 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
         />
       </mesh>
 
-      {/* Shield rim */}
+      {/* Shield rim — no rotation: default torus lies in XY plane, rimming the disc face */}
       <mesh
         position={[0, shield.y, shield.z - 0.005]}
-        rotation={[Math.PI / 2, 0, 0]}
         castShadow
       >
         <torusGeometry args={[shield.r, 0.012, 8, 40]} />

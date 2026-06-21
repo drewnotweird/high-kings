@@ -1,0 +1,14 @@
+AddType application/javascript .js .mjs
+AddType application/wasm .wasm
+AddType text/css .css
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE application/javascript text/css text/html
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+</IfModule>
