@@ -44,16 +44,11 @@ const fireCSS = `
   width: 110px;
   box-sizing: border-box;
 }
-@media (max-width: 600px) {
+@media (min-width: 1024px) {
   .score-panel__inner {
     flex-direction: column !important;
     align-items: center;
     gap: 4px;
-    padding: 6px 10px;
-    width: 70px;
-  }
-  .score-panel-wrapper {
-    bottom: 16px !important;
   }
 }
 @keyframes mistDrift {
