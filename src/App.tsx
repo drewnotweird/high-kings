@@ -38,7 +38,44 @@ const fireCSS = `
   90%  { opacity:0.05; }
   100% { transform: translate(var(--dx2),var(--rise))            rotate(var(--a2)); opacity:0;  }
 }
+@keyframes mistDrift {
+  0%   { transform: translateX(0px)   translateY(0px);  opacity: 0;    }
+  15%  { opacity: var(--peak); }
+  50%  { transform: translateX(var(--mx)) translateY(-18px); opacity: var(--peak); }
+  85%  { opacity: var(--peak); }
+  100% { transform: translateX(calc(var(--mx) * 2)) translateY(-30px); opacity: 0; }
+}
 `
+
+function Mist({ style }: { style: React.CSSProperties }) {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        borderRadius: '50%',
+        background: 'radial-gradient(ellipse, rgba(200,180,160,0.18) 0%, transparent 70%)',
+        filter: 'blur(28px)',
+        animation: 'mistDrift var(--dur) ease-in-out infinite',
+        ...style,
+      }}
+    />
+  )
+}
+
+const mists = Array.from({ length: 7 }, (_, i) => {
+  const r = (n: number) => (Math.random() - 0.5) * n
+  return {
+    id: i,
+    left: `${5 + (i / 7) * 90 + r(8)}%`,
+    bottom: `${2 + Math.random() * 22}%`,
+    width: `${180 + Math.random() * 200}px`,
+    height: `${60 + Math.random() * 60}px`,
+    dur: `${7 + Math.random() * 8}s`,
+    delay: `${-Math.random() * 14}s`,
+    mx: `${r(80)}px`,
+    peak: `${0.04 + Math.random() * 0.05}`,
+  }
+})
 
 function Ember({ style, variant }: { style: React.CSSProperties; variant: number }) {
   return (
@@ -113,6 +150,23 @@ function App() {
           }}
         />
       </div>
+
+      {/* Mist wisps */}
+      {introStarted && mists.map(m => (
+        <Mist
+          key={m.id}
+          style={{
+            left: m.left,
+            bottom: m.bottom,
+            width: m.width,
+            height: m.height,
+            ['--dur' as string]: m.dur,
+            ['--mx' as string]: m.mx,
+            ['--peak' as string]: m.peak,
+            animationDelay: m.delay,
+          }}
+        />
+      ))}
 
       {/* Ember particles — only mount after intro starts */}
       {introStarted && embers.map(e => (
