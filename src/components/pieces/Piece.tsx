@@ -26,7 +26,7 @@ export function Piece({ piece, theme: _theme, isSelected, onClick }: PieceProps)
 
   const prefix = isKing ? 'piece-king' : isDefender ? 'piece-light' : 'piece-dark'
   const texture = useTexture(`${import.meta.env.BASE_URL}textures/${prefix}.png`)
-  const roughnessMap = useTexture(`/textures/${prefix}-roughness.png`)
+  const roughnessMap = useTexture(`${import.meta.env.BASE_URL}textures/${prefix}-roughness.png`)
 
   const points = useMemo(() => {
     if (isKing) {
