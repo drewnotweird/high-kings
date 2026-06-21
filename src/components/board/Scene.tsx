@@ -46,11 +46,11 @@ function SceneInner() {
       <ambientLight color={theme.ambientColor} intensity={theme.ambientIntensity} />
       <FireLight theme={theme} />
 
-      {/* Fill lights around the board edges */}
-      <pointLight position={[-7, 2, 0]} color={theme.fireColor} intensity={2} distance={16} decay={2} />
-      <pointLight position={[7, 2, 0]} color={theme.fireColor} intensity={2} distance={16} decay={2} />
-      <pointLight position={[0, 2, -7]} color={theme.fireColor} intensity={2} distance={16} decay={2} />
-      <pointLight position={[0, 2, 7]} color={theme.fireColor} intensity={1.5} distance={16} decay={2} />
+      {/* Subtle fill lights — kept low so fire remains the dominant source */}
+      <pointLight position={[-7, 2, 0]} color={theme.fireColor} intensity={0.4} distance={16} decay={2} />
+      <pointLight position={[7, 2, 0]} color={theme.fireColor} intensity={0.4} distance={16} decay={2} />
+      <pointLight position={[0, 2, -7]} color={theme.fireColor} intensity={0.4} distance={16} decay={2} />
+      <pointLight position={[0, 2, 7]} color={theme.fireColor} intensity={0.3} distance={16} decay={2} />
 
       <Board theme={theme} />
 

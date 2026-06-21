@@ -132,14 +132,14 @@ const pieces = [
     noiseAmt: 12,
   },
   {
-    name: 'piece-king',    // king
+    name: 'piece-king',    // king — pale ivory-gold so grain reads under warm fire light
     seed: 999,
-    base: '#c08030',
-    grain: '#5a2e08',
-    grainCount: 55,
-    grainOpacity: 0.20,
+    base: '#e8d4a0',
+    grain: '#1a0800',
+    grainCount: 70,
+    grainOpacity: 0.45,
     waver: 5,
-    noiseAmt: 14,
+    noiseAmt: 32,
   },
 ]
 

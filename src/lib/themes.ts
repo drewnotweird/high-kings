@@ -33,9 +33,9 @@ export const themes: Record<string, ThemeConfig> = {
   longhouse: {
     name: 'Longhouse',
     ambientColor: '#7a3a00',
-    ambientIntensity: 2.0,
+    ambientIntensity: 0.4,
     fireColor: '#ff7a20',
-    fireIntensity: 6,
+    fireIntensity: 4,
     fogColor: '#0d0804',
     fogNear: 16,
     fogFar: 32,
