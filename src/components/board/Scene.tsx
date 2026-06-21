@@ -166,7 +166,7 @@ function SceneInner() {
       <OrbitControls
         enablePan={false}
         minDistance={6}
-        maxDistance={20}
+        maxDistance={32}
         minPolarAngle={0.3}
         maxPolarAngle={Math.PI / 2.2}
         target={[0, 0, 0]}
