@@ -43,6 +43,7 @@ const fireCSS = `
 .score-panel__inner {
   width: 110px;
   box-sizing: border-box;
+  padding: 14px !important;
 }
 @media (min-width: 1024px) {
   .score-panel__inner {
