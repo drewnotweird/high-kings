@@ -103,7 +103,7 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
         bumpMap={texture}
         bumpScale={0.04}
         roughnessMap={roughnessMap}
-        roughness={0.55}
+        roughness={1.0}
         emissive={emissive}
         emissiveIntensity={isSelected ? 0.6 : 0.12}
         metalness={0.0}

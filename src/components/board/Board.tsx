@@ -6,7 +6,7 @@ import type { ThemeConfig } from '../../lib/themes'
 
 const SQUARE_SIZE = 0.95
 const TILE_HEIGHT = 0.09
-const BEVEL = 0.025
+const BEVEL = 0.06
 const BOARD_OFFSET = (BOARD_SIZE - 1) / 2
 const TILE_COUNT = 10
 
