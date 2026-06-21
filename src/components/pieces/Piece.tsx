@@ -1,0 +1,112 @@
+import { useRef, useMemo } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { Mesh, Vector2 } from 'three'
+import type { Piece as PieceData } from '../../game/hnefatafl'
+import type { ThemeConfig } from '../../lib/themes'
+
+const BOARD_OFFSET = 5
+
+interface PieceProps {
+  piece: PieceData
+  theme: ThemeConfig
+  isSelected: boolean
+  onClick: () => void
+}
+
+export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
+  const meshRef = useRef<Mesh>(null)
+
+  const x = piece.col - BOARD_OFFSET
+  const z = piece.row - BOARD_OFFSET
+
+  const isKing = piece.type === 'king'
+  const isDefender = piece.type === 'defender'
+
+  const color = isKing
+    ? theme.kingColor
+    : isDefender
+    ? theme.defenderColor
+    : theme.attackerColor
+
+  const emissive = isKing
+    ? theme.kingEmissive
+    : isDefender
+    ? theme.defenderEmissive
+    : theme.attackerEmissive
+
+  // Lathe profile curves — Vector2(radius, height)
+  const points = useMemo(() => {
+    if (isKing) {
+      return [
+        new Vector2(0, 0),
+        new Vector2(0.28, 0),
+        new Vector2(0.32, 0.08),
+        new Vector2(0.28, 0.18),
+        new Vector2(0.22, 0.30),
+        new Vector2(0.24, 0.42),
+        new Vector2(0.20, 0.55),
+        new Vector2(0.16, 0.62),
+        new Vector2(0.22, 0.68),
+        new Vector2(0.22, 0.76),
+        new Vector2(0.14, 0.80),
+        new Vector2(0.08, 0.82),
+        new Vector2(0, 0.82),
+      ]
+    }
+    if (isDefender) {
+      return [
+        new Vector2(0, 0),
+        new Vector2(0.24, 0),
+        new Vector2(0.27, 0.06),
+        new Vector2(0.22, 0.16),
+        new Vector2(0.20, 0.28),
+        new Vector2(0.22, 0.38),
+        new Vector2(0.18, 0.46),
+        new Vector2(0.12, 0.50),
+        new Vector2(0, 0.50),
+      ]
+    }
+    // Attacker — squat, wider at base
+    return [
+      new Vector2(0, 0),
+      new Vector2(0.26, 0),
+      new Vector2(0.30, 0.06),
+      new Vector2(0.26, 0.14),
+      new Vector2(0.24, 0.26),
+      new Vector2(0.20, 0.36),
+      new Vector2(0.14, 0.40),
+      new Vector2(0, 0.40),
+    ]
+  }, [isKing, isDefender])
+
+  useFrame((_, delta) => {
+    if (!meshRef.current) return
+    const targetY = isSelected ? 0.55 : 0.15
+    meshRef.current.position.y +=
+      (targetY - meshRef.current.position.y) * Math.min(delta * 8, 1)
+    if (isKing) {
+      meshRef.current.rotation.y += delta * 0.3
+    }
+  })
+
+  return (
+    <mesh
+      ref={meshRef}
+      position={[x, 0.15, z]}
+      castShadow
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick()
+      }}
+    >
+      <latheGeometry args={[points, 24]} />
+      <meshStandardMaterial
+        color={color}
+        emissive={emissive}
+        emissiveIntensity={isSelected ? 1.5 : 0.4}
+        roughness={theme.pieceRoughness}
+        metalness={theme.pieceMetalness}
+      />
+    </mesh>
+  )
+}
