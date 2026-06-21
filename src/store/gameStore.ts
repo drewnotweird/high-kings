@@ -19,7 +19,7 @@ export const useGameStore = create<GameStore>((set) => ({
   pieces: createInitialPieces(),
   selectedId: null,
   theme: 'natural',
-  currentTurn: 'attacker',
+  currentTurn: 'defender',
   scores: { attacker: 0, defender: 0 },
   setTheme: (theme) => set({ theme }),
   selectPiece: (id) => set({ selectedId: id }),
