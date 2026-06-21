@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Scene } from './components/board/Scene'
 import { ThemeSwitcher } from './components/ui/ThemeSwitcher'
+import { useGameStore } from './store/gameStore'
+import type { PlayerSide } from './store/gameStore'
 
 const fireCSS = `
 @keyframes sceneFadeIn {
@@ -124,8 +126,49 @@ const embers = Array.from({ length: 12 }, (_, i) => {
   }
 })
 
+function PieceIcon({ side }: { side: PlayerSide }) {
+  const isDefender = side === 'defender'
+  return (
+    <div style={{
+      width: 18,
+      height: isDefender ? 22 : 18,
+      borderRadius: '50% 50% 45% 45%',
+      background: isDefender
+        ? 'radial-gradient(ellipse at 35% 30%, #f0e8d8, #c8b89a)'
+        : 'radial-gradient(ellipse at 35% 30%, #4a5a7a, #1e2a3a)',
+      boxShadow: isDefender
+        ? '0 1px 3px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.3)'
+        : '0 1px 3px rgba(0,0,0,0.7), inset 0 1px 1px rgba(255,255,255,0.15)',
+      flexShrink: 0,
+    }} />
+  )
+}
+
+function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number; isActive: boolean }) {
+  const label = side === 'defender' ? 'White' : 'Blue'
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      background: 'rgba(0,0,0,0.75)',
+      border: `2px solid ${isActive ? '#c8a028' : 'transparent'}`,
+      borderRadius: 6,
+      padding: '8px 14px',
+      transition: 'border-color 0.6s ease',
+      backdropFilter: 'blur(4px)',
+      minWidth: 80,
+    }}>
+      <PieceIcon side={side} />
+      <span style={{ color: '#e8d8b8', fontSize: 18, fontWeight: 600, letterSpacing: 1 }}>{score}</span>
+      <span style={{ color: '#8a7a5a', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' }}>{label}</span>
+    </div>
+  )
+}
+
 function App() {
   const [introStarted, setIntroStarted] = useState(false)
+  const { currentTurn, scores } = useGameStore()
 
   return (
     <div className="relative w-full h-full" style={{ background: '#000' }}>
@@ -195,6 +238,14 @@ function App() {
 
       <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
         <Scene onIntroStart={() => setIntroStarted(true)} />
+      </div>
+
+      {/* Score panels */}
+      <div style={{ position: 'absolute', top: 28, left: 0, zIndex: 10 }}>
+        <ScorePanel side="defender" score={scores.defender} isActive={currentTurn === 'defender'} />
+      </div>
+      <div style={{ position: 'absolute', top: 28, right: 0, zIndex: 10 }}>
+        <ScorePanel side="attacker" score={scores.attacker} isActive={currentTurn === 'attacker'} />
       </div>
 
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
