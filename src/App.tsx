@@ -53,7 +53,7 @@ const fireCSS = `
     width: 70px;
   }
   .score-panel-wrapper {
-    top: 16px !important;
+    top: 32px !important;
   }
 }
 @keyframes mistDrift {
