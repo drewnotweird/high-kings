@@ -96,8 +96,8 @@ export function Piece({ piece, theme: _theme, isSelected, onClick }: PieceProps)
         metalness={0.0}
         clearcoat={0.4}
         clearcoatRoughness={0.55}
-        emissive="#ffffff"
-        emissiveIntensity={isSelected ? 0.25 : 0.06}
+        emissive={isKing ? '#c8880a' : isDefender ? '#9a7a40' : '#6a1010'}
+        emissiveIntensity={isSelected ? 0.5 : 0.2}
       />
     </mesh>
   )

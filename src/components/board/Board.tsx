@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useTexture } from '@react-three/drei'
-import { ClampToEdgeWrapping, Shape, ExtrudeGeometry } from 'three'
+import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2 } from 'three'
 import { BOARD_SIZE, isCorner, isThrone, attackerStarts, defenderStarts } from '../../game/hnefatafl'
 import type { ThemeConfig } from '../../lib/themes'
 
@@ -8,11 +8,10 @@ const SQUARE_SIZE = 0.88
 const TILE_HEIGHT = 0.055
 const CORNER_RADIUS = 0.05
 const BEVEL = 0.038
-// ExtrudeGeometry bevel extends the geometry beyond depth in both directions,
-// so the actual top surface sits at TILE_HEIGHT + BEVEL after rotation.
 const TILE_TOP = TILE_HEIGHT + BEVEL
 const BOARD_OFFSET = (BOARD_SIZE - 1) / 2
 const TILE_COUNT = 10
+const HALF = SQUARE_SIZE / 2
 
 function mulberry32(seed: number) {
   return function () {
@@ -26,6 +25,31 @@ function mulberry32(seed: number) {
 const attackerSet = new Set(attackerStarts.map(([r, c]) => `${r},${c}`))
 const defenderSet = new Set(defenderStarts.map(([r, c]) => `${r},${c}`))
 
+// Custom UV generator so tile texture is centred and fills the top face 0→1
+const uvGenerator = {
+  generateTopUV(_: unknown, vertices: number[], iA: number, iB: number, iC: number) {
+    const toUV = (x: number, y: number) =>
+      new Vector2((x + HALF) / SQUARE_SIZE, (y + HALF) / SQUARE_SIZE)
+    return [
+      toUV(vertices[iA * 3], vertices[iA * 3 + 1]),
+      toUV(vertices[iB * 3], vertices[iB * 3 + 1]),
+      toUV(vertices[iC * 3], vertices[iC * 3 + 1]),
+    ]
+  },
+  generateSideWallUV(_: unknown, vertices: number[], iA: number, iB: number, iC: number, iD: number) {
+    const az = vertices[iA * 3 + 2], bz = vertices[iB * 3 + 2]
+    const cz = vertices[iC * 3 + 2], dz = vertices[iD * 3 + 2]
+    const ax = vertices[iA * 3],     bx = vertices[iB * 3]
+    const cx = vertices[iC * 3],     dx = vertices[iD * 3]
+    return [
+      new Vector2(ax, az / TILE_HEIGHT),
+      new Vector2(bx, bz / TILE_HEIGHT),
+      new Vector2(cx, cz / TILE_HEIGHT),
+      new Vector2(dx, dz / TILE_HEIGHT),
+    ]
+  },
+}
+
 interface BoardProps {
   theme: ThemeConfig
 }
@@ -33,17 +57,17 @@ interface BoardProps {
 export function Board({ theme }: BoardProps) {
   const tileGeometry = useMemo(() => {
     const r = CORNER_RADIUS
-    const h = SQUARE_SIZE / 2 - r
+    const h = HALF - r
     const shape = new Shape()
-    shape.moveTo(-h, -SQUARE_SIZE / 2)
-    shape.lineTo(h, -SQUARE_SIZE / 2)
-    shape.quadraticCurveTo(SQUARE_SIZE / 2, -SQUARE_SIZE / 2, SQUARE_SIZE / 2, -h)
-    shape.lineTo(SQUARE_SIZE / 2, h)
-    shape.quadraticCurveTo(SQUARE_SIZE / 2, SQUARE_SIZE / 2, h, SQUARE_SIZE / 2)
-    shape.lineTo(-h, SQUARE_SIZE / 2)
-    shape.quadraticCurveTo(-SQUARE_SIZE / 2, SQUARE_SIZE / 2, -SQUARE_SIZE / 2, h)
-    shape.lineTo(-SQUARE_SIZE / 2, -h)
-    shape.quadraticCurveTo(-SQUARE_SIZE / 2, -SQUARE_SIZE / 2, -h, -SQUARE_SIZE / 2)
+    shape.moveTo(-h, -HALF)
+    shape.lineTo(h, -HALF)
+    shape.quadraticCurveTo(HALF, -HALF, HALF, -h)
+    shape.lineTo(HALF, h)
+    shape.quadraticCurveTo(HALF, HALF, h, HALF)
+    shape.lineTo(-h, HALF)
+    shape.quadraticCurveTo(-HALF, HALF, -HALF, h)
+    shape.lineTo(-HALF, -h)
+    shape.quadraticCurveTo(-HALF, -HALF, -h, -HALF)
     shape.closePath()
 
     return new ExtrudeGeometry(shape, {
@@ -52,6 +76,8 @@ export function Board({ theme }: BoardProps) {
       bevelThickness: BEVEL,
       bevelSize: BEVEL,
       bevelSegments: 6,
+      // @ts-expect-error – Three.js accepts this but typedefs lag behind
+      UVGenerator: uvGenerator,
     })
   }, [])
 
@@ -68,12 +94,9 @@ export function Board({ theme }: BoardProps) {
 
   const tilePaths = Array.from({ length: TILE_COUNT }, (_, i) => `/textures/tile-${i + 1}.png`)
   const tileTextures = useTexture(tilePaths)
+  tileTextures.forEach(t => { t.wrapS = t.wrapT = ClampToEdgeWrapping })
 
-  tileTextures.forEach(t => {
-    t.wrapS = t.wrapT = ClampToEdgeWrapping
-  })
-
-  const boardTexture = useTexture("/textures/board-edge.png")
+  const boardTexture = useTexture('/textures/board-edge.png')
 
   const overlays = useTexture({
     corner:   '/textures/tile-corner.png',
@@ -116,11 +139,7 @@ export function Board({ theme }: BoardProps) {
 
       {squares.map(({ row, col, x, z, variantIdx, overlay }) => (
         <group key={`${row}-${col}`} position={[x, 0, z]}>
-          <mesh
-            rotation={[-Math.PI / 2, 0, 0]}
-            geometry={tileGeometry}
-            receiveShadow
-          >
+          <mesh rotation={[-Math.PI / 2, 0, 0]} geometry={tileGeometry} receiveShadow>
             <meshStandardMaterial
               map={tileTextures[variantIdx]}
               roughness={theme.boardRoughness}

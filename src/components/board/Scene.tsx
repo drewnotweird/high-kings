@@ -40,7 +40,7 @@ function SceneInner() {
         color="#e8f0ff"
         intensity={22}
         distance={40}
-        angle={0.44}
+        angle={0.32}
         penumbra={1.0}
         decay={1.0}
         castShadow
