@@ -24,7 +24,7 @@ function FadingLights() {
 
   useFrame(() => {
     const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
-    const fade = Math.min(Math.max(t / BOARD_DURATION, 0), 1)
+    const fade = Math.min(Math.max((t - BOARD_DURATION) / 1.2, 0), 1)
     const e = 1 - Math.pow(1 - fade, 2)
 
     if (ambientRef.current)  ambientRef.current.intensity  = 0.02 * e
@@ -97,7 +97,7 @@ function FireLight() {
   useFrame(() => {
     if (!ref.current) return
     const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
-    const fade = Math.min(Math.max(t / BOARD_DURATION, 0), 1)
+    const fade = Math.min(Math.max((t - BOARD_DURATION) / 1.2, 0), 1)
     const e = 1 - Math.pow(1 - fade, 2)
     const now = Date.now() / 1000
     const flicker = 1 + 0.35 * Math.sin(now * 7.3) + 0.2 * Math.sin(now * 13.1) + 0.1 * Math.sin(now * 3.7)
@@ -178,7 +178,7 @@ function SceneInner() {
 
 type LoaderPhase = 'loading' | 'holding' | 'fading' | 'done'
 
-function LoadingOverlay({ onFadeStart, onDone }: { onFadeStart: () => void; onDone: () => void }) {
+function LoadingOverlay({ onDone }: { onDone: () => void }) {
   const { active } = useProgress()
   const [phase, setPhase] = useState<LoaderPhase>('loading')
   const minHoldMet = useRef(false)
@@ -187,7 +187,6 @@ function LoadingOverlay({ onFadeStart, onDone }: { onFadeStart: () => void; onDo
   const tryStartFade = () => {
     if (minHoldMet.current && loadingDone.current) {
       setPhase('fading')
-      onFadeStart()
       setTimeout(() => {
         setPhase('done')
         onDone()
@@ -237,12 +236,7 @@ function LoadingOverlay({ onFadeStart, onDone }: { onFadeStart: () => void; onDo
   )
 }
 
-interface SceneProps {
-  onBackgroundStart?: () => void
-  onIntroStart?: () => void
-}
-
-export function Scene({ onBackgroundStart, onIntroStart }: SceneProps) {
+export function Scene() {
   const [introStartMs, setIntroStartMs] = useState<number | null>(null)
 
   return (
@@ -257,10 +251,7 @@ export function Scene({ onBackgroundStart, onIntroStart }: SceneProps) {
             <SceneInner />
           </Suspense>
         </Canvas>
-        <LoadingOverlay
-          onFadeStart={() => onBackgroundStart?.()}
-          onDone={() => { setIntroStartMs(Date.now()); onIntroStart?.() }}
-        />
+        <LoadingOverlay onDone={() => setIntroStartMs(Date.now())} />
       </div>
     </IntroStartContext.Provider>
   )
