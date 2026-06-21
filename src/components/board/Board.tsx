@@ -76,7 +76,6 @@ export function Board({ theme }: BoardProps) {
       bevelThickness: BEVEL,
       bevelSize: BEVEL,
       bevelSegments: 6,
-      // @ts-expect-error – Three.js accepts this but typedefs lag behind
       UVGenerator: uvGenerator,
     })
   }, [])
