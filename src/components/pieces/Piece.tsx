@@ -94,8 +94,8 @@ export function Piece({ piece, theme: _theme, isSelected, onClick }: PieceProps)
         bumpScale={0.6}
         roughness={0.75}
         metalness={0.0}
-        clearcoat={0.4}
-        clearcoatRoughness={0.55}
+        clearcoat={0.85}
+        clearcoatRoughness={0.2}
         emissive={isKing ? '#c8880a' : isDefender ? '#9a7a40' : '#6a1010'}
         emissiveIntensity={isSelected ? 0.5 : 0.2}
       />

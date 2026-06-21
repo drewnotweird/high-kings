@@ -14,7 +14,7 @@ function SceneInner() {
       <fog attach="fog" args={["#0a0800", 18, 36]} />
 
       <Environment preset="night" environmentIntensity={0.4} />
-      <ambientLight color="#9ab0c8" intensity={0.2} />
+      <ambientLight color="#9ab0c8" intensity={0.08} />
 
       {/* Moon — cool directional from high above, slight angle */}
       <directionalLight
@@ -40,7 +40,7 @@ function SceneInner() {
         color="#e8f0ff"
         intensity={22}
         distance={40}
-        angle={0.32}
+        angle={0.28}
         penumbra={1.0}
         decay={1.0}
         castShadow
@@ -49,11 +49,28 @@ function SceneInner() {
         shadow-blurSamples={32}
       />
 
-      {/* Warm bounce from below — firelight off the board */}
-      <pointLight position={[0, -1, 2]} color="#b86820" intensity={4} distance={18} decay={2} />
+      {/* Low front light — angled so pieces cast soft trailing shadows across the board */}
+      <directionalLight
+        position={[2, 5, 14]}
+        color="#d0ddf0"
+        intensity={0.35}
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-radius={18}
+        shadow-blurSamples={24}
+        shadow-camera-near={0.5}
+        shadow-camera-far={35}
+        shadow-camera-left={-9}
+        shadow-camera-right={9}
+        shadow-camera-top={9}
+        shadow-camera-bottom={-9}
+      />
 
-      {/* Cool rim from behind */}
-      <pointLight position={[0, 6, -14]} color="#6888a8" intensity={6} distance={28} decay={2} />
+      {/* Warm bounce from below — firelight off the board */}
+      <pointLight position={[0, -1, 2]} color="#b86820" intensity={3} distance={18} decay={2} />
+
+      {/* Soft backlight — cool glow from behind the board */}
+      <pointLight position={[0, 9, -16]} color="#7090c0" intensity={10} distance={32} decay={1.8} />
 
       <Board theme={theme} />
 
