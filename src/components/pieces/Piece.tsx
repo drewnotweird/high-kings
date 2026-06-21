@@ -106,8 +106,8 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
         emissiveIntensity={isSelected ? 2.5 : 1.0}
         roughness={theme.pieceRoughness}
         metalness={theme.pieceMetalness}
-        clearcoat={1}
-        clearcoatRoughness={0.08}
+        clearcoat={0.6}
+        clearcoatRoughness={0.35}
       />
     </mesh>
   )
