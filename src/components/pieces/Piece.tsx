@@ -39,18 +39,16 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
     if (isKing) {
       return [
         new Vector2(0, 0),
-        new Vector2(0.30, 0),
-        new Vector2(0.35, 0.10),
-        new Vector2(0.30, 0.25),
-        new Vector2(0.24, 0.50),
-        new Vector2(0.26, 0.72),
-        new Vector2(0.22, 0.95),
-        new Vector2(0.20, 1.08),
-        new Vector2(0.32, 1.20), // crown flare — wider
-        new Vector2(0.36, 1.30), // dome start
-        new Vector2(0.34, 1.42),
-        new Vector2(0.26, 1.52),
-        new Vector2(0.14, 1.58),
+        new Vector2(0.32, 0),
+        new Vector2(0.36, 0.10),
+        new Vector2(0.30, 0.22),
+        new Vector2(0.26, 0.45),
+        new Vector2(0.26, 0.80),
+        new Vector2(0.26, 1.10),
+        new Vector2(0.25, 1.28),
+        new Vector2(0.22, 1.42),
+        new Vector2(0.16, 1.52),
+        new Vector2(0.06, 1.58),
         new Vector2(0, 1.60),
       ]
     }
