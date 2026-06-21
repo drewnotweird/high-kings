@@ -149,7 +149,7 @@ export function Board({ theme }: BoardProps) {
 
           {overlay && (
             <mesh position={[0, TILE_TOP + 0.003, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[SQUARE_SIZE * 0.88, SQUARE_SIZE * 0.82]} />
+              <planeGeometry args={[SQUARE_SIZE * 0.96, SQUARE_SIZE * 0.96]} />
               <meshStandardMaterial
                 map={overlays[overlay]}
                 transparent
