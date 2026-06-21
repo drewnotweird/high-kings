@@ -7,8 +7,9 @@ import type { ThemeConfig } from '../../lib/themes'
 
 const BOARD_OFFSET = 5
 const W = 1.35
-const DROP_FROM = 18
+const DROP_FROM = 22
 const REST_Y = 0.15
+const DROP_DURATION = 0.38
 
 interface PieceProps {
   piece: PieceData
@@ -21,6 +22,7 @@ interface PieceProps {
 export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: PieceProps) {
   const meshRef = useRef<Mesh>(null)
   const landed = useRef(false)
+  const landTime = useRef(0)
 
   const x = piece.col - BOARD_OFFSET
   const z = piece.row - BOARD_OFFSET
@@ -83,23 +85,26 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: 
         return
       }
       meshRef.current.visible = true
-      // Fast drop with slight overshoot bounce
-      const progress = Math.min((t - dropDelay) / 0.35, 1)
-      const eased = progress < 1
-        ? 1 - Math.pow(1 - progress, 3)  // ease-out cubic
-        : 1
-      // Small bounce overshoot
-      const bounce = progress > 0.85
-        ? Math.sin((progress - 0.85) / 0.15 * Math.PI) * -0.12
-        : 0
-      meshRef.current.position.y = DROP_FROM + (REST_Y - DROP_FROM) * eased + bounce
+      const progress = Math.min((t - dropDelay) / DROP_DURATION, 1)
+      // Ease-in cubic — accelerates like gravity
+      const eased = progress * progress * progress
+      meshRef.current.position.y = DROP_FROM + (REST_Y - DROP_FROM) * eased
 
-      if (progress >= 1) landed.current = true
+      if (progress >= 1) {
+        landed.current = true
+        landTime.current = t
+      }
       return
     }
 
-    // Normal select/deselect animation once landed
-    const targetY = isSelected ? 0.55 : REST_Y
+    // After landing: single brief downward compression — heavy, hard, no ringing
+    const settle = t - landTime.current
+    const knock = settle < 0.14
+      ? Math.sin((settle / 0.14) * Math.PI) * -0.055
+      : 0
+
+    // Normal select/deselect animation once settled
+    const targetY = (isSelected ? 0.55 : REST_Y) + knock
     meshRef.current.position.y +=
       (targetY - meshRef.current.position.y) * Math.min(delta * 8, 1)
   })

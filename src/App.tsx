@@ -2,6 +2,10 @@ import { Scene } from './components/board/Scene'
 import { ThemeSwitcher } from './components/ui/ThemeSwitcher'
 
 const fireCSS = `
+@keyframes sceneFadeIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
 @keyframes fireFlicker {
   0%   { opacity: 0.35; }
   25%  { opacity: 0.45; }
@@ -87,22 +91,22 @@ function App() {
     <div className="relative w-full h-full" style={{ background: '#000' }}>
       <style>{fireCSS}</style>
 
-      {/* Steady dark base */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: 'radial-gradient(ellipse at 50% 65%, #2a1200 0%, #0a0800 55%, #000 100%)' }} />
-      {/* Flickering warm glow layer — subtle */}
+      {/* Steady dark base — fades in with scene */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: 'radial-gradient(ellipse at 50% 65%, #2a1200 0%, #0a0800 55%, #000 100%)', animation: 'sceneFadeIn 2s ease-out forwards' }} />
+      {/* Flickering warm glow layer */}
       <div
         style={{
           position: 'absolute', inset: 0, zIndex: 0,
           background: 'radial-gradient(ellipse at 50% 72%, #5a2400 0%, #1a0800 45%, transparent 70%)',
-          animation: 'fireFlicker 2.8s ease-in-out infinite',
+          animation: 'sceneFadeIn 2s ease-out forwards, fireFlicker 2.8s 2s ease-in-out infinite',
         }}
       />
-      {/* Second offset layer for irregular flicker */}
+      {/* Second offset layer */}
       <div
         style={{
           position: 'absolute', inset: 0, zIndex: 0,
           background: 'radial-gradient(ellipse at 46% 78%, #6b2000 0%, transparent 50%)',
-          animation: 'fireFlicker 1.9s ease-in-out infinite reverse',
+          animation: 'sceneFadeIn 2s ease-out forwards, fireFlicker 1.9s 2s ease-in-out infinite reverse',
         }}
       />
 
