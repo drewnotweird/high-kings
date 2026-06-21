@@ -7,16 +7,20 @@ import type { ThemeConfig } from '../../lib/themes'
 
 const BOARD_OFFSET = 5
 const W = 1.35
+const DROP_FROM = 18
+const REST_Y = 0.15
 
 interface PieceProps {
   piece: PieceData
   theme: ThemeConfig
   isSelected: boolean
+  dropDelay: number  // seconds before this piece starts falling
   onClick: () => void
 }
 
-export function Piece({ piece, theme: _theme, isSelected, onClick }: PieceProps) {
+export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: PieceProps) {
   const meshRef = useRef<Mesh>(null)
+  const landed = useRef(false)
 
   const x = piece.col - BOARD_OFFSET
   const z = piece.row - BOARD_OFFSET
@@ -69,9 +73,32 @@ export function Piece({ piece, theme: _theme, isSelected, onClick }: PieceProps)
     ]
   }, [isKing, isDefender])
 
-  useFrame((_, delta) => {
+  useFrame(({ clock }, delta) => {
     if (!meshRef.current) return
-    const targetY = isSelected ? 0.55 : 0.15
+    const t = clock.getElapsedTime()
+
+    if (!landed.current) {
+      if (t < dropDelay) {
+        meshRef.current.position.y = DROP_FROM
+        return
+      }
+      // Fast drop with slight overshoot bounce
+      const progress = Math.min((t - dropDelay) / 0.35, 1)
+      const eased = progress < 1
+        ? 1 - Math.pow(1 - progress, 3)  // ease-out cubic
+        : 1
+      // Small bounce overshoot
+      const bounce = progress > 0.85
+        ? Math.sin((progress - 0.85) / 0.15 * Math.PI) * -0.12
+        : 0
+      meshRef.current.position.y = DROP_FROM + (REST_Y - DROP_FROM) * eased + bounce
+
+      if (progress >= 1) landed.current = true
+      return
+    }
+
+    // Normal select/deselect animation once landed
+    const targetY = isSelected ? 0.55 : REST_Y
     meshRef.current.position.y +=
       (targetY - meshRef.current.position.y) * Math.min(delta * 8, 1)
   })
@@ -79,7 +106,7 @@ export function Piece({ piece, theme: _theme, isSelected, onClick }: PieceProps)
   return (
     <mesh
       ref={meshRef}
-      position={[x, 0.15, z]}
+      position={[x, DROP_FROM, z]}
       rotation={[0, Math.PI, 0]}
       castShadow
       onClick={(e) => {
