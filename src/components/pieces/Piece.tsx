@@ -40,42 +40,42 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
       return [
         new Vector2(0, 0),
         new Vector2(0.28, 0),
-        new Vector2(0.32, 0.08),
-        new Vector2(0.28, 0.18),
-        new Vector2(0.22, 0.30),
-        new Vector2(0.24, 0.42),
-        new Vector2(0.20, 0.55),
-        new Vector2(0.16, 0.62),
-        new Vector2(0.22, 0.68),
-        new Vector2(0.22, 0.76),
-        new Vector2(0.14, 0.80),
-        new Vector2(0.08, 0.82),
-        new Vector2(0, 0.82),
+        new Vector2(0.33, 0.10),
+        new Vector2(0.28, 0.25),
+        new Vector2(0.22, 0.50),
+        new Vector2(0.24, 0.72),
+        new Vector2(0.20, 0.95),
+        new Vector2(0.16, 1.10),
+        new Vector2(0.24, 1.20),
+        new Vector2(0.24, 1.36),
+        new Vector2(0.14, 1.44),
+        new Vector2(0.08, 1.48),
+        new Vector2(0, 1.48),
       ]
     }
     if (isDefender) {
       return [
         new Vector2(0, 0),
         new Vector2(0.24, 0),
-        new Vector2(0.27, 0.06),
-        new Vector2(0.22, 0.16),
-        new Vector2(0.20, 0.28),
-        new Vector2(0.22, 0.38),
-        new Vector2(0.18, 0.46),
-        new Vector2(0.12, 0.50),
-        new Vector2(0, 0.50),
+        new Vector2(0.28, 0.10),
+        new Vector2(0.22, 0.28),
+        new Vector2(0.20, 0.52),
+        new Vector2(0.22, 0.72),
+        new Vector2(0.18, 0.88),
+        new Vector2(0.12, 0.96),
+        new Vector2(0, 0.96),
       ]
     }
-    // Attacker — squat, wider at base
+    // Attacker — squat but still taller than before
     return [
       new Vector2(0, 0),
-      new Vector2(0.26, 0),
-      new Vector2(0.30, 0.06),
-      new Vector2(0.26, 0.14),
-      new Vector2(0.24, 0.26),
-      new Vector2(0.20, 0.36),
-      new Vector2(0.14, 0.40),
-      new Vector2(0, 0.40),
+      new Vector2(0.27, 0),
+      new Vector2(0.31, 0.10),
+      new Vector2(0.27, 0.24),
+      new Vector2(0.24, 0.48),
+      new Vector2(0.20, 0.68),
+      new Vector2(0.14, 0.76),
+      new Vector2(0, 0.76),
     ]
   }, [isKing, isDefender])
 
