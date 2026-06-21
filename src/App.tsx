@@ -151,22 +151,26 @@ function App() {
         />
       </div>
 
-      {/* Mist wisps */}
-      {introStarted && mists.map(m => (
-        <Mist
-          key={m.id}
-          style={{
-            left: m.left,
-            bottom: m.bottom,
-            width: m.width,
-            height: m.height,
-            ['--dur' as string]: m.dur,
-            ['--mx' as string]: m.mx,
-            ['--peak' as string]: m.peak,
-            animationDelay: m.delay,
-          }}
-        />
-      ))}
+      {/* Mist wisps — fade in container prevents snap-on */}
+      {introStarted && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, animation: 'sceneFadeIn 3s ease-out forwards' }}>
+          {mists.map(m => (
+            <Mist
+              key={m.id}
+              style={{
+                left: m.left,
+                bottom: m.bottom,
+                width: m.width,
+                height: m.height,
+                ['--dur' as string]: m.dur,
+                ['--mx' as string]: m.mx,
+                ['--peak' as string]: m.peak,
+                animationDelay: m.delay,
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Ember particles — only mount after intro starts */}
       {introStarted && embers.map(e => (
