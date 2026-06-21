@@ -27,7 +27,7 @@ jobs:
 
       - name: Force upload tile-11.png
         run: |
-          curl -T "dist/textures/tile-11.png" \
+          curl -T "$GITHUB_WORKSPACE/dist/textures/tile-11.png" \
             --ftp-create-dirs \
             --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" \
             "ftp://${{ secrets.FTP_SERVER }}/${{ secrets.FTP_SERVER_DIR }}textures/tile-11.png"
