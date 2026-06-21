@@ -24,15 +24,16 @@ function FadingLights() {
 
   useFrame(() => {
     const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
-    const fade = Math.min(Math.max((t - BOARD_DURATION) / 1.2, 0), 1)
-    const e = 1 - Math.pow(1 - fade, 2)
+    const f = (start: number, dur: number) => 1 - Math.pow(1 - Math.min(Math.max((t - start) / dur, 0), 1), 2)
 
-    if (ambientRef.current)  ambientRef.current.intensity  = 0.02 * e
-    if (moonRef.current)     moonRef.current.intensity     = 0.25 * e
-    if (spotRef.current)     spotRef.current.intensity     = 20   * e
-    if (frontRef.current)    frontRef.current.intensity    = 0.2  * e
-    if (bounceRef.current)   bounceRef.current.intensity   = 5    * e
-    if (backRef.current)     backRef.current.intensity     = 3    * e
+    if (ambientRef.current)  ambientRef.current.intensity  = 0.02 * f(0.0, 0.5)
+    if (moonRef.current)     moonRef.current.intensity     = 0.25 * f(0.3, 0.5)
+    if (spotRef.current)     spotRef.current.intensity     = 20   * f(0.6, 0.5)
+    if (frontRef.current)    frontRef.current.intensity    = 0.2  * f(0.9, 0.4)
+
+    const late = f(BOARD_DURATION, 1.2)
+    if (bounceRef.current)   bounceRef.current.intensity   = 5 * late
+    if (backRef.current)     backRef.current.intensity     = 3 * late
   })
 
   return (
