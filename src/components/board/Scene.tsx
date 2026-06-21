@@ -146,7 +146,7 @@ function SceneInner() {
 
   return (
     <>
-      <fog attach="fog" args={["#0a0800", 18, 36]} />
+      <fog attach="fog" args={["#0a0800", 28, 55]} />
       <Environment preset="night" environmentIntensity={0.0} />
       <FadingLights />
       <FireLight />
