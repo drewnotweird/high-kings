@@ -135,7 +135,7 @@ function App() {
         />
       ))}
 
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', opacity: introStarted ? undefined : 0, animation: introStarted ? 'sceneFadeIn 2s ease-out forwards' : 'none' }}>
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
         <Scene onIntroStart={() => setIntroStarted(true)} />
       </div>
 
