@@ -115,9 +115,11 @@ function AnimatedBoard({ children }: { children: React.ReactNode }) {
     if (!groupRef.current || done.current) return
     const t = clock.getElapsedTime()
     const progress = Math.min(t / BOARD_DURATION, 1)
-    // Ease-out cubic
+    // Ease-out cubic for both position and rotation
     const eased = 1 - Math.pow(1 - progress, 3)
     groupRef.current.position.y = BOARD_START_Y + (-BOARD_START_Y) * eased
+    // Tilt: starts pitched forward ~70°, rotates flat
+    groupRef.current.rotation.x = (1 - eased) * 1.2
     if (progress >= 1) done.current = true
   })
 
