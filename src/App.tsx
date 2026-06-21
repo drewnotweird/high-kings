@@ -239,10 +239,10 @@ function App() {
       </div>
 
       {/* Score panels */}
-      <div style={{ position: 'absolute', top: 28, left: 12, zIndex: 10 }}>
+      <div style={{ position: 'absolute', top: 48, right: '74vw', zIndex: 10 }}>
         <ScorePanel side="defender" score={scores.defender} isActive={currentTurn === 'defender'} />
       </div>
-      <div style={{ position: 'absolute', top: 28, right: 12, zIndex: 10 }}>
+      <div style={{ position: 'absolute', top: 48, left: '74vw', zIndex: 10 }}>
         <ScorePanel side="attacker" score={scores.attacker} isActive={currentTurn === 'attacker'} />
       </div>
 
