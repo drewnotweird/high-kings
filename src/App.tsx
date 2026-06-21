@@ -53,7 +53,7 @@ function Mist({ style }: { style: React.CSSProperties }) {
       style={{
         position: 'absolute',
         borderRadius: '50%',
-        background: 'radial-gradient(ellipse, rgba(200,180,160,0.18) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse, rgba(220,200,180,0.9) 0%, transparent 70%)',
         filter: 'blur(28px)',
         animation: 'mistDrift var(--dur) ease-in-out infinite',
         ...style,
@@ -73,7 +73,7 @@ const mists = Array.from({ length: 7 }, (_, i) => {
     dur: `${7 + Math.random() * 8}s`,
     delay: `${-Math.random() * 14}s`,
     mx: `${r(80)}px`,
-    peak: `${0.04 + Math.random() * 0.05}`,
+    peak: `${0.12 + Math.random() * 0.1}`,
   }
 })
 
