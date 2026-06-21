@@ -236,7 +236,11 @@ function LoadingOverlay({ onDone }: { onDone: () => void }) {
   )
 }
 
-export function Scene() {
+interface SceneProps {
+  onIntroStart?: () => void
+}
+
+export function Scene({ onIntroStart }: SceneProps) {
   const [introStartMs, setIntroStartMs] = useState<number | null>(null)
 
   return (
@@ -251,7 +255,7 @@ export function Scene() {
             <SceneInner />
           </Suspense>
         </Canvas>
-        <LoadingOverlay onDone={() => setIntroStartMs(Date.now())} />
+        <LoadingOverlay onDone={() => { setIntroStartMs(Date.now()); onIntroStart?.() }} />
       </div>
     </IntroStartContext.Provider>
   )

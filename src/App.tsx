@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Scene } from './components/board/Scene'
 import { ThemeSwitcher } from './components/ui/ThemeSwitcher'
 
@@ -87,14 +88,16 @@ const embers = Array.from({ length: 12 }, (_, i) => {
 })
 
 function App() {
+  const [introStarted, setIntroStarted] = useState(false)
+
   return (
     <div className="relative w-full h-full" style={{ background: '#000' }}>
       <style>{fireCSS}</style>
 
-      {/* Steady dark base */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: 'radial-gradient(ellipse at 50% 65%, #2a1200 0%, #0a0800 55%, #000 100%)', animation: 'sceneFadeIn 2.5s ease-out forwards' }} />
+      {/* Steady dark base — only fades in once loader finishes */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: 'radial-gradient(ellipse at 50% 65%, #2a1200 0%, #0a0800 55%, #000 100%)', opacity: introStarted ? undefined : 0, animation: introStarted ? 'sceneFadeIn 2.5s ease-out forwards' : 'none' }} />
       {/* Flickering layers wrapped so their container fades in — no jump when flicker starts */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, animation: 'sceneFadeIn 2.5s ease-out forwards' }}>
+      <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: introStarted ? undefined : 0, animation: introStarted ? 'sceneFadeIn 2.5s ease-out forwards' : 'none' }}>
         <div
           style={{
             position: 'absolute', inset: 0,
@@ -111,8 +114,8 @@ function App() {
         />
       </div>
 
-      {/* Ember particles */}
-      {embers.map(e => (
+      {/* Ember particles — only mount after intro starts */}
+      {introStarted && embers.map(e => (
         <Ember
           key={e.id}
           variant={e.variant}
@@ -132,8 +135,8 @@ function App() {
         />
       ))}
 
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', animation: 'sceneFadeIn 2s ease-out forwards' }}>
-        <Scene />
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', opacity: introStarted ? undefined : 0, animation: introStarted ? 'sceneFadeIn 2s ease-out forwards' : 'none' }}>
+        <Scene onIntroStart={() => setIntroStarted(true)} />
       </div>
 
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
