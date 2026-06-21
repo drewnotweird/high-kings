@@ -98,7 +98,7 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
       }}
     >
       <latheGeometry args={[points, 24]} />
-      <meshStandardMaterial
+      <meshPhysicalMaterial
         map={texture}
         bumpMap={texture}
         bumpScale={0.03}
@@ -106,6 +106,8 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
         emissiveIntensity={isSelected ? 2.5 : 1.0}
         roughness={theme.pieceRoughness}
         metalness={theme.pieceMetalness}
+        clearcoat={1}
+        clearcoatRoughness={0.08}
       />
     </mesh>
   )
