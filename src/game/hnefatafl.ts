@@ -10,7 +10,7 @@ export interface Piece {
   col: number
 }
 
-const attackerStarts: [number, number][] = [
+export const attackerStarts: [number, number][] = [
   [0,3],[0,4],[0,5],[0,6],[0,7],
   [1,5],
   [3,0],[4,0],[5,0],[6,0],[7,0],
@@ -21,7 +21,7 @@ const attackerStarts: [number, number][] = [
   [9,5],
 ]
 
-const defenderStarts: [number, number][] = [
+export const defenderStarts: [number, number][] = [
   [3,5],[4,5],[5,3],[5,4],[5,6],[5,7],[6,5],[7,5],
   [4,4],[4,6],[6,4],[6,6],
 ]

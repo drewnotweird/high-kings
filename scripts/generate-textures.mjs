@@ -190,5 +190,170 @@ for (const p of pieces) {
   console.log(`✓ ${rOutPath}`)
 }
 
-console.log('\nDone. Edit these PNGs in any image editor, then reload the browser.')
+console.log('\nDone. Edit piece PNGs in any image editor, then reload the browser.')
 console.log('Roughness maps: dark = shiny, light = matte.')
+
+// ─── Tile base textures (10 variants) ─────────────────────────────────────────
+// All tiles use the same pale stone look but with different grain seeds.
+// Edit tile-1.png through tile-10.png in any image editor.
+const TW = 512
+const TH = 512
+
+function drawTile(ctx, seed) {
+  const rand = rng(seed)
+  const base = '#c8bfa8'
+  const grain = '#7a6a50'
+
+  ctx.fillStyle = base
+  ctx.fillRect(0, 0, TW, TH)
+
+  // Subtle noise
+  const imgData = ctx.getImageData(0, 0, TW, TH)
+  const d = imgData.data
+  const [br, bg, bb] = hexToRgb(base)
+  for (let i = 0; i < d.length; i += 4) {
+    const n = (rand() - 0.5) * 22
+    d[i]     = clamp(br + n)
+    d[i + 1] = clamp(bg + n)
+    d[i + 2] = clamp(bb + n)
+    d[i + 3] = 255
+  }
+  ctx.putImageData(imgData, 0, 0)
+
+  // Fine grain lines in varying directions
+  const angle = rand() * Math.PI
+  const cos = Math.cos(angle)
+  const sin = Math.sin(angle)
+  const lineCount = 30 + Math.floor(rand() * 20)
+  for (let i = 0; i < lineCount; i++) {
+    const t = rand() * TW * 2 - TW * 0.5
+    ctx.beginPath()
+    ctx.moveTo(t * cos - (-TH) * sin, t * sin + (-TH) * cos)
+    ctx.lineTo(t * cos - TH * 2 * sin, t * sin + TH * 2 * cos)
+    ctx.strokeStyle = grain
+    ctx.lineWidth = rand() * 1.2 + 0.3
+    ctx.globalAlpha = 0.08 + rand() * 0.14
+    ctx.stroke()
+  }
+  ctx.globalAlpha = 1
+}
+
+// ─── Overlay marker textures (transparent PNGs) ───────────────────────────────
+// These sit on top of specific tiles. Edit them to add runes, symbols, etc.
+// Background is fully transparent — only the marker is painted.
+
+function drawCornerOverlay(ctx) {
+  ctx.clearRect(0, 0, TW, TH)
+  const cx = TW / 2, cy = TH / 2, r = TW * 0.35
+  // Octagon ring
+  ctx.beginPath()
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2 - Math.PI / 8
+    i === 0 ? ctx.moveTo(cx + r * Math.cos(a), cy + r * Math.sin(a))
+            : ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a))
+  }
+  ctx.closePath()
+  ctx.strokeStyle = '#8b0000'
+  ctx.lineWidth = 10
+  ctx.globalAlpha = 0.7
+  ctx.stroke()
+  // Inner dot
+  ctx.beginPath()
+  ctx.arc(cx, cy, r * 0.18, 0, Math.PI * 2)
+  ctx.fillStyle = '#8b0000'
+  ctx.fill()
+  ctx.globalAlpha = 1
+}
+
+function drawThroneOverlay(ctx) {
+  ctx.clearRect(0, 0, TW, TH)
+  const cx = TW / 2, cy = TH / 2
+  ctx.globalAlpha = 0.65
+  // Cross of lines
+  for (let rot = 0; rot < 4; rot++) {
+    const a = (rot / 4) * Math.PI * 2
+    ctx.beginPath()
+    ctx.moveTo(cx, cy)
+    ctx.lineTo(cx + Math.cos(a) * TW * 0.38, cy + Math.sin(a) * TH * 0.38)
+    ctx.strokeStyle = '#c8a830'
+    ctx.lineWidth = 8
+    ctx.stroke()
+  }
+  // Centre circle
+  ctx.beginPath()
+  ctx.arc(cx, cy, TW * 0.12, 0, Math.PI * 2)
+  ctx.strokeStyle = '#c8a830'
+  ctx.lineWidth = 8
+  ctx.stroke()
+  // Outer ring
+  ctx.beginPath()
+  ctx.arc(cx, cy, TW * 0.38, 0, Math.PI * 2)
+  ctx.lineWidth = 5
+  ctx.stroke()
+  ctx.globalAlpha = 1
+}
+
+function drawDefenderOverlay(ctx) {
+  ctx.clearRect(0, 0, TW, TH)
+  const cx = TW / 2, cy = TH / 2, r = TW * 0.28
+  ctx.globalAlpha = 0.5
+  // Simple circle marker
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, 0, Math.PI * 2)
+  ctx.strokeStyle = '#c8a45a'
+  ctx.lineWidth = 7
+  ctx.stroke()
+  // Small inner dot
+  ctx.beginPath()
+  ctx.arc(cx, cy, r * 0.25, 0, Math.PI * 2)
+  ctx.fillStyle = '#c8a45a'
+  ctx.fill()
+  ctx.globalAlpha = 1
+}
+
+function drawAttackerOverlay(ctx) {
+  ctx.clearRect(0, 0, TW, TH)
+  const cx = TW / 2, cy = TH / 2, r = TW * 0.28
+  ctx.globalAlpha = 0.5
+  // Diamond
+  ctx.beginPath()
+  ctx.moveTo(cx, cy - r)
+  ctx.lineTo(cx + r, cy)
+  ctx.lineTo(cx, cy + r)
+  ctx.lineTo(cx - r, cy)
+  ctx.closePath()
+  ctx.strokeStyle = '#8b2000'
+  ctx.lineWidth = 7
+  ctx.stroke()
+  ctx.globalAlpha = 1
+}
+
+// Generate tile base variants
+for (let i = 1; i <= 10; i++) {
+  const canvas = createCanvas(TW, TH)
+  const ctx = canvas.getContext('2d')
+  drawTile(ctx, i * 137)
+  const outPath = path.join(OUT, `tile-${i}.png`)
+  writeFileSync(outPath, canvas.toBuffer('image/png'))
+  console.log(`✓ ${outPath}`)
+}
+
+// Generate overlay markers
+const overlays = [
+  { name: 'tile-corner',   fn: drawCornerOverlay },
+  { name: 'tile-throne',   fn: drawThroneOverlay },
+  { name: 'tile-defender', fn: drawDefenderOverlay },
+  { name: 'tile-attacker', fn: drawAttackerOverlay },
+]
+for (const { name, fn } of overlays) {
+  const canvas = createCanvas(TW, TH)
+  const ctx = canvas.getContext('2d')
+  fn(ctx)
+  const outPath = path.join(OUT, `${name}.png`)
+  writeFileSync(outPath, canvas.toBuffer('image/png'))
+  console.log(`✓ ${outPath}`)
+}
+
+console.log('\nAll tile textures generated.')
+console.log('Edit tile-1.png … tile-10.png for base tile variety.')
+console.log('Edit tile-corner/throne/defender/attacker.png for markers.')

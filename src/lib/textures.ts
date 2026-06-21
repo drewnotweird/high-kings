@@ -95,7 +95,7 @@ function buildColorTexture(params: typeof textureParams.light, seed: number): Ca
   return tex
 }
 
-function buildRoughnessTexture(params: typeof textureParams.light, seed: number): CanvasTexture {
+function buildRoughnessTexture(_params: typeof textureParams.light, seed: number): CanvasTexture {
   const canvas = document.createElement('canvas')
   canvas.width = TEX_W
   canvas.height = TEX_H
