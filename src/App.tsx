@@ -52,6 +52,9 @@ const fireCSS = `
     padding: 6px 10px;
     width: 70px;
   }
+  .score-panel-wrapper {
+    top: 16px !important;
+  }
 }
 @keyframes mistDrift {
   0%   { transform: translateX(0px)   translateY(0px);  opacity: 0;    }
@@ -253,10 +256,10 @@ function App() {
 
       {/* Score panels */}
       {introStarted && <>
-        <div style={{ position: 'absolute', top: 48, right: '74vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards' }}>
+        <div className="score-panel-wrapper score-panel-wrapper--defender" style={{ position: 'absolute', top: 48, right: '74vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards' }}>
           <ScorePanel side="defender" score={scores.defender} isActive={currentTurn === 'defender'} />
         </div>
-        <div style={{ position: 'absolute', top: 48, left: '74vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards' }}>
+        <div className="score-panel-wrapper score-panel-wrapper--attacker" style={{ position: 'absolute', top: 48, left: '74vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards' }}>
           <ScorePanel side="attacker" score={scores.attacker} isActive={currentTurn === 'attacker'} />
         </div>
       </>}
