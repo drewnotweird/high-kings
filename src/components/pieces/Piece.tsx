@@ -85,12 +85,16 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: 
       if (t < 0 || t < dropDelay) {
         meshRef.current.visible = false
         meshRef.current.position.y = REST_Y
+        meshRef.current.rotation.y = Math.PI + Math.PI * 2
         return
       }
       meshRef.current.visible = true
       const progress = Math.min((t - dropDelay) / JUMP_DURATION, 1)
-      // Parabolic arc: up then back down
+      // Parabolic arc
       meshRef.current.position.y = REST_Y + JUMP_PEAK * 4 * progress * (1 - progress)
+      // Spin: ease-out one full rotation into final facing
+      const rotEased = 1 - Math.pow(1 - progress, 2)
+      meshRef.current.rotation.y = Math.PI + Math.PI * 2 * (1 - rotEased)
 
       if (progress >= 1) {
         landed.current = true
@@ -98,6 +102,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: 
       }
       return
     }
+    meshRef.current.rotation.y = Math.PI
 
     // After landing: single brief downward compression — heavy, hard, no ringing
     const settle = (Date.now() - landTime.current) / 1000
@@ -115,7 +120,6 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: 
     <mesh
       ref={meshRef}
       position={[x, REST_Y, z]}
-      rotation={[0, Math.PI, 0]}
       castShadow
       onClick={(e) => {
         e.stopPropagation()
