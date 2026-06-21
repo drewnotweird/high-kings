@@ -239,12 +239,14 @@ function App() {
       </div>
 
       {/* Score panels */}
-      <div style={{ position: 'absolute', top: 48, right: '74vw', zIndex: 10 }}>
-        <ScorePanel side="defender" score={scores.defender} isActive={currentTurn === 'defender'} />
-      </div>
-      <div style={{ position: 'absolute', top: 48, left: '74vw', zIndex: 10 }}>
-        <ScorePanel side="attacker" score={scores.attacker} isActive={currentTurn === 'attacker'} />
-      </div>
+      {introStarted && <>
+        <div style={{ position: 'absolute', top: 48, right: '74vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards' }}>
+          <ScorePanel side="defender" score={scores.defender} isActive={currentTurn === 'defender'} />
+        </div>
+        <div style={{ position: 'absolute', top: 48, left: '74vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards' }}>
+          <ScorePanel side="attacker" score={scores.attacker} isActive={currentTurn === 'attacker'} />
+        </div>
+      </>}
 
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
         <img src={`${import.meta.env.BASE_URL}logo.png`} alt="High Kings" className="h-32 w-auto select-none" />
