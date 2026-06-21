@@ -11,9 +11,9 @@ const BOARD_OFFSET = 5
 // Position is in local mesh space: -Z is the camera-facing surface (after PI rotation).
 // shieldZ should be slightly past the surface radius at that height.
 const SHIELD_DEFS = {
-  king:     { y: 0.45, z: -0.37, r: 0.30, thickness: 0.05 },
-  defender: { y: 0.28, z: -0.22, r: 0.19, thickness: 0.04 },
-  attacker: { y: 0.22, z: -0.28, r: 0.20, thickness: 0.04 },
+  king:     { y: 0.45, z: -0.38, r: 0.36, thickness: 0.05 },
+  defender: { y: 0.30, z: -0.23, r: 0.26, thickness: 0.04 },
+  attacker: { y: 0.24, z: -0.28, r: 0.26, thickness: 0.04 },
 }
 
 interface PieceProps {
@@ -48,6 +48,17 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
 
   const shield = isKing ? SHIELD_DEFS.king : isDefender ? SHIELD_DEFS.defender : SHIELD_DEFS.attacker
 
+  // The cylinder cap UV maps the full texture (512×1024) into a disc.
+  // Clone and set repeat(1, 0.5) + offset(0, 0.25) to show only the centre
+  // square of the texture, correcting the 2:1 aspect ratio distortion.
+  const shieldTexture = useMemo(() => {
+    const t = texture.clone()
+    t.needsUpdate = true
+    t.repeat.set(1, 0.5)
+    t.offset.set(0, 0.25)
+    return t
+  }, [texture])
+
   const points = useMemo(() => {
     if (isKing) {
       return [
@@ -72,9 +83,9 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
         new Vector2(0.22, 0.28),
         new Vector2(0.20, 0.52),
         new Vector2(0.22, 0.72),
-        new Vector2(0.18, 0.88),
-        new Vector2(0.12, 0.96),
-        new Vector2(0, 0.96),
+        new Vector2(0.16, 0.88),
+        new Vector2(0.07, 0.94),
+        new Vector2(0, 0.97),
       ]
     }
     return [
@@ -83,9 +94,9 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
       new Vector2(0.31, 0.10),
       new Vector2(0.27, 0.24),
       new Vector2(0.24, 0.48),
-      new Vector2(0.20, 0.68),
-      new Vector2(0.14, 0.76),
-      new Vector2(0, 0.76),
+      new Vector2(0.19, 0.66),
+      new Vector2(0.10, 0.74),
+      new Vector2(0, 0.78),
     ]
   }, [isKing, isDefender])
 
@@ -129,7 +140,7 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
       >
         <cylinderGeometry args={[shield.r, shield.r, shield.thickness, 40]} />
         <meshPhysicalMaterial
-          map={texture}
+          map={shieldTexture}
           roughnessMap={roughnessMap}
           roughness={0.55}
           metalness={0.0}

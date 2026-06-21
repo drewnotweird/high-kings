@@ -4,8 +4,8 @@ import { RepeatWrapping } from 'three'
 import { BOARD_SIZE, isCorner, isThrone, attackerStarts, defenderStarts } from '../../game/hnefatafl'
 import type { ThemeConfig } from '../../lib/themes'
 
-const SQUARE_SIZE = 0.88
-const TILE_HEIGHT = 0.16
+const SQUARE_SIZE = 0.95
+const TILE_HEIGHT = 0.09
 const BOARD_OFFSET = (BOARD_SIZE - 1) / 2
 const TILE_COUNT = 10
 // Ratio of tile side height to top width — used to keep stone grain scale consistent
