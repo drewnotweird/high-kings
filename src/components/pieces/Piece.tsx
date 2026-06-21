@@ -85,9 +85,6 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
     const targetY = isSelected ? 0.55 : 0.15
     meshRef.current.position.y +=
       (targetY - meshRef.current.position.y) * Math.min(delta * 8, 1)
-    if (isKing) {
-      meshRef.current.rotation.y += delta * 0.3
-    }
   })
 
   return (
@@ -106,7 +103,7 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
         bumpMap={texture}
         bumpScale={0.03}
         emissive={emissive}
-        emissiveIntensity={isSelected ? 1.2 : 0.3}
+        emissiveIntensity={isSelected ? 2.5 : 1.0}
         roughness={theme.pieceRoughness}
         metalness={theme.pieceMetalness}
       />
