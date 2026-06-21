@@ -23,8 +23,8 @@ function FadingLights() {
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime()
-    // Fade in over ~1.4s, slightly delayed so board rises in near-darkness
-    const fade = Math.min(Math.max((t - 0.3) / 1.4, 0), 1)
+    // Fade in after board has landed
+    const fade = Math.min(Math.max((t - BOARD_DURATION) / 1.2, 0), 1)
     const e = 1 - Math.pow(1 - fade, 2) // ease-out quad
 
     if (ambientRef.current)  ambientRef.current.intensity  = 0.02 * e
@@ -99,7 +99,7 @@ function FireLight() {
   useFrame(({ clock }) => {
     if (!ref.current) return
     const t = clock.getElapsedTime()
-    const fade = Math.min(Math.max((t - 0.3) / 1.4, 0), 1)
+    const fade = Math.min(Math.max((t - BOARD_DURATION) / 1.2, 0), 1)
     const e = 1 - Math.pow(1 - fade, 2)
     const flicker = 1 + 0.35 * Math.sin(t * 7.3) + 0.2 * Math.sin(t * 13.1) + 0.1 * Math.sin(t * 3.7)
     ref.current.intensity = 6 * flicker * e
@@ -119,7 +119,7 @@ function AnimatedBoard({ children }: { children: React.ReactNode }) {
     const eased = 1 - Math.pow(1 - progress, 3)
     groupRef.current.position.y = BOARD_START_Y + (-BOARD_START_Y) * eased
     // Tilt: starts pitched forward ~70°, rotates flat
-    groupRef.current.rotation.x = (1 - eased) * 1.2
+    groupRef.current.rotation.x = (1 - eased) * -1.2
     if (progress >= 1) done.current = true
   })
 
