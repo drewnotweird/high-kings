@@ -152,8 +152,27 @@ function hexToRgb(hex) {
 }
 function clamp(v) { return Math.max(0, Math.min(255, Math.round(v))) }
 
+// ─── Roughness map ────────────────────────────────────────────────────────────
+// Greyscale image — dark = shiny/highlighted, light = matte/rough.
+// Paint dark where you want specular shine (e.g. raised carved edges, top of dome).
+function drawRoughness(ctx, baseValue = 180) {
+  // Mid-grey base — partially rough
+  ctx.fillStyle = `rgb(${baseValue},${baseValue},${baseValue})`
+  ctx.fillRect(0, 0, W, H)
+
+  // Dome top is naturally smoother (darker = shinier)
+  const grad = ctx.createRadialGradient(W / 2, 0, 0, W / 2, 0, W * 0.7)
+  grad.addColorStop(0, `rgba(60,60,60,0.5)`)
+  grad.addColorStop(1, `rgba(0,0,0,0)`)
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, W, H)
+
+  drawGuide(ctx)
+}
+
 // ─── Generate ─────────────────────────────────────────────────────────────────
 for (const p of pieces) {
+  // Colour / diffuse map
   const canvas = createCanvas(W, H)
   const ctx = canvas.getContext('2d')
   drawBase(ctx, p, p.seed)
@@ -161,6 +180,15 @@ for (const p of pieces) {
   const outPath = path.join(OUT, `${p.name}.png`)
   writeFileSync(outPath, canvas.toBuffer('image/png'))
   console.log(`✓ ${outPath}`)
+
+  // Roughness map
+  const rCanvas = createCanvas(W, H)
+  const rCtx = rCanvas.getContext('2d')
+  drawRoughness(rCtx)
+  const rOutPath = path.join(OUT, `${p.name}-roughness.png`)
+  writeFileSync(rOutPath, rCanvas.toBuffer('image/png'))
+  console.log(`✓ ${rOutPath}`)
 }
 
 console.log('\nDone. Edit these PNGs in any image editor, then reload the browser.')
+console.log('Roughness maps: dark = shiny, light = matte.')

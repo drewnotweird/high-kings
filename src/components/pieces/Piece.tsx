@@ -29,13 +29,11 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
     ? theme.defenderEmissive
     : theme.attackerEmissive
 
-  const texturePath = isKing
-    ? '/textures/piece-king.png'
-    : isDefender
-    ? '/textures/piece-light.png'
-    : '/textures/piece-dark.png'
-
-  const texture = useTexture(texturePath)
+  const prefix = isKing ? 'piece-king' : isDefender ? 'piece-light' : 'piece-dark'
+  const [texture, roughnessMap] = useTexture([
+    `/textures/${prefix}.png`,
+    `/textures/${prefix}-roughness.png`,
+  ])
 
   // Lathe profile curves — Vector2(radius, height)
   const points = useMemo(() => {
@@ -103,9 +101,10 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
         map={texture}
         bumpMap={texture}
         bumpScale={0.04}
+        roughnessMap={roughnessMap}
+        roughness={0.55}
         emissive={emissive}
         emissiveIntensity={isSelected ? 0.6 : 0.12}
-        roughness={0.55}
         metalness={0.0}
         clearcoat={1}
         clearcoatRoughness={0.22}
