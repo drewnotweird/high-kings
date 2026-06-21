@@ -7,9 +7,9 @@ import type { ThemeConfig } from '../../lib/themes'
 
 const BOARD_OFFSET = 5
 const W = 1.35
-const DROP_FROM = 22
 const REST_Y = 0.15
-const DROP_DURATION = 0.38
+const JUMP_PEAK = 1.4   // how high the piece jumps
+const JUMP_DURATION = 0.36
 
 interface PieceProps {
   piece: PieceData
@@ -82,13 +82,13 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: 
     if (!landed.current) {
       if (t < dropDelay) {
         meshRef.current.visible = false
+        meshRef.current.position.y = REST_Y
         return
       }
       meshRef.current.visible = true
-      const progress = Math.min((t - dropDelay) / DROP_DURATION, 1)
-      // Ease-in cubic — accelerates like gravity
-      const eased = progress * progress * progress
-      meshRef.current.position.y = DROP_FROM + (REST_Y - DROP_FROM) * eased
+      const progress = Math.min((t - dropDelay) / JUMP_DURATION, 1)
+      // Parabolic arc: up then back down
+      meshRef.current.position.y = REST_Y + JUMP_PEAK * 4 * progress * (1 - progress)
 
       if (progress >= 1) {
         landed.current = true
@@ -112,7 +112,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: 
   return (
     <mesh
       ref={meshRef}
-      position={[x, DROP_FROM, z]}
+      position={[x, REST_Y, z]}
       rotation={[0, Math.PI, 0]}
       castShadow
       onClick={(e) => {
