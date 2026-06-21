@@ -2,7 +2,8 @@ import { useMemo } from 'react'
 import { BOARD_SIZE, isCorner, isThrone } from '../../game/hnefatafl'
 import type { ThemeConfig } from '../../lib/themes'
 
-const SQUARE_SIZE = 1
+const SQUARE_SIZE = 0.88
+const TILE_HEIGHT = 0.1
 const BOARD_OFFSET = (BOARD_SIZE - 1) / 2
 
 interface BoardProps {
@@ -45,7 +46,7 @@ export function Board({ theme }: BoardProps) {
           position={[x, 0, z]}
           receiveShadow
         >
-          <boxGeometry args={[SQUARE_SIZE, 0.05, SQUARE_SIZE]} />
+          <boxGeometry args={[SQUARE_SIZE, TILE_HEIGHT, SQUARE_SIZE]} />
           <meshStandardMaterial
             color={color}
             roughness={theme.boardRoughness}
