@@ -48,17 +48,6 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
 
   const shield = isKing ? SHIELD_DEFS.king : isDefender ? SHIELD_DEFS.defender : SHIELD_DEFS.attacker
 
-  // Cloned texture for the shield face: rotate 90° CCW and zoom in 2×
-  const shieldTexture = useMemo(() => {
-    const t = texture.clone()
-    t.needsUpdate = true
-    t.center.set(0.5, 0.5)
-    t.rotation = Math.PI / 2
-    t.repeat.set(0.5, 0.5)
-    t.offset.set(0.25, 0.25)
-    return t
-  }, [texture])
-
   const points = useMemo(() => {
     if (isKing) {
       return [
@@ -140,13 +129,14 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
       >
         <cylinderGeometry args={[shield.r, shield.r, shield.thickness, 40]} />
         <meshPhysicalMaterial
-          map={shieldTexture}
-          roughness={0.5}
-          metalness={0.05}
-          emissive={shieldEmissive}
-          emissiveIntensity={isSelected ? 0.8 : 0.2}
+          map={texture}
+          roughnessMap={roughnessMap}
+          roughness={0.55}
+          metalness={0.0}
+          emissive={emissive}
+          emissiveIntensity={isSelected ? 0.6 : 0.12}
           clearcoat={1}
-          clearcoatRoughness={0.15}
+          clearcoatRoughness={0.22}
         />
       </mesh>
 
