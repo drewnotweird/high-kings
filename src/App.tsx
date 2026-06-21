@@ -127,20 +127,11 @@ const embers = Array.from({ length: 12 }, (_, i) => {
 })
 
 function PieceIcon({ side }: { side: PlayerSide }) {
-  const isDefender = side === 'defender'
+  const src = side === 'defender'
+    ? `${import.meta.env.BASE_URL}white-piece.png`
+    : `${import.meta.env.BASE_URL}blue-piece.png`
   return (
-    <div style={{
-      width: 18,
-      height: isDefender ? 22 : 18,
-      borderRadius: '50% 50% 45% 45%',
-      background: isDefender
-        ? 'radial-gradient(ellipse at 35% 30%, #f0e8d8, #c8b89a)'
-        : 'radial-gradient(ellipse at 35% 30%, #4a5a7a, #1e2a3a)',
-      boxShadow: isDefender
-        ? '0 1px 3px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.3)'
-        : '0 1px 3px rgba(0,0,0,0.7), inset 0 1px 1px rgba(255,255,255,0.15)',
-      flexShrink: 0,
-    }} />
+    <img src={src} alt="" style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0 }} />
   )
 }
 
