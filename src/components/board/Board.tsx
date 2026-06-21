@@ -91,17 +91,17 @@ export function Board({ theme }: BoardProps) {
     return map
   }, [])
 
-  const tilePaths = Array.from({ length: TILE_COUNT }, (_, i) => `/textures/tile-${i + 1}.png`)
+  const tilePaths = Array.from({ length: TILE_COUNT }, (_, i) => `${import.meta.env.BASE_URL}textures/tile-${i + 1}.png`)
   const tileTextures = useTexture(tilePaths)
   tileTextures.forEach(t => { t.wrapS = t.wrapT = ClampToEdgeWrapping })
 
-  const boardTexture = useTexture('/textures/board-edge.png')
+  const boardTexture = useTexture(`${import.meta.env.BASE_URL}textures/board-edge.png`)
 
   const overlays = useTexture({
-    corner:   '/textures/tile-corner.png',
-    throne:   '/textures/tile-throne.png',
-    defender: '/textures/tile-defender.png',
-    attacker: '/textures/tile-attacker.png',
+    corner:   `${import.meta.env.BASE_URL}textures/tile-corner.png`,
+    throne:   `${import.meta.env.BASE_URL}textures/tile-throne.png`,
+    defender: `${import.meta.env.BASE_URL}textures/tile-defender.png`,
+    attacker: `${import.meta.env.BASE_URL}textures/tile-attacker.png`,
   })
 
   const squares = useMemo(() => {
