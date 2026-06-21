@@ -261,10 +261,10 @@ function App() {
 
       {/* Score panels */}
       {introStarted && <>
-        <div className="score-panel-wrapper score-panel-wrapper--defender" style={{ position: 'absolute', bottom: 24, left: '56vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards' }}>
+        <div className="score-panel-wrapper score-panel-wrapper--defender" style={{ position: 'absolute', bottom: 24, left: '26vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards' }}>
           <ScorePanel side="defender" score={scores.defender} isActive={currentTurn === 'defender'} />
         </div>
-        <div className="score-panel-wrapper score-panel-wrapper--attacker" style={{ position: 'absolute', bottom: 24, right: '56vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards' }}>
+        <div className="score-panel-wrapper score-panel-wrapper--attacker" style={{ position: 'absolute', bottom: 24, right: '26vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards' }}>
           <ScorePanel side="attacker" score={scores.attacker} isActive={currentTurn === 'attacker'} />
         </div>
       </>}
