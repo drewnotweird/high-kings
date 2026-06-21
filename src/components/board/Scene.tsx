@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, Environment } from '@react-three/drei'
 import type { PointLight } from 'three'
 import { Board } from './Board'
 import { Piece } from '../pieces/Piece'
@@ -42,6 +42,7 @@ function SceneInner() {
       <color attach="background" args={[theme.background]} />
       <fog attach="fog" args={[theme.fogColor, theme.fogNear, theme.fogFar]} />
 
+      <Environment preset="night" environmentIntensity={0.4} />
       <ambientLight color={theme.ambientColor} intensity={theme.ambientIntensity} />
       <FireLight theme={theme} />
 

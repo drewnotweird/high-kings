@@ -101,11 +101,11 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
       <meshPhysicalMaterial
         map={texture}
         bumpMap={texture}
-        bumpScale={0.03}
+        bumpScale={0.04}
         emissive={emissive}
-        emissiveIntensity={isSelected ? 2.5 : 1.0}
-        roughness={theme.pieceRoughness}
-        metalness={theme.pieceMetalness}
+        emissiveIntensity={isSelected ? 0.6 : 0.12}
+        roughness={0.55}
+        metalness={0.0}
         clearcoat={1}
         clearcoatRoughness={0.22}
       />
