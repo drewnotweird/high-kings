@@ -145,21 +145,30 @@ function PieceIcon({ side }: { side: PlayerSide }) {
 }
 
 function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number; isActive: boolean }) {
+  const isAttacker = side === 'attacker'
   return (
     <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 10,
-      background: 'rgba(0,0,0,0.75)',
-      border: `2px solid ${isActive ? '#c8a028' : 'transparent'}`,
-      borderRadius: 6,
-      padding: '8px 14px',
-      transition: 'border-color 0.6s ease',
-      backdropFilter: 'blur(4px)',
-      minWidth: 60,
+      padding: 3,
+      borderRadius: 8,
+      background: isActive
+        ? 'linear-gradient(135deg, #f5e070, #c8880a, #e8c040, #a06808)'
+        : 'transparent',
+      transition: 'background 0.6s ease',
     }}>
-      <PieceIcon side={side} />
-      <span style={{ color: '#e8d8b8', fontSize: 18, fontWeight: 600, letterSpacing: 1 }}>{score}</span>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        flexDirection: isAttacker ? 'row-reverse' : 'row',
+        gap: 10,
+        background: 'rgba(0,0,0,0.85)',
+        borderRadius: 6,
+        padding: '8px 14px',
+        backdropFilter: 'blur(4px)',
+        minWidth: 60,
+      }}>
+        <PieceIcon side={side} />
+        <span style={{ color: '#e8d8b8', fontSize: 18, fontWeight: 600, letterSpacing: 1 }}>{score}</span>
+      </div>
     </div>
   )
 }
@@ -239,10 +248,10 @@ function App() {
       </div>
 
       {/* Score panels */}
-      <div style={{ position: 'absolute', top: 28, left: 0, zIndex: 10 }}>
+      <div style={{ position: 'absolute', top: 28, left: 12, zIndex: 10 }}>
         <ScorePanel side="defender" score={scores.defender} isActive={currentTurn === 'defender'} />
       </div>
-      <div style={{ position: 'absolute', top: 28, right: 0, zIndex: 10 }}>
+      <div style={{ position: 'absolute', top: 28, right: 12, zIndex: 10 }}>
         <ScorePanel side="attacker" score={scores.attacker} isActive={currentTurn === 'attacker'} />
       </div>
 
