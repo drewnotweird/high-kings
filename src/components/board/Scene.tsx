@@ -14,7 +14,7 @@ function SceneInner() {
       <fog attach="fog" args={["#0a0800", 18, 36]} />
 
       <Environment preset="night" environmentIntensity={0.4} />
-      <ambientLight color="#9ab0c8" intensity={0.08} />
+      <ambientLight color="#9ab0c8" intensity={0.04} />
 
       {/* Moon — cool directional from high above, slight angle */}
       <directionalLight
@@ -40,7 +40,7 @@ function SceneInner() {
         color="#e8f0ff"
         intensity={22}
         distance={40}
-        angle={0.28}
+        angle={0.24}
         penumbra={1.0}
         decay={1.0}
         castShadow
