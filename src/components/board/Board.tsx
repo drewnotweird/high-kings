@@ -1,9 +1,11 @@
 import { useMemo } from 'react'
+import { RoundedBox } from '@react-three/drei'
 import { BOARD_SIZE, isCorner, isThrone } from '../../game/hnefatafl'
 import type { ThemeConfig } from '../../lib/themes'
 
 const SQUARE_SIZE = 0.88
-const TILE_HEIGHT = 0.1
+const TILE_HEIGHT = 0.12
+const BEVEL = 0.04
 const BOARD_OFFSET = (BOARD_SIZE - 1) / 2
 
 interface BoardProps {
@@ -41,18 +43,20 @@ export function Board({ theme }: BoardProps) {
 
       {/* Grid squares */}
       {squares.map(({ row, col, x, z, color }) => (
-        <mesh
+        <RoundedBox
           key={`${row}-${col}`}
+          args={[SQUARE_SIZE, TILE_HEIGHT, SQUARE_SIZE]}
+          radius={BEVEL}
+          smoothness={4}
           position={[x, 0, z]}
           receiveShadow
         >
-          <boxGeometry args={[SQUARE_SIZE, TILE_HEIGHT, SQUARE_SIZE]} />
           <meshStandardMaterial
             color={color}
             roughness={theme.boardRoughness}
             metalness={theme.boardMetalness}
           />
-        </mesh>
+        </RoundedBox>
       ))}
 
       {/* Corner markers — small raised rune stones */}
