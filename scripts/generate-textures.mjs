@@ -22,6 +22,7 @@ import { createCanvas } from 'canvas'
 import { writeFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import path from 'path'
+import sharp from 'sharp'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const OUT = path.join(__dirname, '../public/textures')
@@ -170,6 +171,15 @@ function drawRoughness(ctx, baseValue = 180) {
   drawGuide(ctx)
 }
 
+// ─── Compressed write helper ──────────────────────────────────────────────────
+async function writePng(canvas, outPath, { width, height } = {}) {
+  let pipeline = sharp(canvas.toBuffer('image/png'))
+  if (width && height) pipeline = pipeline.resize(width, height)
+  const buf = await pipeline.png({ compressionLevel: 9, effort: 10 }).toBuffer()
+  writeFileSync(outPath, buf)
+  console.log(`✓ ${outPath} (${(buf.length / 1024).toFixed(0)} KB)`)
+}
+
 // ─── Generate ─────────────────────────────────────────────────────────────────
 for (const p of pieces) {
   // Colour / diffuse map
@@ -177,17 +187,13 @@ for (const p of pieces) {
   const ctx = canvas.getContext('2d')
   drawBase(ctx, p, p.seed)
   drawGuide(ctx)
-  const outPath = path.join(OUT, `${p.name}.png`)
-  writeFileSync(outPath, canvas.toBuffer('image/png'))
-  console.log(`✓ ${outPath}`)
+  await writePng(canvas, path.join(OUT, `${p.name}.png`))
 
   // Roughness map
   const rCanvas = createCanvas(W, H)
   const rCtx = rCanvas.getContext('2d')
   drawRoughness(rCtx)
-  const rOutPath = path.join(OUT, `${p.name}-roughness.png`)
-  writeFileSync(rOutPath, rCanvas.toBuffer('image/png'))
-  console.log(`✓ ${rOutPath}`)
+  await writePng(rCanvas, path.join(OUT, `${p.name}-roughness.png`))
 }
 
 console.log('\nDone. Edit piece PNGs in any image editor, then reload the browser.')
@@ -328,17 +334,15 @@ function drawAttackerOverlay(ctx) {
   ctx.globalAlpha = 1
 }
 
-// Generate tile base variants
+// Generate tile base variants (resized to 256×256 — sufficient at tile scale)
 for (let i = 1; i <= 10; i++) {
   const canvas = createCanvas(TW, TH)
   const ctx = canvas.getContext('2d')
   drawTile(ctx, i * 137)
-  const outPath = path.join(OUT, `tile-${i}.png`)
-  writeFileSync(outPath, canvas.toBuffer('image/png'))
-  console.log(`✓ ${outPath}`)
+  await writePng(canvas, path.join(OUT, `tile-${i}.png`), { width: 256, height: 256 })
 }
 
-// Generate overlay markers
+// Generate overlay markers (resized to 256×256)
 const overlays = [
   { name: 'tile-corner',   fn: drawCornerOverlay },
   { name: 'tile-throne',   fn: drawThroneOverlay },
@@ -349,9 +353,7 @@ for (const { name, fn } of overlays) {
   const canvas = createCanvas(TW, TH)
   const ctx = canvas.getContext('2d')
   fn(ctx)
-  const outPath = path.join(OUT, `${name}.png`)
-  writeFileSync(outPath, canvas.toBuffer('image/png'))
-  console.log(`✓ ${outPath}`)
+  await writePng(canvas, path.join(OUT, `${name}.png`), { width: 256, height: 256 })
 }
 
 console.log('\nAll tile textures generated.')
