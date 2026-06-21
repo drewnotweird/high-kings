@@ -1,4 +1,4 @@
-import { useRef, Suspense } from 'react'
+import { useRef, Suspense, useState, useEffect, useContext, createContext } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Environment, useProgress } from '@react-three/drei'
 import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group } from 'three'
@@ -6,26 +6,26 @@ import { Board } from './Board'
 import { Piece } from '../pieces/Piece'
 import { useGameStore } from '../../store/gameStore'
 import { themes } from '../../lib/themes'
+import { IntroStartContext } from '../../contexts/intro'
 
 const BOARD_ARRIVE = 1.2
 const PIECE_STAGGER = 0.07
-const BOARD_DURATION = 1.1  // slightly slower rise
-const BOARD_START_Y = -20   // start further below
+const BOARD_DURATION = 1.1
+const BOARD_START_Y = -20
 
 function FadingLights() {
+  const introStartMs = useContext(IntroStartContext)
   const ambientRef = useRef<AmbientLight>(null)
   const moonRef = useRef<DirectionalLight>(null)
   const spotRef = useRef<SpotLight>(null)
   const frontRef = useRef<DirectionalLight>(null)
   const bounceRef = useRef<PointLight>(null)
   const backRef = useRef<PointLight>(null)
-  const fireBaseRef = useRef<PointLight>(null)
 
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    // Fade in after board has landed
+  useFrame(() => {
+    const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
     const fade = Math.min(Math.max((t - BOARD_DURATION) / 1.2, 0), 1)
-    const e = 1 - Math.pow(1 - fade, 2) // ease-out quad
+    const e = 1 - Math.pow(1 - fade, 2)
 
     if (ambientRef.current)  ambientRef.current.intensity  = 0.02 * e
     if (moonRef.current)     moonRef.current.intensity     = 0.25 * e
@@ -33,13 +33,11 @@ function FadingLights() {
     if (frontRef.current)    frontRef.current.intensity    = 0.2  * e
     if (bounceRef.current)   bounceRef.current.intensity   = 5    * e
     if (backRef.current)     backRef.current.intensity     = 3    * e
-    if (fireBaseRef.current) fireBaseRef.current.intensity = 5    * e
   })
 
   return (
     <>
       <ambientLight ref={ambientRef} color="#9ab0c8" intensity={0} />
-
       <directionalLight
         ref={moonRef}
         position={[-3, 20, 5]}
@@ -88,37 +86,41 @@ function FadingLights() {
         shadow-camera-bottom={-9}
       />
       <pointLight ref={bounceRef} position={[0, -1, 2]} color="#c85010" intensity={0} distance={22} decay={1.8} />
-      <pointLight ref={fireBaseRef} position={[0, -1, 2]} color="#c85010" intensity={0} distance={22} decay={1.8} />
       <pointLight ref={backRef} position={[0, 9, -16]} color="#7090c0" intensity={0} distance={32} decay={1.8} />
     </>
   )
 }
 
 function FireLight() {
+  const introStartMs = useContext(IntroStartContext)
   const ref = useRef<PointLight>(null)
-  useFrame(({ clock }) => {
+  useFrame(() => {
     if (!ref.current) return
-    const t = clock.getElapsedTime()
+    const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
     const fade = Math.min(Math.max((t - BOARD_DURATION) / 1.2, 0), 1)
     const e = 1 - Math.pow(1 - fade, 2)
-    const flicker = 1 + 0.35 * Math.sin(t * 7.3) + 0.2 * Math.sin(t * 13.1) + 0.1 * Math.sin(t * 3.7)
+    const now = Date.now() / 1000
+    const flicker = 1 + 0.35 * Math.sin(now * 7.3) + 0.2 * Math.sin(now * 13.1) + 0.1 * Math.sin(now * 3.7)
     ref.current.intensity = 6 * flicker * e
   })
   return <pointLight ref={ref} position={[0, -0.5, 3]} color="#ff6010" distance={20} decay={2} intensity={0} />
 }
 
 function AnimatedBoard({ children }: { children: React.ReactNode }) {
+  const introStartMs = useContext(IntroStartContext)
   const groupRef = useRef<Group>(null)
   const done = useRef(false)
 
-  useFrame(({ clock }) => {
+  useFrame(() => {
     if (!groupRef.current || done.current) return
-    const t = clock.getElapsedTime()
+    const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
+    if (t < 0) {
+      groupRef.current.position.y = BOARD_START_Y
+      return
+    }
     const progress = Math.min(t / BOARD_DURATION, 1)
-    // Ease-out cubic for both position and rotation
     const eased = 1 - Math.pow(1 - progress, 3)
     groupRef.current.position.y = BOARD_START_Y + (-BOARD_START_Y) * eased
-    // Tilt: starts pitched forward ~70°, rotates flat
     groupRef.current.rotation.x = (1 - eased) * -1.2
     if (progress >= 1) done.current = true
   })
@@ -145,14 +147,11 @@ function SceneInner() {
     <>
       <fog attach="fog" args={["#0a0800", 18, 36]} />
       <Environment preset="night" environmentIntensity={0.0} />
-
       <FadingLights />
       <FireLight />
-
       <AnimatedBoard>
         <Board theme={theme} />
       </AnimatedBoard>
-
       {pieces.map((piece) => (
         <Piece
           key={piece.id}
@@ -163,7 +162,6 @@ function SceneInner() {
           onClick={() => selectPiece(selectedId === piece.id ? null : piece.id)}
         />
       ))}
-
       <OrbitControls
         enablePan={false}
         minDistance={6}
@@ -178,9 +176,44 @@ function SceneInner() {
   )
 }
 
-function LoadingOverlay() {
+type LoaderPhase = 'loading' | 'holding' | 'fading' | 'done'
+
+function LoadingOverlay({ onDone }: { onDone: () => void }) {
   const { active } = useProgress()
-  if (!active) return null
+  const [phase, setPhase] = useState<LoaderPhase>('loading')
+  const minHoldMet = useRef(false)
+  const loadingDone = useRef(false)
+
+  const tryStartFade = () => {
+    if (minHoldMet.current && loadingDone.current) {
+      setPhase('fading')
+      setTimeout(() => {
+        setPhase('done')
+        onDone()
+      }, 1000)
+    }
+  }
+
+  // Minimum 1s hold
+  useEffect(() => {
+    const t = setTimeout(() => {
+      minHoldMet.current = true
+      tryStartFade()
+    }, 1000)
+    return () => clearTimeout(t)
+  }, [])
+
+  // Wait for textures
+  useEffect(() => {
+    if (!active && phase === 'loading') {
+      loadingDone.current = true
+      setPhase('holding')
+      tryStartFade()
+    }
+  }, [active])
+
+  if (phase === 'done') return null
+
   return (
     <div style={{
       position: 'absolute',
@@ -191,6 +224,8 @@ function LoadingOverlay() {
       background: 'radial-gradient(ellipse at 50% 65%, #2a1200 0%, #0a0800 55%, #000 100%)',
       zIndex: 10,
       pointerEvents: 'none',
+      opacity: phase === 'fading' ? 0 : 1,
+      transition: phase === 'fading' ? 'opacity 1s ease-out' : 'none',
     }}>
       <img
         src={`${import.meta.env.BASE_URL}loader.gif`}
@@ -202,18 +237,22 @@ function LoadingOverlay() {
 }
 
 export function Scene() {
+  const [introStartMs, setIntroStartMs] = useState<number | null>(null)
+
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <Canvas
-        shadows={{ type: 2 }}
-        camera={{ position: [0, 12, 14], fov: 45 }}
-        gl={{ antialias: true, alpha: true }}
-      >
-        <Suspense fallback={null}>
-          <SceneInner />
-        </Suspense>
-      </Canvas>
-      <LoadingOverlay />
-    </div>
+    <IntroStartContext.Provider value={introStartMs}>
+      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        <Canvas
+          shadows={{ type: 2 }}
+          camera={{ position: [0, 12, 14], fov: 45 }}
+          gl={{ antialias: true, alpha: true }}
+        >
+          <Suspense fallback={null}>
+            <SceneInner />
+          </Suspense>
+        </Canvas>
+        <LoadingOverlay onDone={() => setIntroStartMs(Date.now())} />
+      </div>
+    </IntroStartContext.Provider>
   )
 }

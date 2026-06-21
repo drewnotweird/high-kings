@@ -1,9 +1,10 @@
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useContext } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import { Mesh, Vector2 } from 'three'
 import type { Piece as PieceData } from '../../game/hnefatafl'
 import type { ThemeConfig } from '../../lib/themes'
+import { IntroStartContext } from '../../contexts/intro'
 
 const BOARD_OFFSET = 5
 const W = 1.35
@@ -21,6 +22,7 @@ interface PieceProps {
 
 export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: PieceProps) {
   const meshRef = useRef<Mesh>(null)
+  const introStartMs = useContext(IntroStartContext)
   const landed = useRef(false)
   const landTime = useRef(0)
 
@@ -75,12 +77,12 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: 
     ]
   }, [isKing, isDefender])
 
-  useFrame(({ clock }, delta) => {
+  useFrame((_, delta) => {
     if (!meshRef.current) return
-    const t = clock.getElapsedTime()
+    const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
 
     if (!landed.current) {
-      if (t < dropDelay) {
+      if (t < 0 || t < dropDelay) {
         meshRef.current.visible = false
         meshRef.current.position.y = REST_Y
         return
@@ -92,13 +94,13 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: 
 
       if (progress >= 1) {
         landed.current = true
-        landTime.current = t
+        landTime.current = Date.now()
       }
       return
     }
 
     // After landing: single brief downward compression — heavy, hard, no ringing
-    const settle = t - landTime.current
+    const settle = (Date.now() - landTime.current) / 1000
     const knock = settle < 0.14
       ? Math.sin((settle / 0.14) * Math.PI) * -0.055
       : 0
