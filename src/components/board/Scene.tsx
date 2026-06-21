@@ -135,9 +135,9 @@ function SceneInner() {
   const theme = themes[themeName]
 
   const ordered = [
-    ...pieces.filter(p => p.type === 'attacker'),
-    ...pieces.filter(p => p.type === 'defender'),
     ...pieces.filter(p => p.type === 'king'),
+    ...pieces.filter(p => p.type === 'defender'),
+    ...pieces.filter(p => p.type === 'attacker'),
   ]
   const delayMap = new Map(ordered.map((p, i) => [p.id, BOARD_ARRIVE + i * PIECE_STAGGER]))
 
@@ -193,9 +193,9 @@ function LoadingOverlay() {
       pointerEvents: 'none',
     }}>
       <img
-        src={`${import.meta.env.BASE_URL}logo.png`}
-        alt="High Kings"
-        style={{ height: 128, width: 'auto', opacity: 0.85, animation: 'fireFlicker 1.8s ease-in-out infinite' }}
+        src={`${import.meta.env.BASE_URL}loader.gif`}
+        alt="Loading…"
+        style={{ width: 64, height: 64, objectFit: 'contain' }}
       />
     </div>
   )

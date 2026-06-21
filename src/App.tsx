@@ -91,24 +91,25 @@ function App() {
     <div className="relative w-full h-full" style={{ background: '#000' }}>
       <style>{fireCSS}</style>
 
-      {/* Steady dark base — fades in with scene */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: 'radial-gradient(ellipse at 50% 65%, #2a1200 0%, #0a0800 55%, #000 100%)', animation: 'sceneFadeIn 2s ease-out forwards' }} />
-      {/* Flickering warm glow layer */}
-      <div
-        style={{
-          position: 'absolute', inset: 0, zIndex: 0,
-          background: 'radial-gradient(ellipse at 50% 72%, #5a2400 0%, #1a0800 45%, transparent 70%)',
-          animation: 'sceneFadeIn 2s ease-out forwards, fireFlicker 2.8s 2s ease-in-out infinite',
-        }}
-      />
-      {/* Second offset layer */}
-      <div
-        style={{
-          position: 'absolute', inset: 0, zIndex: 0,
-          background: 'radial-gradient(ellipse at 46% 78%, #6b2000 0%, transparent 50%)',
-          animation: 'sceneFadeIn 2s ease-out forwards, fireFlicker 1.9s 2s ease-in-out infinite reverse',
-        }}
-      />
+      {/* Steady dark base */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: 'radial-gradient(ellipse at 50% 65%, #2a1200 0%, #0a0800 55%, #000 100%)', animation: 'sceneFadeIn 2.5s ease-out forwards' }} />
+      {/* Flickering layers wrapped so their container fades in — no jump when flicker starts */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 0, animation: 'sceneFadeIn 2.5s ease-out forwards' }}>
+        <div
+          style={{
+            position: 'absolute', inset: 0,
+            background: 'radial-gradient(ellipse at 50% 72%, #5a2400 0%, #1a0800 45%, transparent 70%)',
+            animation: 'fireFlicker 2.8s ease-in-out infinite',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute', inset: 0,
+            background: 'radial-gradient(ellipse at 46% 78%, #6b2000 0%, transparent 50%)',
+            animation: 'fireFlicker 1.9s ease-in-out infinite reverse',
+          }}
+        />
+      </div>
 
       {/* Ember particles */}
       {embers.map(e => (
@@ -131,7 +132,7 @@ function App() {
         />
       ))}
 
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', animation: 'sceneFadeIn 2s ease-out forwards' }}>
         <Scene />
       </div>
 
