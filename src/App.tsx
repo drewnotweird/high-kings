@@ -40,11 +40,11 @@ function Ember({ style, variant }: { style: React.CSSProperties; variant: number
     <div
       style={{
         position: 'absolute',
-        width: 2,
-        height: 2,
-        borderRadius: '50%',
-        background: '#ffdd80',
-        boxShadow: '0 0 3px 1px rgba(255,140,0,0.9)',
+        width: 1,
+        height: 7,
+        borderRadius: 0,
+        background: 'linear-gradient(to top, #ff8800, #ffdd80)',
+        boxShadow: '0 0 2px 1px rgba(255,120,0,0.6)',
         animation: `ember${variant} var(--dur) ease-in-out infinite`,
         ...style,
       }}
