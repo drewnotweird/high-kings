@@ -40,6 +40,19 @@ const fireCSS = `
   90%  { opacity:0.05; }
   100% { transform: translate(var(--dx2),var(--rise))            rotate(var(--a2)); opacity:0;  }
 }
+.score-panel__inner {
+  width: 110px;
+  box-sizing: border-box;
+}
+@media (max-width: 600px) {
+  .score-panel__inner {
+    flex-direction: column !important;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    width: 70px;
+  }
+}
 @keyframes mistDrift {
   0%   { transform: translateX(0px)   translateY(0px);  opacity: 0;    }
   15%  { opacity: var(--peak); }
