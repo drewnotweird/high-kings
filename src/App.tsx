@@ -131,14 +131,14 @@ function PieceIcon({ side }: { side: PlayerSide }) {
     ? `${import.meta.env.BASE_URL}white-piece.png`
     : `${import.meta.env.BASE_URL}blue-piece.png`
   return (
-    <img src={src} alt="" style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0 }} />
+    <img className="score-panel__piece-icon" src={src} alt="" style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0 }} />
   )
 }
 
 function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number; isActive: boolean }) {
   const isAttacker = side === 'attacker'
   return (
-    <div style={{
+    <div className={`score-panel score-panel--${side}${isActive ? ' score-panel--active' : ''}`} style={{
       padding: 3,
       borderRadius: 8,
       background: isActive
@@ -146,7 +146,7 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
         : 'transparent',
       transition: 'background 0.6s ease',
     }}>
-      <div style={{
+      <div className="score-panel__inner" style={{
         display: 'flex',
         alignItems: 'center',
         flexDirection: isAttacker ? 'row-reverse' : 'row',
@@ -158,7 +158,7 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
         minWidth: 60,
       }}>
         <PieceIcon side={side} />
-        <span style={{ color: '#e8d8b8', fontSize: 18, fontWeight: 600, letterSpacing: 1 }}>{score}</span>
+        <span className="score-panel__score" style={{ color: '#e8d8b8', fontSize: 18, fontWeight: 600, letterSpacing: 1 }}>{score}</span>
       </div>
     </div>
   )
