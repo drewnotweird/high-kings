@@ -35,67 +35,47 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
     `/textures/${prefix}-roughness.png`,
   ])
 
-  // Each profile includes a collar/flange at shield height — part of the same
-  // surface of revolution so UVs are continuous across the whole piece.
   const points = useMemo(() => {
     if (isKing) {
+      // Tall, wide base, gentle taper, generous dome
       return [
-        new Vector2(0,    0),
-        new Vector2(0.44, 0),
-        new Vector2(0.50, 0.12),
-        new Vector2(0.40, 0.32),
-        // collar — wide disc around the mid-body
-        new Vector2(0.38, 0.38),
-        new Vector2(0.44, 0.41),
-        new Vector2(0.52, 0.44),  // collar outer rim
-        new Vector2(0.52, 0.48),
-        new Vector2(0.44, 0.51),
-        new Vector2(0.37, 0.54),
-        // continue up
-        new Vector2(0.34, 0.65),
-        new Vector2(0.36, 0.95),
-        new Vector2(0.34, 1.15),
-        new Vector2(0.30, 1.30),
-        new Vector2(0.22, 1.42),
-        new Vector2(0.10, 1.48),
-        new Vector2(0,    1.50),
+        new Vector2(0,    0   ),
+        new Vector2(0.38, 0   ),
+        new Vector2(0.40, 0.06),
+        new Vector2(0.35, 0.20),
+        new Vector2(0.31, 0.70),
+        new Vector2(0.29, 1.00),
+        new Vector2(0.26, 1.20),
+        new Vector2(0.19, 1.34),
+        new Vector2(0.09, 1.41),
+        new Vector2(0,    1.43),
       ]
     }
     if (isDefender) {
+      // Medium height, slimmer than king
       return [
-        new Vector2(0,    0),
-        new Vector2(0.24, 0),
-        new Vector2(0.28, 0.10),
-        new Vector2(0.22, 0.28),
-        // collar
-        new Vector2(0.22, 0.31),
-        new Vector2(0.30, 0.34),  // collar outer rim
-        new Vector2(0.30, 0.38),
-        new Vector2(0.22, 0.41),
-        // continue up
-        new Vector2(0.20, 0.52),
-        new Vector2(0.22, 0.72),
-        new Vector2(0.16, 0.88),
-        new Vector2(0.07, 0.94),
-        new Vector2(0,    0.97),
+        new Vector2(0,    0   ),
+        new Vector2(0.26, 0   ),
+        new Vector2(0.28, 0.05),
+        new Vector2(0.23, 0.16),
+        new Vector2(0.20, 0.55),
+        new Vector2(0.18, 0.72),
+        new Vector2(0.14, 0.83),
+        new Vector2(0.07, 0.90),
+        new Vector2(0,    0.92),
       ]
     }
-    // attacker
+    // Attacker — stockier, slightly shorter than defender
     return [
-      new Vector2(0,    0),
-      new Vector2(0.27, 0),
-      new Vector2(0.31, 0.10),
-      new Vector2(0.27, 0.24),
-      // collar
-      new Vector2(0.27, 0.27),
-      new Vector2(0.34, 0.30),  // collar outer rim
-      new Vector2(0.34, 0.34),
-      new Vector2(0.27, 0.37),
-      // continue up
-      new Vector2(0.24, 0.48),
-      new Vector2(0.19, 0.66),
-      new Vector2(0.10, 0.74),
-      new Vector2(0,    0.78),
+      new Vector2(0,    0   ),
+      new Vector2(0.28, 0   ),
+      new Vector2(0.30, 0.05),
+      new Vector2(0.25, 0.15),
+      new Vector2(0.22, 0.48),
+      new Vector2(0.19, 0.63),
+      new Vector2(0.14, 0.73),
+      new Vector2(0.06, 0.78),
+      new Vector2(0,    0.80),
     ]
   }, [isKing, isDefender])
 
