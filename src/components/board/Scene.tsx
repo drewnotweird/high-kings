@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, Environment } from '@react-three/drei'
 import { Board } from './Board'
 import { Piece } from '../pieces/Piece'
 import { useGameStore } from '../../store/gameStore'
@@ -11,24 +11,49 @@ function SceneInner() {
 
   return (
     <>
-      <fog attach="fog" args={["#0a0800", 20, 38]} />
+      <fog attach="fog" args={["#0a0800", 18, 36]} />
 
-      {/* Cool ambient — moonlit fill, barely there */}
-      <ambientLight color="#b0c8e8" intensity={0.5} />
+      <Environment preset="night" environmentIntensity={0.4} />
+      <ambientLight color="#9ab0c8" intensity={0.2} />
 
-      {/* Main moonlight — cool blue-white, high angle from one side */}
+      {/* Moon — cool directional from high above, slight angle */}
       <directionalLight
-        position={[-6, 14, 6]}
-        color="#d8eaff"
-        intensity={1.1}
+        position={[-3, 20, 5]}
+        color="#c8dff8"
+        intensity={0.9}
         castShadow
-        shadow-mapSize={[2048, 2048]}
-        shadow-radius={8}
-        shadow-blurSamples={16}
+        shadow-mapSize={[1024, 1024]}
+        shadow-radius={24}
+        shadow-blurSamples={32}
+        shadow-camera-near={1}
+        shadow-camera-far={40}
+        shadow-camera-left={-10}
+        shadow-camera-right={10}
+        shadow-camera-top={10}
+        shadow-camera-bottom={-10}
       />
 
-      {/* Soft secondary fill from opposite side so shadows aren't totally black */}
-      <directionalLight position={[8, 6, -4]} color="#c0d8f0" intensity={0.6} />
+      {/* Soft spotlight — centred on the board, wide and very soft penumbra */}
+      <spotLight
+        position={[0, 20, 4]}
+        target-position={[0, 0, 0]}
+        color="#e8f0ff"
+        intensity={22}
+        distance={40}
+        angle={0.44}
+        penumbra={1.0}
+        decay={1.0}
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-radius={20}
+        shadow-blurSamples={32}
+      />
+
+      {/* Warm bounce from below — firelight off the board */}
+      <pointLight position={[0, -1, 2]} color="#b86820" intensity={4} distance={18} decay={2} />
+
+      {/* Cool rim from behind */}
+      <pointLight position={[0, 6, -14]} color="#6888a8" intensity={6} distance={28} decay={2} />
 
       <Board theme={theme} />
 

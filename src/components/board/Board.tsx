@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useTexture } from '@react-three/drei'
-import { RepeatWrapping, Shape, ExtrudeGeometry } from 'three'
+import { ClampToEdgeWrapping, Shape, ExtrudeGeometry } from 'three'
 import { BOARD_SIZE, isCorner, isThrone, attackerStarts, defenderStarts } from '../../game/hnefatafl'
 import type { ThemeConfig } from '../../lib/themes'
 
@@ -8,6 +8,9 @@ const SQUARE_SIZE = 0.88
 const TILE_HEIGHT = 0.055
 const CORNER_RADIUS = 0.05
 const BEVEL = 0.038
+// ExtrudeGeometry bevel extends the geometry beyond depth in both directions,
+// so the actual top surface sits at TILE_HEIGHT + BEVEL after rotation.
+const TILE_TOP = TILE_HEIGHT + BEVEL
 const BOARD_OFFSET = (BOARD_SIZE - 1) / 2
 const TILE_COUNT = 10
 
@@ -66,6 +69,10 @@ export function Board({ theme }: BoardProps) {
   const tilePaths = Array.from({ length: TILE_COUNT }, (_, i) => `/textures/tile-${i + 1}.png`)
   const tileTextures = useTexture(tilePaths)
 
+  tileTextures.forEach(t => {
+    t.wrapS = t.wrapT = ClampToEdgeWrapping
+  })
+
   const boardTexture = useTexture("/textures/board-edge.png")
 
   const overlays = useTexture({
@@ -73,10 +80,6 @@ export function Board({ theme }: BoardProps) {
     throne:   '/textures/tile-throne.png',
     defender: '/textures/tile-defender.png',
     attacker: '/textures/tile-attacker.png',
-  })
-
-  ;[...Object.values(overlays)].forEach(t => {
-    t.wrapS = t.wrapT = RepeatWrapping
   })
 
   const squares = useMemo(() => {
@@ -126,15 +129,17 @@ export function Board({ theme }: BoardProps) {
           </mesh>
 
           {overlay && (
-            <mesh position={[0, TILE_HEIGHT + 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[SQUARE_SIZE * 0.78, SQUARE_SIZE * 0.78]} />
+            <mesh position={[0, TILE_TOP + 0.003, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[SQUARE_SIZE * 0.82, SQUARE_SIZE * 0.82]} />
               <meshStandardMaterial
                 map={overlays[overlay]}
                 transparent
-                alphaTest={0.05}
+                alphaTest={0.01}
                 roughness={0.8}
                 metalness={0}
                 depthWrite={false}
+                polygonOffset
+                polygonOffsetFactor={-1}
               />
             </mesh>
           )}

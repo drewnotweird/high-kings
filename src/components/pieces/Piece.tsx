@@ -6,6 +6,7 @@ import type { Piece as PieceData } from '../../game/hnefatafl'
 import type { ThemeConfig } from '../../lib/themes'
 
 const BOARD_OFFSET = 5
+const W = 1.35 // width multiplier for wider bases
 
 interface PieceProps {
   piece: PieceData
@@ -25,45 +26,46 @@ export function Piece({ piece, theme: _theme, isSelected, onClick }: PieceProps)
 
   const prefix = isKing ? 'piece-king' : isDefender ? 'piece-light' : 'piece-dark'
   const texture = useTexture(`/textures/${prefix}.png`)
+  const roughnessMap = useTexture(`/textures/${prefix}-roughness.png`)
 
   const points = useMemo(() => {
     if (isKing) {
       return [
-        new Vector2(0,    0   ),
-        new Vector2(0.38, 0   ),
-        new Vector2(0.40, 0.06),
-        new Vector2(0.35, 0.20),
-        new Vector2(0.31, 0.70),
-        new Vector2(0.29, 1.00),
-        new Vector2(0.26, 1.20),
-        new Vector2(0.19, 1.34),
-        new Vector2(0.09, 1.41),
-        new Vector2(0,    1.43),
+        new Vector2(0,        0   ),
+        new Vector2(0.38*W,   0   ),
+        new Vector2(0.40*W,   0.06),
+        new Vector2(0.35*W,   0.20),
+        new Vector2(0.31*W,   0.70),
+        new Vector2(0.29*W,   1.00),
+        new Vector2(0.26*W,   1.20),
+        new Vector2(0.19*W,   1.34),
+        new Vector2(0.09*W,   1.41),
+        new Vector2(0,        1.43),
       ]
     }
     if (isDefender) {
       return [
-        new Vector2(0,    0   ),
-        new Vector2(0.26, 0   ),
-        new Vector2(0.28, 0.05),
-        new Vector2(0.23, 0.16),
-        new Vector2(0.20, 0.55),
-        new Vector2(0.18, 0.72),
-        new Vector2(0.14, 0.83),
-        new Vector2(0.07, 0.90),
-        new Vector2(0,    0.92),
+        new Vector2(0,        0   ),
+        new Vector2(0.26*W,   0   ),
+        new Vector2(0.28*W,   0.05),
+        new Vector2(0.23*W,   0.16),
+        new Vector2(0.20*W,   0.55),
+        new Vector2(0.18*W,   0.72),
+        new Vector2(0.14*W,   0.83),
+        new Vector2(0.07*W,   0.90),
+        new Vector2(0,        0.92),
       ]
     }
     return [
-      new Vector2(0,    0   ),
-      new Vector2(0.28, 0   ),
-      new Vector2(0.30, 0.05),
-      new Vector2(0.25, 0.15),
-      new Vector2(0.22, 0.48),
-      new Vector2(0.19, 0.63),
-      new Vector2(0.14, 0.73),
-      new Vector2(0.06, 0.78),
-      new Vector2(0,    0.80),
+      new Vector2(0,        0   ),
+      new Vector2(0.28*W,   0   ),
+      new Vector2(0.30*W,   0.05),
+      new Vector2(0.25*W,   0.15),
+      new Vector2(0.22*W,   0.48),
+      new Vector2(0.19*W,   0.63),
+      new Vector2(0.14*W,   0.73),
+      new Vector2(0.06*W,   0.78),
+      new Vector2(0,        0.80),
     ]
   }, [isKing, isDefender])
 
@@ -88,11 +90,14 @@ export function Piece({ piece, theme: _theme, isSelected, onClick }: PieceProps)
       <latheGeometry args={[points, 32]} />
       <meshPhysicalMaterial
         map={texture}
-        roughness={0.45}
+        bumpMap={roughnessMap}
+        bumpScale={0.6}
+        roughness={0.75}
         metalness={0.0}
-        clearcoat={0.6}
-        clearcoatRoughness={0.25}
-        emissiveIntensity={isSelected ? 0.3 : 0}
+        clearcoat={0.4}
+        clearcoatRoughness={0.55}
+        emissive="#ffffff"
+        emissiveIntensity={isSelected ? 0.25 : 0.06}
       />
     </mesh>
   )
