@@ -51,31 +51,18 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: 
         new Vector2(0,        1.43),
       ]
     }
-    if (isDefender) {
-      return [
-        new Vector2(0,        0   ),
-        new Vector2(0.26*W,   0   ),
-        new Vector2(0.28*W,   0.05),
-        new Vector2(0.23*W,   0.16),
-        new Vector2(0.20*W,   0.55),
-        new Vector2(0.18*W,   0.72),
-        new Vector2(0.14*W,   0.83),
-        new Vector2(0.07*W,   0.90),
-        new Vector2(0,        0.92),
-      ]
-    }
     return [
       new Vector2(0,        0   ),
-      new Vector2(0.28*W,   0   ),
-      new Vector2(0.30*W,   0.05),
-      new Vector2(0.25*W,   0.15),
-      new Vector2(0.22*W,   0.48),
-      new Vector2(0.19*W,   0.63),
-      new Vector2(0.14*W,   0.73),
-      new Vector2(0.06*W,   0.78),
-      new Vector2(0,        0.80),
+      new Vector2(0.26*W,   0   ),
+      new Vector2(0.28*W,   0.05),
+      new Vector2(0.23*W,   0.16),
+      new Vector2(0.20*W,   0.55),
+      new Vector2(0.18*W,   0.72),
+      new Vector2(0.14*W,   0.83),
+      new Vector2(0.07*W,   0.90),
+      new Vector2(0,        0.92),
     ]
-  }, [isKing, isDefender])
+  }, [isKing])
 
   useFrame((_, delta) => {
     if (!meshRef.current) return

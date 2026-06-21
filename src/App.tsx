@@ -145,7 +145,6 @@ function PieceIcon({ side }: { side: PlayerSide }) {
 }
 
 function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number; isActive: boolean }) {
-  const label = side === 'defender' ? 'White' : 'Blue'
   return (
     <div style={{
       display: 'flex',
@@ -157,11 +156,10 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
       padding: '8px 14px',
       transition: 'border-color 0.6s ease',
       backdropFilter: 'blur(4px)',
-      minWidth: 80,
+      minWidth: 60,
     }}>
       <PieceIcon side={side} />
       <span style={{ color: '#e8d8b8', fontSize: 18, fontWeight: 600, letterSpacing: 1 }}>{score}</span>
-      <span style={{ color: '#8a7a5a', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' }}>{label}</span>
     </div>
   )
 }
