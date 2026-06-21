@@ -50,6 +50,16 @@ const fireCSS = `
     align-items: center;
     gap: 4px;
   }
+  .score-panel-wrapper--defender {
+    left: 6vw !important;
+    right: auto !important;
+    bottom: calc(50vh - 45px) !important;
+  }
+  .score-panel-wrapper--attacker {
+    right: 6vw !important;
+    left: auto !important;
+    bottom: calc(50vh - 45px) !important;
+  }
 }
 @keyframes mistDrift {
   0%   { transform: translateX(0px)   translateY(0px);  opacity: 0;    }
