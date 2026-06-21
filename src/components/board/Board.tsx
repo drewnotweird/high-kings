@@ -100,7 +100,7 @@ export function Board({ theme }: BoardProps) {
           </RoundedBox>
 
           {overlay && (
-            <mesh position={[0, TILE_HEIGHT / 2 + 0.002, 0]}>
+            <mesh position={[0, TILE_HEIGHT / 2 + 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
               <planeGeometry args={[SQUARE_SIZE * 0.88, SQUARE_SIZE * 0.88]} />
               <meshStandardMaterial
                 map={overlays[overlay]}
