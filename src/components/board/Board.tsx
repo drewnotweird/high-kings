@@ -95,6 +95,8 @@ export function Board({ theme }: BoardProps) {
   const tileTextures = useTexture(tilePaths)
   tileTextures.forEach(t => { t.wrapS = t.wrapT = ClampToEdgeWrapping })
 
+  const cornerTileTexture = useTexture(`${import.meta.env.BASE_URL}textures/tile-11.png`)
+
   const boardTexture = useTexture(`${import.meta.env.BASE_URL}textures/board-edge.png`)
 
   const overlays = useTexture({
@@ -119,7 +121,7 @@ export function Board({ theme }: BoardProps) {
         else if (defenderSet.has(key)) overlay = 'defender'
         else if (attackerSet.has(key)) overlay = 'attacker'
 
-        result.push({ row, col, x, z, variantIdx, overlay })
+        result.push({ row, col, x, z, variantIdx, overlay, isCornerTile: isCorner(row, col) })
       }
     }
     return result
@@ -136,11 +138,11 @@ export function Board({ theme }: BoardProps) {
         />
       </mesh>
 
-      {squares.map(({ row, col, x, z, variantIdx, overlay }) => (
+      {squares.map(({ row, col, x, z, variantIdx, overlay, isCornerTile }) => (
         <group key={`${row}-${col}`} position={[x, 0, z]}>
           <mesh rotation={[-Math.PI / 2, 0, 0]} geometry={tileGeometry} receiveShadow>
             <meshStandardMaterial
-              map={tileTextures[variantIdx]}
+              map={isCornerTile ? cornerTileTexture : tileTextures[variantIdx]}
               roughness={theme.boardRoughness}
               metalness={theme.boardMetalness}
             />
