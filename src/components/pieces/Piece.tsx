@@ -7,6 +7,15 @@ import type { ThemeConfig } from '../../lib/themes'
 
 const BOARD_OFFSET = 5
 
+// Shield sits on the front face of each piece.
+// Position is in local mesh space: -Z is the camera-facing surface (after PI rotation).
+// shieldZ should be slightly past the surface radius at that height.
+const SHIELD_DEFS = {
+  king:     { y: 0.65, z: -0.37, r: 0.22, thickness: 0.04 },
+  defender: { y: 0.44, z: -0.23, r: 0.15, thickness: 0.035 },
+  attacker: { y: 0.36, z: -0.28, r: 0.15, thickness: 0.035 },
+}
+
 interface PieceProps {
   piece: PieceData
   theme: ThemeConfig
@@ -29,13 +38,16 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
     ? theme.defenderEmissive
     : theme.attackerEmissive
 
+  const shieldEmissive = isKing ? '#c8900a' : isDefender ? '#5a3a10' : '#4a0000'
+
   const prefix = isKing ? 'piece-king' : isDefender ? 'piece-light' : 'piece-dark'
   const [texture, roughnessMap] = useTexture([
     `/textures/${prefix}.png`,
     `/textures/${prefix}-roughness.png`,
   ])
 
-  // Lathe profile curves — Vector2(radius, height)
+  const shield = isKing ? SHIELD_DEFS.king : isDefender ? SHIELD_DEFS.defender : SHIELD_DEFS.attacker
+
   const points = useMemo(() => {
     if (isKing) {
       return [
@@ -65,7 +77,6 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
         new Vector2(0, 0.96),
       ]
     }
-    // Attacker — squat but still taller than before
     return [
       new Vector2(0, 0),
       new Vector2(0.27, 0),
@@ -109,6 +120,42 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
         clearcoat={1}
         clearcoatRoughness={0.22}
       />
+
+      {/* Shield disc — child inherits parent rotation, so -Z local = camera-facing */}
+      <mesh
+        position={[0, shield.y, shield.z]}
+        rotation={[Math.PI / 2, 0, 0]}
+        castShadow
+      >
+        <cylinderGeometry args={[shield.r, shield.r, shield.thickness, 40]} />
+        <meshPhysicalMaterial
+          map={texture}
+          roughness={0.5}
+          metalness={0.05}
+          emissive={shieldEmissive}
+          emissiveIntensity={isSelected ? 0.8 : 0.2}
+          clearcoat={1}
+          clearcoatRoughness={0.15}
+        />
+      </mesh>
+
+      {/* Shield rim */}
+      <mesh
+        position={[0, shield.y, shield.z - 0.005]}
+        rotation={[Math.PI / 2, 0, 0]}
+        castShadow
+      >
+        <torusGeometry args={[shield.r, 0.012, 8, 40]} />
+        <meshPhysicalMaterial
+          roughness={0.3}
+          metalness={0.6}
+          emissive={shieldEmissive}
+          emissiveIntensity={isSelected ? 1.0 : 0.4}
+          clearcoat={1}
+          clearcoatRoughness={0.1}
+          color={isKing ? '#d4a830' : '#5a4020'}
+        />
+      </mesh>
     </mesh>
   )
 }
