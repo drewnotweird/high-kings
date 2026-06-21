@@ -1,4 +1,4 @@
-import { useRef, Suspense, useState, useEffect, useContext, createContext } from 'react'
+import { useRef, Suspense, useState, useEffect, useContext } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Environment, useProgress } from '@react-three/drei'
 import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group } from 'three'
