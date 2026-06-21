@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { Mesh, Vector2 } from 'three'
 import type { Piece as PieceData } from '../../game/hnefatafl'
 import type { ThemeConfig } from '../../lib/themes'
+import { buildPieceTextures } from '../../lib/textures'
 
 const BOARD_OFFSET = 5
 
@@ -22,17 +23,16 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
   const isKing = piece.type === 'king'
   const isDefender = piece.type === 'defender'
 
-  const color = isKing
-    ? theme.kingColor
-    : isDefender
-    ? theme.defenderColor
-    : theme.attackerColor
-
   const emissive = isKing
     ? theme.kingEmissive
     : isDefender
     ? theme.defenderEmissive
     : theme.attackerEmissive
+
+  const textures = useMemo(
+    () => buildPieceTextures(isKing ? 'king' : isDefender ? 'light' : 'dark'),
+    [isKing, isDefender]
+  )
 
   // Lathe profile curves — Vector2(radius, height)
   const points = useMemo(() => {
@@ -99,9 +99,12 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
     >
       <latheGeometry args={[points, 24]} />
       <meshStandardMaterial
-        color={color}
+        map={textures.map}
+        roughnessMap={textures.roughnessMap}
+        bumpMap={textures.bumpMap}
+        bumpScale={0.04}
         emissive={emissive}
-        emissiveIntensity={isSelected ? 1.5 : 0.4}
+        emissiveIntensity={isSelected ? 1.2 : 0.3}
         roughness={theme.pieceRoughness}
         metalness={theme.pieceMetalness}
       />
