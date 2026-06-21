@@ -91,6 +91,7 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
     <mesh
       ref={meshRef}
       position={[x, 0.15, z]}
+      rotation={[0, Math.PI, 0]}
       castShadow
       onClick={(e) => {
         e.stopPropagation()
