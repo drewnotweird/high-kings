@@ -41,7 +41,7 @@ export const themes: Record<string, ThemeConfig> = {
     fogFar: 32,
     background: '#0d0804',
     boardColor: '#3a1e08',
-    boardRoughness: 0.9,
+    boardRoughness: 0.5,
     boardMetalness: 0.0,
     lightSquareColor: '#7a4a1a',
     darkSquareColor: '#3a1e08',

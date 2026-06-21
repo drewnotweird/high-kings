@@ -46,6 +46,9 @@ function SceneInner() {
       <ambientLight color={theme.ambientColor} intensity={theme.ambientIntensity} />
       <FireLight theme={theme} />
 
+      {/* Cool overhead fill to keep tiles reading light against the warm fire */}
+      <pointLight position={[0, 8, 0]} color="#c8d8e8" intensity={1.2} distance={20} decay={1.5} />
+
       {/* Subtle fill lights — kept low so fire remains the dominant source */}
       <pointLight position={[-7, 2, 0]} color={theme.fireColor} intensity={0.4} distance={16} decay={2} />
       <pointLight position={[7, 2, 0]} color={theme.fireColor} intensity={0.4} distance={16} decay={2} />
