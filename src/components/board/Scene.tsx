@@ -178,7 +178,7 @@ function SceneInner() {
 
 type LoaderPhase = 'loading' | 'holding' | 'fading' | 'done'
 
-function LoadingOverlay({ onDone }: { onDone: () => void }) {
+function LoadingOverlay({ onFadeStart, onDone }: { onFadeStart: () => void; onDone: () => void }) {
   const { active } = useProgress()
   const [phase, setPhase] = useState<LoaderPhase>('loading')
   const minHoldMet = useRef(false)
@@ -187,6 +187,7 @@ function LoadingOverlay({ onDone }: { onDone: () => void }) {
   const tryStartFade = () => {
     if (minHoldMet.current && loadingDone.current) {
       setPhase('fading')
+      onFadeStart()
       setTimeout(() => {
         setPhase('done')
         onDone()
@@ -237,10 +238,11 @@ function LoadingOverlay({ onDone }: { onDone: () => void }) {
 }
 
 interface SceneProps {
+  onBackgroundStart?: () => void
   onIntroStart?: () => void
 }
 
-export function Scene({ onIntroStart }: SceneProps) {
+export function Scene({ onBackgroundStart, onIntroStart }: SceneProps) {
   const [introStartMs, setIntroStartMs] = useState<number | null>(null)
 
   return (
@@ -255,7 +257,10 @@ export function Scene({ onIntroStart }: SceneProps) {
             <SceneInner />
           </Suspense>
         </Canvas>
-        <LoadingOverlay onDone={() => { setIntroStartMs(Date.now()); onIntroStart?.() }} />
+        <LoadingOverlay
+          onFadeStart={() => onBackgroundStart?.()}
+          onDone={() => { setIntroStartMs(Date.now()); onIntroStart?.() }}
+        />
       </div>
     </IntroStartContext.Provider>
   )

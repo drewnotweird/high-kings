@@ -88,16 +88,17 @@ const embers = Array.from({ length: 12 }, (_, i) => {
 })
 
 function App() {
+  const [backgroundStarted, setBackgroundStarted] = useState(false)
   const [introStarted, setIntroStarted] = useState(false)
 
   return (
     <div className="relative w-full h-full" style={{ background: '#000' }}>
       <style>{fireCSS}</style>
 
-      {/* Steady dark base — only fades in once loader finishes */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: 'radial-gradient(ellipse at 50% 65%, #2a1200 0%, #0a0800 55%, #000 100%)', opacity: introStarted ? undefined : 0, animation: introStarted ? 'sceneFadeIn 2.5s ease-out forwards' : 'none' }} />
-      {/* Flickering layers wrapped so their container fades in — no jump when flicker starts */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: introStarted ? undefined : 0, animation: introStarted ? 'sceneFadeIn 2.5s ease-out forwards' : 'none' }}>
+      {/* Steady dark base — fades in when loader starts fading (1s before intro) */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: 'radial-gradient(ellipse at 50% 65%, #2a1200 0%, #0a0800 55%, #000 100%)', opacity: backgroundStarted ? undefined : 0, animation: backgroundStarted ? 'sceneFadeIn 2.5s ease-out forwards' : 'none' }} />
+      {/* Flickering layers */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: backgroundStarted ? undefined : 0, animation: backgroundStarted ? 'sceneFadeIn 2.5s ease-out forwards' : 'none' }}>
         <div
           style={{
             position: 'absolute', inset: 0,
@@ -136,7 +137,7 @@ function App() {
       ))}
 
       <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
-        <Scene onIntroStart={() => setIntroStarted(true)} />
+        <Scene onBackgroundStart={() => setBackgroundStarted(true)} onIntroStart={() => setIntroStarted(true)} />
       </div>
 
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
