@@ -94,7 +94,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: 
       meshRef.current.position.y = REST_Y + JUMP_PEAK * 4 * progress * (1 - progress)
       // Spin: ease-out one full rotation into final facing
       const rotEased = 1 - Math.pow(1 - progress, 2)
-      meshRef.current.rotation.y = Math.PI + Math.PI * 2 * (1 - rotEased)
+      meshRef.current.rotation.y = Math.PI + Math.PI * 0.5 * (1 - rotEased)
 
       if (progress >= 1) {
         landed.current = true
