@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { createInitialPieces } from '../game/hnefatafl'
 import type { Piece } from '../game/hnefatafl'
 
-export type Theme = 'longhouse' | 'clifftop' | 'hoard'
+export type Theme = 'natural'
 
 interface GameStore {
   pieces: Piece[]
@@ -15,7 +15,7 @@ interface GameStore {
 export const useGameStore = create<GameStore>((set) => ({
   pieces: createInitialPieces(),
   selectedId: null,
-  theme: 'longhouse',
+  theme: 'natural',
   setTheme: (theme) => set({ theme }),
   selectPiece: (id) => set({ selectedId: id }),
 }))

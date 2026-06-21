@@ -1,12 +1,13 @@
 import { useMemo } from 'react'
-import { useTexture, RoundedBox } from '@react-three/drei'
-import { RepeatWrapping } from 'three'
+import { useTexture } from '@react-three/drei'
+import { RepeatWrapping, Shape, ExtrudeGeometry } from 'three'
 import { BOARD_SIZE, isCorner, isThrone, attackerStarts, defenderStarts } from '../../game/hnefatafl'
 import type { ThemeConfig } from '../../lib/themes'
 
-const SQUARE_SIZE = 0.95
-const TILE_HEIGHT = 0.09
-const BEVEL = 0.06
+const SQUARE_SIZE = 0.88
+const TILE_HEIGHT = 0.055
+const CORNER_RADIUS = 0.05
+const BEVEL = 0.038
 const BOARD_OFFSET = (BOARD_SIZE - 1) / 2
 const TILE_COUNT = 10
 
@@ -27,6 +28,30 @@ interface BoardProps {
 }
 
 export function Board({ theme }: BoardProps) {
+  const tileGeometry = useMemo(() => {
+    const r = CORNER_RADIUS
+    const h = SQUARE_SIZE / 2 - r
+    const shape = new Shape()
+    shape.moveTo(-h, -SQUARE_SIZE / 2)
+    shape.lineTo(h, -SQUARE_SIZE / 2)
+    shape.quadraticCurveTo(SQUARE_SIZE / 2, -SQUARE_SIZE / 2, SQUARE_SIZE / 2, -h)
+    shape.lineTo(SQUARE_SIZE / 2, h)
+    shape.quadraticCurveTo(SQUARE_SIZE / 2, SQUARE_SIZE / 2, h, SQUARE_SIZE / 2)
+    shape.lineTo(-h, SQUARE_SIZE / 2)
+    shape.quadraticCurveTo(-SQUARE_SIZE / 2, SQUARE_SIZE / 2, -SQUARE_SIZE / 2, h)
+    shape.lineTo(-SQUARE_SIZE / 2, -h)
+    shape.quadraticCurveTo(-SQUARE_SIZE / 2, -SQUARE_SIZE / 2, -h, -SQUARE_SIZE / 2)
+    shape.closePath()
+
+    return new ExtrudeGeometry(shape, {
+      depth: TILE_HEIGHT,
+      bevelEnabled: true,
+      bevelThickness: BEVEL,
+      bevelSize: BEVEL,
+      bevelSegments: 6,
+    })
+  }, [])
+
   const tileAssignment = useMemo(() => {
     const map: Record<string, number> = {}
     for (let row = 0; row < BOARD_SIZE; row++) {
@@ -40,6 +65,8 @@ export function Board({ theme }: BoardProps) {
 
   const tilePaths = Array.from({ length: TILE_COUNT }, (_, i) => `/textures/tile-${i + 1}.png`)
   const tileTextures = useTexture(tilePaths)
+
+  const boardTexture = useTexture("/textures/board-edge.png")
 
   const overlays = useTexture({
     corner:   '/textures/tile-corner.png',
@@ -78,41 +105,40 @@ export function Board({ theme }: BoardProps) {
       <mesh position={[0, -0.15, 0]} receiveShadow>
         <boxGeometry args={[BOARD_SIZE + 1.2, 0.3, BOARD_SIZE + 1.2]} />
         <meshStandardMaterial
-          color={theme.boardEdgeColor}
+          map={boardTexture}
           roughness={theme.boardRoughness}
           metalness={theme.boardMetalness}
         />
       </mesh>
 
       {squares.map(({ row, col, x, z, variantIdx, overlay }) => (
-          <group key={`${row}-${col}`} position={[x, 0, z]}>
-            <RoundedBox
-              args={[SQUARE_SIZE, TILE_HEIGHT, SQUARE_SIZE]}
-              radius={BEVEL}
-              smoothness={4}
-              receiveShadow
-            >
-              <meshStandardMaterial
-                map={tileTextures[variantIdx]}
-                roughness={theme.boardRoughness}
-                metalness={theme.boardMetalness}
-              />
-            </RoundedBox>
+        <group key={`${row}-${col}`} position={[x, 0, z]}>
+          <mesh
+            rotation={[-Math.PI / 2, 0, 0]}
+            geometry={tileGeometry}
+            receiveShadow
+          >
+            <meshStandardMaterial
+              map={tileTextures[variantIdx]}
+              roughness={theme.boardRoughness}
+              metalness={theme.boardMetalness}
+            />
+          </mesh>
 
-            {overlay && (
-              <mesh position={[0, TILE_HEIGHT / 2 + 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <planeGeometry args={[SQUARE_SIZE * 0.88, SQUARE_SIZE * 0.88]} />
-                <meshStandardMaterial
-                  map={overlays[overlay]}
-                  transparent
-                  alphaTest={0.05}
-                  roughness={0.8}
-                  metalness={0}
-                  depthWrite={false}
-                />
-              </mesh>
-            )}
-          </group>
+          {overlay && (
+            <mesh position={[0, TILE_HEIGHT + 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[SQUARE_SIZE * 0.78, SQUARE_SIZE * 0.78]} />
+              <meshStandardMaterial
+                map={overlays[overlay]}
+                transparent
+                alphaTest={0.05}
+                roughness={0.8}
+                metalness={0}
+                depthWrite={false}
+              />
+            </mesh>
+          )}
+        </group>
       ))}
     </group>
   )

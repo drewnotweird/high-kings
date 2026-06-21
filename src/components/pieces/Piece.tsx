@@ -14,7 +14,7 @@ interface PieceProps {
   onClick: () => void
 }
 
-export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
+export function Piece({ piece, theme: _theme, isSelected, onClick }: PieceProps) {
   const meshRef = useRef<Mesh>(null)
 
   const x = piece.col - BOARD_OFFSET
@@ -23,21 +23,11 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
   const isKing = piece.type === 'king'
   const isDefender = piece.type === 'defender'
 
-  const emissive = isKing
-    ? theme.kingEmissive
-    : isDefender
-    ? theme.defenderEmissive
-    : theme.attackerEmissive
-
   const prefix = isKing ? 'piece-king' : isDefender ? 'piece-light' : 'piece-dark'
-  const [texture, roughnessMap] = useTexture([
-    `/textures/${prefix}.png`,
-    `/textures/${prefix}-roughness.png`,
-  ])
+  const texture = useTexture(`/textures/${prefix}.png`)
 
   const points = useMemo(() => {
     if (isKing) {
-      // Tall, wide base, gentle taper, generous dome
       return [
         new Vector2(0,    0   ),
         new Vector2(0.38, 0   ),
@@ -52,7 +42,6 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
       ]
     }
     if (isDefender) {
-      // Medium height, slimmer than king
       return [
         new Vector2(0,    0   ),
         new Vector2(0.26, 0   ),
@@ -65,7 +54,6 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
         new Vector2(0,    0.92),
       ]
     }
-    // Attacker — stockier, slightly shorter than defender
     return [
       new Vector2(0,    0   ),
       new Vector2(0.28, 0   ),
@@ -100,15 +88,11 @@ export function Piece({ piece, theme, isSelected, onClick }: PieceProps) {
       <latheGeometry args={[points, 32]} />
       <meshPhysicalMaterial
         map={texture}
-        bumpMap={texture}
-        bumpScale={0.04}
-        roughnessMap={roughnessMap}
-        roughness={1.0}
-        emissive={emissive}
-        emissiveIntensity={isSelected ? 0.6 : 0.12}
+        roughness={0.45}
         metalness={0.0}
-        clearcoat={1}
-        clearcoatRoughness={0.22}
+        clearcoat={0.6}
+        clearcoatRoughness={0.25}
+        emissiveIntensity={isSelected ? 0.3 : 0}
       />
     </mesh>
   )
