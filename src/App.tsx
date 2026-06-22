@@ -47,24 +47,22 @@ const fireCSS = `
 }
 .ui-button {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  background: rgba(0,0,0,0.6);
-  border: 1px solid rgba(200,160,40,0.3);
-  border-radius: 6px;
+  justify-content: center;
+  gap: 4px;
+  width: 52px;
+  height: 52px;
+  background: none;
+  border: none;
   color: #e8d8b8;
-  padding: 8px 12px;
   cursor: pointer;
-  backdrop-filter: blur(4px);
-  transition: border-color 0.2s;
   font-family: inherit;
+  transition: opacity 0.2s;
 }
-.ui-button:hover { border-color: rgba(200,160,40,0.8); }
-.ui-button__icon { width: 20px; height: 20px; flex-shrink: 0; }
-.ui-button__label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; }
-@media (max-width: 600px) {
-  .ui-button { flex-direction: column; gap: 3px; padding: 6px 10px; }
-}
+.ui-button:hover { opacity: 0.7; }
+.ui-button__icon { width: 22px; height: 22px; flex-shrink: 0; }
+.ui-button__label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; }
 .menu-overlay {
   position: absolute;
   inset: 0;
