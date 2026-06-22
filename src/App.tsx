@@ -218,7 +218,6 @@ body, button, input, select {
   position: relative;
   z-index: 1;
   margin-top: -25px;
-  background: #f0e060;
   padding: 30px 40px 0 40px;
   animation: creditsUnroll 1.3s cubic-bezier(0.15,0.7,0.25,1) 0.25s both;
   transform-origin: top center;
