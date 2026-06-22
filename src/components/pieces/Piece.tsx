@@ -9,23 +9,27 @@ import { IntroStartContext } from '../../contexts/intro'
 const BOARD_OFFSET = 5
 const W = 1.35
 const REST_Y = 0.15
-const JUMP_PEAK = 1.4   // how high the piece jumps
+const JUMP_PEAK = 1.4
 const JUMP_DURATION = 0.36
+
+export type MenuPhase = 'idle' | 'hiding' | 'hidden' | 'appearing'
 
 interface PieceProps {
   piece: PieceData
   theme: ThemeConfig
   isSelected: boolean
-  dropDelay: number  // seconds before this piece starts falling
-  hidden: boolean
+  dropDelay: number
+  menuPhase: MenuPhase
   onClick: () => void
 }
 
-export function Piece({ piece, theme: _theme, isSelected, dropDelay, hidden, onClick }: PieceProps) {
+export function Piece({ piece, theme: _theme, isSelected, dropDelay, menuPhase, onClick }: PieceProps) {
   const meshRef = useRef<Mesh>(null)
   const introStartMs = useContext(IntroStartContext)
   const landed = useRef(false)
   const landTime = useRef(0)
+  const prevMenuPhase = useRef<MenuPhase>('idle')
+  const menuAnimStart = useRef(0)
 
   const x = piece.col - BOARD_OFFSET
   const z = piece.row - BOARD_OFFSET
@@ -67,10 +71,10 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, hidden, onC
 
   useFrame((_, delta) => {
     if (!meshRef.current) return
-    if (hidden) { meshRef.current.visible = false; return }
-    meshRef.current.visible = true
+
     const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
 
+    // Intro drop (runs once before piece has landed)
     if (!landed.current) {
       if (t < 0 || t < dropDelay) {
         meshRef.current.visible = false
@@ -80,30 +84,54 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, hidden, onC
       }
       meshRef.current.visible = true
       const progress = Math.min((t - dropDelay) / JUMP_DURATION, 1)
-      // Parabolic arc
       meshRef.current.position.y = REST_Y + JUMP_PEAK * 4 * progress * (1 - progress)
-      // Spin: ease-out one full rotation into final facing
       const rotEased = 1 - Math.pow(1 - progress, 2)
       meshRef.current.rotation.y = Math.PI + Math.PI * 0.5 * (1 - rotEased)
-
       if (progress >= 1) {
         landed.current = true
         landTime.current = Date.now()
       }
       return
     }
-    meshRef.current.rotation.y = Math.PI
 
-    // After landing: single brief downward compression — heavy, hard, no ringing
+    // Detect menu phase change and record start time
+    if (menuPhase !== prevMenuPhase.current) {
+      prevMenuPhase.current = menuPhase
+      menuAnimStart.current = Date.now()
+    }
+
+    if (menuPhase === 'hidden') {
+      meshRef.current.visible = false
+      return
+    }
+
+    if (menuPhase === 'hiding') {
+      const progress = Math.min((Date.now() - menuAnimStart.current) / 1000 / JUMP_DURATION, 1)
+      const up = 1 - Math.pow(1 - progress, 2)
+      meshRef.current.visible = progress < 1
+      meshRef.current.position.y = REST_Y + JUMP_PEAK * 2 * up
+      meshRef.current.rotation.y = Math.PI + Math.PI * 0.5 * progress
+      return
+    }
+
+    if (menuPhase === 'appearing') {
+      const progress = Math.min((Date.now() - menuAnimStart.current) / 1000 / JUMP_DURATION, 1)
+      meshRef.current.visible = true
+      meshRef.current.position.y = REST_Y + JUMP_PEAK * 4 * progress * (1 - progress)
+      const rotEased = 1 - Math.pow(1 - progress, 2)
+      meshRef.current.rotation.y = Math.PI + Math.PI * 0.5 * (1 - rotEased)
+      return
+    }
+
+    // idle — normal gameplay
+    meshRef.current.visible = true
+    meshRef.current.rotation.y = Math.PI
     const settle = (Date.now() - landTime.current) / 1000
     const knock = settle < 0.14
       ? Math.sin((settle / 0.14) * Math.PI) * -0.055
       : 0
-
-    // Normal select/deselect animation once settled
     const targetY = (isSelected ? 0.55 : REST_Y) + knock
-    meshRef.current.position.y +=
-      (targetY - meshRef.current.position.y) * Math.min(delta * 8, 1)
+    meshRef.current.position.y += (targetY - meshRef.current.position.y) * Math.min(delta * 8, 1)
   })
 
   return (

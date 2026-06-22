@@ -1,16 +1,16 @@
-import { useRef, Suspense, useState, useEffect, useContext } from 'react'
+import { useRef, Suspense, useState, useEffect, useContext, useCallback } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Environment, useProgress } from '@react-three/drei'
 import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group, Vector3 } from 'three'
 import { Board } from './Board'
-import { Piece } from '../pieces/Piece'
+import { Piece, type MenuPhase } from '../pieces/Piece'
 import { useGameStore } from '../../store/gameStore'
 import { themes } from '../../lib/themes'
 import { IntroStartContext } from '../../contexts/intro'
 
 const BOARD_ARRIVE = 1.2
-const PIECE_STAGGER = 0.07
 const BOARD_DURATION = 1.1
+const PIECE_ANIM_DURATION = 0.36
 const BOARD_START_Y = -20
 
 function FadingLights() {
@@ -164,23 +164,32 @@ function CameraReset({ menuOpen }: { menuOpen: boolean }) {
   return null
 }
 
+const HIDE_DURATION_MS = Math.round(PIECE_ANIM_DURATION * 1000) + 50
+
 function SceneInner({ menuOpen }: { menuOpen: boolean }) {
   const { pieces, selectedId, theme: themeName, selectPiece } = useGameStore()
   const theme = themes[themeName]
-  const [piecesHidden, setPiecesHidden] = useState(false)
+  const [menuPhase, setMenuPhase] = useState<MenuPhase>('idle')
+  const everOpened = useRef(false)
 
-  // Hide pieces halfway through flip, restore halfway through flip-back
-  useEffect(() => {
-    const t = setTimeout(() => setPiecesHidden(menuOpen), 250)
+  // Suppress exhaustive-deps: tryStartFade intentionally omitted (stable pattern)
+  const schedulePhase = useCallback((phase: MenuPhase, delayMs: number) => {
+    const t = setTimeout(() => setMenuPhase(phase), delayMs)
     return () => clearTimeout(t)
+  }, [])
+
+  useEffect(() => {
+    if (menuOpen) {
+      everOpened.current = true
+      setMenuPhase('hiding')
+      return schedulePhase('hidden', HIDE_DURATION_MS)
+    } else if (everOpened.current) {
+      setMenuPhase('appearing')
+      return schedulePhase('idle', HIDE_DURATION_MS)
+    }
   }, [menuOpen])
 
-  const ordered = [
-    ...pieces.filter(p => p.type === 'king'),
-    ...pieces.filter(p => p.type === 'defender'),
-    ...pieces.filter(p => p.type === 'attacker'),
-  ]
-  const delayMap = new Map(ordered.map((p, i) => [p.id, BOARD_ARRIVE + i * PIECE_STAGGER]))
+  const delayMap = new Map(pieces.map(p => [p.id, BOARD_ARRIVE]))
 
   return (
     <>
@@ -198,7 +207,7 @@ function SceneInner({ menuOpen }: { menuOpen: boolean }) {
           theme={theme}
           isSelected={selectedId === piece.id}
           dropDelay={delayMap.get(piece.id) ?? BOARD_ARRIVE}
-          hidden={piecesHidden}
+          menuPhase={menuPhase}
           onClick={() => selectPiece(selectedId === piece.id ? null : piece.id)}
         />
       ))}
