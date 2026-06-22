@@ -1,7 +1,7 @@
 import { useRef, Suspense, useState, useEffect, useContext } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Environment, useProgress } from '@react-three/drei'
-import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group } from 'three'
+import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group, Vector3 } from 'three'
 import { Board } from './Board'
 import { Piece } from '../pieces/Piece'
 import { useGameStore } from '../../store/gameStore'
@@ -144,6 +144,23 @@ function AnimatedBoard({ children, menuOpen }: { children: React.ReactNode; menu
   )
 }
 
+const DEFAULT_CAM_POS = new Vector3(0, 12, 14)
+const DEFAULT_CAM_TARGET = new Vector3(0, 0, 0)
+
+function CameraReset({ menuOpen }: { menuOpen: boolean }) {
+  useFrame(({ camera, controls }) => {
+    if (!menuOpen) return
+    camera.position.lerp(DEFAULT_CAM_POS, 0.06)
+    if (controls) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const c = controls as any
+      c.target.lerp(DEFAULT_CAM_TARGET, 0.06)
+      c.update()
+    }
+  })
+  return null
+}
+
 function SceneInner({ menuOpen }: { menuOpen: boolean }) {
   const { pieces, selectedId, theme: themeName, selectPiece } = useGameStore()
   const theme = themes[themeName]
@@ -182,7 +199,9 @@ function SceneInner({ menuOpen }: { menuOpen: boolean }) {
           onClick={() => selectPiece(selectedId === piece.id ? null : piece.id)}
         />
       ))}
+      <CameraReset menuOpen={menuOpen} />
       <OrbitControls
+        makeDefault
         enabled={!menuOpen}
         enablePan={false}
         minDistance={6}
