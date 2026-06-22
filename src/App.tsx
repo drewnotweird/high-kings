@@ -78,16 +78,21 @@ const fireCSS = `
 .menu-overlay__screens {
   position: relative;
   width: 260px;
-  display: flex;
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.menu-overlay__screens--settings { transform: translateX(-260px); }
 .menu-overlay__screen {
-  min-width: 260px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  transition: opacity 0.25s ease;
+}
+.menu-overlay__screen--hidden {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
 }
 .menu-overlay__item {
   background: rgba(0,0,0,0.8);
@@ -369,10 +374,10 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame }: {
 
   return (
     <div className={`menu-overlay${isVisible ? ' menu-overlay--visible' : ''}`} style={{ opacity: isVisible ? 1 : 0 }}>
-      <div className={`menu-overlay__screens${screen === 'settings' ? ' menu-overlay__screens--settings' : ''}`}>
+      <div className="menu-overlay__screens">
 
         {/* Main screen */}
-        <div className="menu-overlay__screen">
+        <div className={`menu-overlay__screen${screen === 'settings' ? ' menu-overlay__screen--hidden' : ''}`}>
           <button className="menu-overlay__item" onClick={onResume}>Resume Game</button>
           <button className="menu-overlay__item" onClick={() => setScreen('settings')}>Settings</button>
           <button className="menu-overlay__item" onClick={onNewGame}>New Game</button>
@@ -380,7 +385,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame }: {
         </div>
 
         {/* Settings screen */}
-        <div className="menu-overlay__screen">
+        <div className={`menu-overlay__screen${screen !== 'settings' ? ' menu-overlay__screen--hidden' : ''}`}>
           <div className="settings-panel">
             <div className="settings-panel__header" onClick={() => setScreen('main')}>
               <span className="settings-panel__back">
