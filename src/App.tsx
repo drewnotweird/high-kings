@@ -191,7 +191,7 @@ body, button, input, select {
   animation: creditsScrollEnter 0.55s cubic-bezier(0.2,0.8,0.3,1) forwards;
 }
 .credits-scroll--closing {
-  animation: creditsScrollExit 0.65s cubic-bezier(0.6,0,0.85,0.4) forwards;
+  animation: creditsScrollExit 0.5s cubic-bezier(0.6,0,0.85,0.4) 0.9s forwards;
 }
 @keyframes creditsScrollEnter {
   from { transform: translateY(-120px); }
@@ -222,10 +222,10 @@ body, button, input, select {
   padding: 30px 40px 0 40px;
   display: flex;
   align-items: flex-end;
-  animation: creditsUnroll 1.3s cubic-bezier(0.15,0.7,0.25,1) 0.25s both;
+  animation: creditsUnroll 2.5s cubic-bezier(0.15,0.7,0.25,1) 0.25s both;
 }
 .credits-scroll--closing .credits-scroll__parchment {
-  animation: creditsRollUp 0.45s cubic-bezier(0.7,0,0.9,0.4) forwards;
+  animation: creditsRollUp 1s cubic-bezier(0.7,0,0.9,0.4) forwards;
 }
 .credits-scroll__content {
   opacity: 1;
@@ -511,7 +511,7 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
   const [closing, setClosing] = useState(false)
   const handleClose = () => {
     setClosing(true)
-    setTimeout(onClose, 700)
+    setTimeout(onClose, 1500)
   }
   return (
     <div className={`credits-scroll-overlay${closing ? ' credits-scroll-overlay--closing' : ''}`}>
