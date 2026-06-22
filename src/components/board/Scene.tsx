@@ -196,14 +196,15 @@ function CameraLock({ locked }: { locked: boolean }) {
 
   const lockedTarget = useMemo(() => new Vector3(), [])
 
-  useFrame(({ camera, controls }) => {
+  useFrame(({ camera, controls }, delta) => {
     if (!locked) return
-    camera.position.lerp(topDownCam.pos, 0.06)
+    const speed = Math.min(delta * 5, 1)
+    camera.position.lerp(topDownCam.pos, speed)
     lockedTarget.copy(topDownCam.target)
     if (controls) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const c = controls as any
-      c.target.lerp(lockedTarget, 0.06)
+      c.target.lerp(lockedTarget, speed)
       c.update()
     }
   })
