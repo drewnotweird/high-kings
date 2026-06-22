@@ -37,8 +37,8 @@ function FadingLights({ menuOpen }: { menuOpen: boolean }) {
 
     if (ambientRef.current)  ambientRef.current.intensity  = 0.02 * f(0.0, 0.5)
     if (moonRef.current)     moonRef.current.intensity     = 0.25 * f(0.3, 0.5)
-    if (spotRef.current)     spotRef.current.intensity     = 20   * f(0.6, 0.5) * ms
-    if (frontRef.current)    frontRef.current.intensity    = 0.2  * f(0.9, 0.4) * ms
+    if (spotRef.current)     spotRef.current.intensity     = 20   * f(0.6, 0.5)
+    if (frontRef.current)    frontRef.current.intensity    = 0.2  * f(0.9, 0.4)
 
     const late = f(BOARD_DURATION, 1.2)
     if (bounceRef.current)   bounceRef.current.intensity   = 5 * late * ms

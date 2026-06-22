@@ -1,7 +1,7 @@
 import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
-import { Mesh, Vector2 } from 'three'
+import { Mesh, Vector2, MeshPhysicalMaterial } from 'three'
 import type { Piece as PieceData } from '../../game/hnefatafl'
 import type { ThemeConfig } from '../../lib/themes'
 
@@ -27,8 +27,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
   const meshRef = useRef<Mesh>(null)
   const landed = useRef(false)
   const landTime = useRef(0)
-  const prevMenuPhase = useRef<MenuPhase>('idle')
-  const menuAnimStart = useRef(0)
+  const menuOpacity = useRef(1)
 
   const x = piece.col - BOARD_OFFSET
   const z = piece.row - BOARD_OFFSET
@@ -70,6 +69,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
 
   useFrame((_, delta) => {
     if (!meshRef.current) return
+    const mat = meshRef.current.material as MeshPhysicalMaterial
 
     const t = dropStartMs ? (Date.now() - dropStartMs) / 1000 : -1
 
@@ -82,6 +82,9 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
         return
       }
       meshRef.current.visible = true
+      menuOpacity.current = 1
+      mat.transparent = false
+      mat.opacity = 1
       const progress = Math.min((t - dropDelay) / JUMP_DURATION, 1)
       meshRef.current.position.y = REST_Y + JUMP_PEAK * 4 * progress * (1 - progress)
       const rotEased = 1 - Math.pow(1 - progress, 2)
@@ -93,42 +96,28 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
       return
     }
 
-    // Detect menu phase change and record start time
-    if (menuPhase !== prevMenuPhase.current) {
-      prevMenuPhase.current = menuPhase
-      menuAnimStart.current = Date.now()
-    }
+    // Menu fade — lerp opacity based on phase
+    const targetOpacity = (menuPhase === 'hiding' || menuPhase === 'hidden') ? 0 : 1
+    menuOpacity.current += (targetOpacity - menuOpacity.current) * Math.min(delta * 9, 1)
+    const op = menuOpacity.current
 
-    if (menuPhase === 'hidden') {
+    if (op < 0.01) {
       meshRef.current.visible = false
+      mat.transparent = true
+      mat.opacity = 0
       return
     }
 
-    if (menuPhase === 'hiding') {
-      const progress = Math.min((Date.now() - menuAnimStart.current) / 1000 / JUMP_DURATION, 1)
-      const up = 1 - Math.pow(1 - progress, 2)
-      meshRef.current.visible = progress < 1
-      meshRef.current.position.y = REST_Y + JUMP_PEAK * 2 * up
-      meshRef.current.rotation.y = Math.PI + Math.PI * 0.5 * progress
-      return
-    }
-
-    if (menuPhase === 'appearing') {
-      const progress = Math.min((Date.now() - menuAnimStart.current) / 1000 / JUMP_DURATION, 1)
-      meshRef.current.visible = true
-      meshRef.current.position.y = REST_Y + JUMP_PEAK * 4 * progress * (1 - progress)
-      const rotEased = 1 - Math.pow(1 - progress, 2)
-      meshRef.current.rotation.y = Math.PI + Math.PI * 0.5 * (1 - rotEased)
-      return
-    }
-
-    // idle — normal gameplay
     meshRef.current.visible = true
+    mat.transparent = op < 0.999
+    mat.opacity = op
+
+    if (menuPhase === 'hiding' || menuPhase === 'hidden') return
+
+    // idle / appearing — normal gameplay position
     meshRef.current.rotation.y = Math.PI
     const settle = (Date.now() - landTime.current) / 1000
-    const knock = settle < 0.14
-      ? Math.sin((settle / 0.14) * Math.PI) * -0.055
-      : 0
+    const knock = settle < 0.14 ? Math.sin((settle / 0.14) * Math.PI) * -0.055 : 0
     const targetY = (isSelected ? 0.55 : REST_Y) + knock
     meshRef.current.position.y += (targetY - meshRef.current.position.y) * Math.min(delta * 8, 1)
   })
