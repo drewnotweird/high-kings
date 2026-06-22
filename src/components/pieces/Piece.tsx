@@ -68,6 +68,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, hidden, onC
   useFrame((_, delta) => {
     if (!meshRef.current) return
     if (hidden) { meshRef.current.visible = false; return }
+    meshRef.current.visible = true
     const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
 
     if (!landed.current) {

@@ -130,7 +130,7 @@ function AnimatedBoard({ children, menuOpen }: { children: React.ReactNode; menu
     // Menu flip
     const target = menuOpen ? 1 : 0
     flipProgress.current += (target - flipProgress.current) * Math.min(delta * 3, 1)
-    groupRef.current.rotation.x = flipProgress.current * Math.PI
+    groupRef.current.rotation.x = flipProgress.current * -Math.PI
   })
 
   return (
@@ -143,6 +143,13 @@ function AnimatedBoard({ children, menuOpen }: { children: React.ReactNode; menu
 function SceneInner({ menuOpen }: { menuOpen: boolean }) {
   const { pieces, selectedId, theme: themeName, selectPiece } = useGameStore()
   const theme = themes[themeName]
+  const [piecesHidden, setPiecesHidden] = useState(false)
+
+  // Hide pieces halfway through flip, restore halfway through flip-back
+  useEffect(() => {
+    const t = setTimeout(() => setPiecesHidden(menuOpen), 250)
+    return () => clearTimeout(t)
+  }, [menuOpen])
 
   const ordered = [
     ...pieces.filter(p => p.type === 'king'),
@@ -167,7 +174,7 @@ function SceneInner({ menuOpen }: { menuOpen: boolean }) {
           theme={theme}
           isSelected={selectedId === piece.id}
           dropDelay={delayMap.get(piece.id) ?? BOARD_ARRIVE}
-          hidden={menuOpen}
+          hidden={piecesHidden}
           onClick={() => selectPiece(selectedId === piece.id ? null : piece.id)}
         />
       ))}
