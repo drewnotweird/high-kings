@@ -156,26 +156,144 @@ const fireCSS = `
   color: #c8b888;
   flex-shrink: 0;
 }
-.credits-panel {
-  padding: 20px 20px 24px;
+.credits-scroll-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 50px 16px 60px;
+  background: #000;
+  animation: creditsOverlayIn 0.4s ease-out forwards;
+  overflow-y: auto;
 }
-.credits-panel__body {
-  font-size: 13px;
-  line-height: 1.7;
-  color: #b8a878;
-  margin: 0 0 24px;
+.credits-scroll-overlay--closing {
+  animation: creditsOverlayOut 0.55s ease-in forwards;
+}
+@keyframes creditsOverlayIn { from { opacity:0 } to { opacity:1 } }
+@keyframes creditsOverlayOut { from { opacity:1 } to { opacity:0 } }
+.credits-scroll {
+  width: min(320px, calc(100vw - 32px));
+  flex-shrink: 0;
+  filter: drop-shadow(0 16px 48px rgba(0,0,0,0.85));
+  animation: creditsUnroll 1.3s cubic-bezier(0.15,0.7,0.25,1) 0.25s both;
+}
+.credits-scroll--closing {
+  animation: creditsRollUp 0.65s cubic-bezier(0.7,0,0.9,0.4) forwards;
+}
+@keyframes creditsUnroll {
+  from { clip-path: inset(0 0 100% 0); }
+  to   { clip-path: inset(0 0 0%   0); }
+}
+@keyframes creditsRollUp {
+  from { clip-path: inset(0 0 0%   0); }
+  to   { clip-path: inset(0 0 100% 0); }
+}
+.credits-scroll__top-roll {
+  height: 28px;
+  background: linear-gradient(180deg,
+    #3d2808 0%, #6b4818 8%, #a87830 22%,
+    #d4a848 36%, #f0d070 50%,
+    #d4a848 64%, #a87830 78%, #6b4818 92%, #3d2808 100%
+  );
+  border-radius: 4px 4px 3px 3px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.7), 0 2px 5px rgba(0,0,0,0.5);
+}
+.credits-scroll__parchment {
+  position: relative;
+  background:
+    radial-gradient(ellipse 110px 75px at 15% 10%, rgba(100,52,6,0.22) 0%, transparent 70%),
+    radial-gradient(ellipse 75px 95px at 85% 52%, rgba(78,38,4,0.17) 0%, transparent 70%),
+    radial-gradient(ellipse 130px 55px at 52% 90%, rgba(108,58,5,0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 55px 85px at 6%  72%, rgba(72,35,4,0.13) 0%, transparent 70%),
+    radial-gradient(ellipse 85px 65px at 94% 18%, rgba(92,46,4,0.17) 0%, transparent 70%),
+    linear-gradient(168deg,
+      #b88c2a 0%, #cc9e38 12%, #e0b84e 28%,
+      #eecb64 45%, #f2d878 55%,
+      #e8c460 70%, #d4a840 85%, #bc8c24 100%
+    );
+  padding: 26px 26px 50px;
+  box-shadow:
+    inset 6px 0 20px rgba(50,22,0,0.18),
+    inset -6px 0 20px rgba(50,22,0,0.18),
+    inset 0 10px 24px rgba(50,22,0,0.10);
+}
+.credits-scroll__content {
+  opacity: 0;
+  animation: creditsContentIn 0.5s ease-out 1.35s forwards;
+}
+@keyframes creditsContentIn { from { opacity:0 } to { opacity:1 } }
+.credits-scroll__scroll-title {
+  text-align: center;
+  font-size: 20px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #2e1606;
+  margin: 0 0 5px;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+.credits-scroll__era {
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #6b3e12;
+  margin: 0 0 18px;
   font-style: italic;
 }
-.credits-panel__names {
+.credits-scroll__rule {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(60,28,0,0.35) 20%, rgba(60,28,0,0.35) 80%, transparent);
+  margin: 0 0 18px;
+}
+.credits-scroll__body-text {
+  font-size: 13px;
+  line-height: 1.85;
+  color: #3d2008;
+  margin: 0 0 22px;
+  font-style: italic;
+  text-align: center;
+}
+.credits-scroll__names {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 26px;
 }
-.credits-panel__name {
-  font-size: 13px;
-  letter-spacing: 1px;
+.credits-scroll__name {
+  font-size: 12px;
+  letter-spacing: 3px;
   text-transform: uppercase;
-  color: #e8d8a0;
+  color: #2e1606;
+  font-weight: 600;
+}
+.credits-scroll__close-btn {
+  display: block;
+  margin: 0 auto;
+  background: transparent;
+  border: 1px solid rgba(60,28,0,0.4);
+  color: #3d2008;
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  padding: 8px 22px;
+  border-radius: 1px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.credits-scroll__close-btn:hover { background: rgba(60,28,0,0.12); border-color: rgba(60,28,0,0.6); }
+.credits-scroll__torn {
+  position: absolute;
+  bottom: -1px;
+  left: -1px;
+  width: calc(100% + 2px);
+  height: 40px;
+  pointer-events: none;
+  display: block;
 }
 .settings-toggle {
   width: 40px;
@@ -381,13 +499,50 @@ function Chips<T extends string>({ options, value, onChange }: {
   )
 }
 
-function MenuOverlay({ isOpen, isVisible, onResume, onNewGame }: {
+const TORN_EDGE_PATH = "M0,0 L320,0 L320,24 L313,11 L308,20 L301,7 L296,17 L290,9 L284,22 L277,6 L271,16 L265,27 L258,9 L252,20 L246,12 L240,26 L234,8 L228,19 L221,10 L215,24 L209,6 L203,18 L196,11 L190,23 L184,7 L178,21 L172,13 L166,27 L159,8 L153,20 L147,9 L141,23 L135,5 L129,18 L122,11 L116,26 L110,8 L104,21 L97,13 L91,25 L85,7 L79,19 L72,10 L66,24 L60,9 L54,22 L47,11 L41,26 L35,8 L29,20 L23,12 L17,25 L11,9 L6,21 L2,14 L0,22 Z"
+
+function CreditsScroll({ onClose }: { onClose: () => void }) {
+  const [closing, setClosing] = useState(false)
+  const handleClose = () => {
+    setClosing(true)
+    setTimeout(onClose, 1050)
+  }
+  return (
+    <div className={`credits-scroll-overlay${closing ? ' credits-scroll-overlay--closing' : ''}`}>
+      <div className={`credits-scroll${closing ? ' credits-scroll--closing' : ''}`}>
+        <div className="credits-scroll__top-roll" />
+        <div className="credits-scroll__parchment">
+          <div className="credits-scroll__content">
+            <h2 className="credits-scroll__scroll-title">High Kings</h2>
+            <p className="credits-scroll__era">circa 2010</p>
+            <hr className="credits-scroll__rule" />
+            <p className="credits-scroll__body-text">
+              High Kings was originally created around 2010 by three friends who wanted to bring an ancient Viking strategy game to life. We had an enormous amount of fun building it together, and this site lives on its memory.
+            </p>
+            <div className="credits-scroll__names">
+              <span className="credits-scroll__name">Jason Frame</span>
+              <span className="credits-scroll__name">Lewis MacKenzie</span>
+              <span className="credits-scroll__name">Andrew Nicolson</span>
+            </div>
+            <button className="credits-scroll__close-btn" onClick={handleClose}>Roll Up</button>
+          </div>
+          <svg className="credits-scroll__torn" viewBox="0 0 320 40" preserveAspectRatio="none" aria-hidden="true">
+            <path d={TORN_EDGE_PATH} fill="#bc8c24" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
   isOpen: boolean
   isVisible: boolean
   onResume: () => void
   onNewGame: () => void
+  onCredits: () => void
 }) {
-  const [screen, setScreen] = useState<'main' | 'settings' | 'credits'>('main')
+  const [screen, setScreen] = useState<'main' | 'settings'>('main')
   const { musicEnabled, cameraLocked, difficulty, rules, powerSaving, setSetting } = useGameStore()
 
   useEffect(() => { if (!isOpen) setScreen('main') }, [isOpen])
@@ -395,6 +550,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame }: {
   if (!isOpen) return null
 
   return (
+    <>
     <div className={`menu-overlay${isVisible ? ' menu-overlay--visible' : ''}`} style={{ opacity: isVisible ? 1 : 0 }}>
       <div className="menu-overlay__screens">
 
@@ -404,29 +560,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame }: {
           <button className="menu-overlay__item" onClick={() => setScreen('settings')}>Settings</button>
           <button className="menu-overlay__item" onClick={onNewGame}>New Game</button>
           <button className="menu-overlay__item">How to Play</button>
-          <button className="menu-overlay__item" onClick={() => setScreen('credits')}>Credits</button>
-        </div>
-
-        {/* Credits screen */}
-        <div className={`menu-overlay__screen${screen !== 'credits' ? ' menu-overlay__screen--hidden' : ''}`}>
-          <div className="settings-panel">
-            <div className="settings-panel__header" onClick={() => setScreen('main')}>
-              <span className="settings-panel__back">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10 3L5 8l5 5" />
-                </svg>
-              </span>
-              <span className="settings-panel__title">Credits</span>
-            </div>
-            <div className="credits-panel">
-              <p className="credits-panel__body">High Kings was originally created around 2010 by three friends who wanted to bring an ancient Viking strategy game to life. We had an enormous amount of fun building it together, and this site lives on its memory.</p>
-              <div className="credits-panel__names">
-                <span className="credits-panel__name">Jason Frame</span>
-                <span className="credits-panel__name">Lewis MacKenzie</span>
-                <span className="credits-panel__name">Andrew Nicolson</span>
-              </div>
-            </div>
-          </div>
+          <button className="menu-overlay__item" onClick={onCredits}>Credits</button>
         </div>
 
         {/* Settings screen */}
@@ -485,6 +619,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame }: {
 
       </div>
     </div>
+    </>
   )
 }
 
@@ -531,6 +666,7 @@ function App() {
   const [setupAnimating, setSetupAnimating] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuVisible, setMenuVisible] = useState(false)
+  const [showCredits, setShowCredits] = useState(false)
   const { currentTurn, scores, resetGame, powerSaving, setSetting } = useGameStore()
   const setupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -654,6 +790,7 @@ function App() {
             resetGame()
             if (powerSaving) setMenuOpen(false)
           }}
+          onCredits={() => setShowCredits(true)}
         />
       </div>
 
@@ -681,6 +818,7 @@ function App() {
       </>}
 
       <ThemeSwitcher />
+      {showCredits && <CreditsScroll onClose={() => setShowCredits(false)} />}
     </div>
   )
 }
