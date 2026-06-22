@@ -87,7 +87,7 @@ body, button, input, select {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 0;
   transition: opacity 0.25s ease;
 }
 .menu-overlay__screen--hidden {
@@ -121,6 +121,7 @@ body, button, input, select {
   border: 1px solid rgba(200,160,40,0.35);
   border-radius: 8px;
   overflow: hidden;
+  padding: 10px;
 }
 .settings-panel__header {
   display: flex;
@@ -147,7 +148,7 @@ body, button, input, select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 6px 16px;
   border-bottom: 1px solid rgba(255,255,255,0.05);
   gap: 12px;
 }
