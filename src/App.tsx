@@ -566,10 +566,10 @@ function App() {
 
       {/* Score panels */}
       {introStarted && <>
-        <div className="score-panel-wrapper score-panel-wrapper--defender" style={{ position: 'absolute', bottom: 24, left: '10vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : undefined, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
+        <div className="score-panel-wrapper score-panel-wrapper--defender" style={{ position: 'absolute', bottom: 24, left: '10vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
           <ScorePanel side="defender" score={scores.defender} isActive={currentTurn === 'defender'} />
         </div>
-        <div className="score-panel-wrapper score-panel-wrapper--attacker" style={{ position: 'absolute', bottom: 24, right: '10vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : undefined, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
+        <div className="score-panel-wrapper score-panel-wrapper--attacker" style={{ position: 'absolute', bottom: 24, right: '10vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
           <ScorePanel side="attacker" score={scores.attacker} isActive={currentTurn === 'attacker'} />
         </div>
       </>}
@@ -579,7 +579,7 @@ function App() {
       </div>
 
       {introStarted && <>
-        <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ position: 'absolute', top: 24, left: 16, zIndex: 15, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : undefined, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
+        <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ position: 'absolute', top: 24, left: 16, zIndex: 15, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
           <HintButton onClick={() => {}} />
         </div>
         <div className="ui-button-wrapper ui-button-wrapper--menu" style={{ position: 'absolute', top: 24, right: 16, zIndex: 15, animation: 'sceneFadeIn 2s ease-out forwards' }}>
