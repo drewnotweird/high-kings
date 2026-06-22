@@ -166,7 +166,7 @@ body, button, input, select {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 50px 16px 60px;
+  padding: 30px;
   overflow: hidden;
 }
 .credits-scroll-overlay__scrim {
