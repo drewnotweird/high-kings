@@ -28,11 +28,8 @@ function FadingLights({ menuOpen }: { menuOpen: boolean }) {
     const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
     const f = (start: number, dur: number) => 1 - Math.pow(1 - Math.min(Math.max((t - start) / dur, 0), 1), 2)
 
-    if (menuOpen) {
-      menuScale.current = 0
-    } else {
-      menuScale.current += (1 - menuScale.current) * Math.min(delta * 4, 1)
-    }
+    const msTarget = menuOpen ? 0 : 1
+    menuScale.current += (msTarget - menuScale.current) * Math.min(delta * 6, 1)
     const ms = menuScale.current
 
     if (ambientRef.current)  ambientRef.current.intensity  = 0.02 * f(0.0, 0.5)
@@ -113,11 +110,8 @@ function FireLight({ menuOpen }: { menuOpen: boolean }) {
     const e = 1 - Math.pow(1 - fade, 2)
     const now = Date.now() / 1000
     const flicker = 1 + 0.35 * Math.sin(now * 7.3) + 0.2 * Math.sin(now * 13.1) + 0.1 * Math.sin(now * 3.7)
-    if (menuOpen) {
-      menuScale.current = 0
-    } else {
-      menuScale.current += (1 - menuScale.current) * Math.min(delta * 4, 1)
-    }
+    const msTarget = menuOpen ? 0 : 1
+    menuScale.current += (msTarget - menuScale.current) * Math.min(delta * 6, 1)
     ref.current.intensity = 6 * flicker * e * menuScale.current
   })
   return <pointLight ref={ref} position={[0, -0.5, 3]} color="#ff6010" distance={20} decay={2} intensity={0} />
@@ -144,7 +138,7 @@ function AnimatedBoard({ children, menuOpen }: { children: React.ReactNode; menu
     }
 
     const target = menuOpen ? 1 : 0
-    flipProgress.current += (target - flipProgress.current) * Math.min(delta * 3, 1)
+    flipProgress.current += (target - flipProgress.current) * Math.min(delta * 4, 1)
     groupRef.current.rotation.x = flipProgress.current * -Math.PI
   })
 
@@ -175,7 +169,7 @@ function CameraReset({ menuOpen }: { menuOpen: boolean }) {
 // How long pieces take to fly away / appear
 const HIDE_MS = Math.round(PIECE_ANIM_DURATION * 1000) + 50
 // How long to wait after board starts returning before restoring lights / showing pieces
-const BOARD_RETURN_MS = 850
+const BOARD_RETURN_MS = 1000
 
 const TOP_DOWN_CAM = new Vector3(0, 22, 0.01)
 
