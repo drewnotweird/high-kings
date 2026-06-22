@@ -203,10 +203,10 @@ body, button, input, select {
 }
 @keyframes creditsUnroll {
   from { max-height: 0; }
-  to   { max-height: 1200px; }
+  to   { max-height: 100vh; }
 }
 @keyframes creditsRollUp {
-  from { max-height: 1200px; }
+  from { max-height: 100vh; }
   to   { max-height: 0; }
 }
 .credits-scroll__top-roll {
@@ -226,10 +226,8 @@ body, button, input, select {
   animation: creditsRollUp 0.45s cubic-bezier(0.7,0,0.9,0.4) forwards;
 }
 .credits-scroll__content {
-  opacity: 0;
-  animation: creditsContentIn 0.5s ease-out 1.4s forwards;
+  opacity: 1;
 }
-@keyframes creditsContentIn { from { opacity:0 } to { opacity:1 } }
 .credits-scroll__scroll-title {
   text-align: center;
   font-size: 20px;
