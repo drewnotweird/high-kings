@@ -601,7 +601,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
             </div>
 
             <div className="settings-row">
-              <button className="menu-overlay__item" onClick={onResume}>Resume Playing</button>
+              <button className="menu-overlay__item" onClick={onResume}>Resume Game</button>
             </div>
           </div>
 
