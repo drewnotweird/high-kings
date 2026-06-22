@@ -552,7 +552,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
 }) {
   const [screen, setScreen] = useState<'main' | 'settings'>('main')
   const [screensOpacity, setScreensOpacity] = useState(1)
-  const { musicEnabled, cameraLocked, difficulty, rules, powerSaving, setSetting } = useGameStore()
+  const { cameraLocked, difficulty, rules, powerSaving, setSetting } = useGameStore()
 
   useEffect(() => { if (!isOpen) setScreen('main') }, [isOpen])
 
