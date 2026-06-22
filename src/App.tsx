@@ -419,7 +419,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame }: {
               <span className="settings-panel__title">Credits</span>
             </div>
             <div className="credits-panel">
-              <p className="credits-panel__body">High Kings was originally created around 2010 by three friends who wanted to bring an ancient Viking strategy game to life. We had an enormous amount of fun building it together, and this site exists so that game lives on.</p>
+              <p className="credits-panel__body">High Kings was originally created around 2010 by three friends who wanted to bring an ancient Viking strategy game to life. We had an enormous amount of fun building it together, and this site lives on its memory.</p>
               <div className="credits-panel__names">
                 <span className="credits-panel__name">Jason Frame</span>
                 <span className="credits-panel__name">Lewis MacKenzie</span>
