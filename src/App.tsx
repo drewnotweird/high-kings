@@ -220,6 +220,8 @@ body, button, input, select {
   overflow: hidden;
   margin-top: -25px;
   padding: 30px 40px 0 40px;
+  display: flex;
+  align-items: flex-end;
   animation: creditsUnroll 1.3s cubic-bezier(0.15,0.7,0.25,1) 0.25s both;
 }
 .credits-scroll--closing .credits-scroll__parchment {
