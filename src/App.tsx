@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { Scene, getIntroDurationMs } from './components/board/Scene'
-import { Board2D } from './components/board/Board2D'
 import { ThemeSwitcher } from './components/ui/ThemeSwitcher'
 import { useGameStore } from './store/gameStore'
 import type { PlayerSide, GameMode, Difficulty, Rules } from './store/gameStore'
@@ -888,6 +887,7 @@ function App() {
 
   const startSetupAnim = () => {
     if (setupTimerRef.current) clearTimeout(setupTimerRef.current)
+    if (powerSaving) return // no intro animation in power-saving mode
     setSetupAnimating(true)
     setupTimerRef.current = setTimeout(() => setSetupAnimating(false), getIntroDurationMs(pieces.length))
   }
@@ -982,21 +982,14 @@ function App() {
         ))}
       </>}
 
-      {/* Power-saving: simple dark static background */}
-      {powerSaving && (
-        <div className="board2d-bg" style={{ position: 'absolute', inset: 0, zIndex: 0, background: '#0e0c08' }} />
-      )}
-
       <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
-        {/* Scene stays mounted always so piece state (landed refs) is preserved across mode switches */}
-        <div style={{ position: 'absolute', inset: 0, display: powerSaving ? 'none' : 'block' }}>
+        <div style={{ position: 'absolute', inset: 0 }}>
           <Scene
-            onIntroStart={() => { setIntroStarted(true); startSetupAnim() }}
+            onIntroStart={() => { setIntroStarted(true); if (!powerSaving) startSetupAnim() }}
             menuOpen={menuOpen}
-            onNewGame={() => { setMenuOpen(false); startSetupAnim() }}
+            onNewGame={() => { setMenuOpen(false); if (!powerSaving) startSetupAnim() }}
           />
         </div>
-        {powerSaving && <Board2D menuOpen={menuOpen} />}
         <MenuOverlay
           isOpen={menuOpen}
           isVisible={menuVisible}
@@ -1047,7 +1040,7 @@ function App() {
             setPlayerMode(mode)
             resetGame()
             setRoleSelectOpen(false)
-            if (!powerSaving) startSetupAnim()
+            startSetupAnim()
           }}
         />
       )}

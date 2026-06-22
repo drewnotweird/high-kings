@@ -303,7 +303,7 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
     }
     const { boardSize } = getBoardConfig(rules)
     const boardOffset = (boardSize - 1) / 2
-    const removed = prevPiecesRef.current.filter(p => !pieces.find(pp => pp.id === p.id))
+    const removed = !powerSaving ? prevPiecesRef.current.filter(p => !pieces.find(pp => pp.id === p.id)) : []
     if (removed.length > 0) {
       setDustClouds(prev => [
         ...prev,

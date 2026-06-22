@@ -30,7 +30,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
   const landTime = useRef(0)
   const menuOpacity = useRef(1)
 
-  const { rules } = useGameStore()
+  const { rules, powerSaving } = useGameStore()
   const boardOffset = (getBoardConfig(rules).boardSize - 1) / 2
   const x = piece.col - boardOffset
   const z = piece.row - boardOffset
@@ -46,8 +46,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
     const dx = x - visualX.current
     const dz = z - visualZ.current
     const dist = Math.sqrt(dx * dx + dz * dz)
-    // Only arc when moving during live gameplay (not intro drop)
-    if (dist > 0.05 && landed.current) {
+    if (!powerSaving && dist > 0.05 && landed.current) {
       moveArc.current = Math.min(dist * 0.22, 0.55)
     }
     targetX.current = x
@@ -100,36 +99,49 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
 
     // Intro drop (runs once before piece has landed)
     if (!landed.current) {
-      if (t < 0 || t < dropDelay) {
-        meshRef.current.visible = false
-        meshRef.current.position.y = REST_Y
-        meshRef.current.rotation.y = Math.PI + Math.PI * 2
-        return
-      }
-      menuOpacity.current = 1
-      if (materialRef.current) materialRef.current.opacity = 1
-      meshRef.current.visible = true
-      const progress = Math.min((t - dropDelay) / JUMP_DURATION, 1)
-      meshRef.current.position.y = REST_Y + JUMP_PEAK * 4 * progress * (1 - progress)
-      const rotEased = 1 - Math.pow(1 - progress, 2)
-      meshRef.current.rotation.y = Math.PI + Math.PI * 0.5 * (1 - rotEased)
-      if (progress >= 1) {
+      if (powerSaving) {
+        // Skip drop animation — place instantly
         landed.current = true
         landTime.current = Date.now()
+        meshRef.current.visible = true
+        meshRef.current.position.y = REST_Y
+        meshRef.current.rotation.y = Math.PI
+        if (materialRef.current) materialRef.current.opacity = 1
+      } else {
+        if (t < 0 || t < dropDelay) {
+          meshRef.current.visible = false
+          meshRef.current.position.y = REST_Y
+          meshRef.current.rotation.y = Math.PI + Math.PI * 2
+          return
+        }
+        menuOpacity.current = 1
+        if (materialRef.current) materialRef.current.opacity = 1
+        meshRef.current.visible = true
+        const progress = Math.min((t - dropDelay) / JUMP_DURATION, 1)
+        meshRef.current.position.y = REST_Y + JUMP_PEAK * 4 * progress * (1 - progress)
+        const rotEased = 1 - Math.pow(1 - progress, 2)
+        meshRef.current.rotation.y = Math.PI + Math.PI * 0.5 * (1 - rotEased)
+        if (progress >= 1) {
+          landed.current = true
+          landTime.current = Date.now()
+        }
+        return
       }
-      return
     }
 
-    // Smooth horizontal movement toward target
-    const moveSpeed = 9
-    const lerpT = 1 - Math.exp(-moveSpeed * delta)
-    visualX.current += (targetX.current - visualX.current) * lerpT
-    visualZ.current += (targetZ.current - visualZ.current) * lerpT
+    // Horizontal movement — smooth lerp normally, instant snap in power-saving
+    if (powerSaving) {
+      visualX.current = targetX.current
+      visualZ.current = targetZ.current
+    } else {
+      const moveSpeed = 9
+      const lerpT = 1 - Math.exp(-moveSpeed * delta)
+      visualX.current += (targetX.current - visualX.current) * lerpT
+      visualZ.current += (targetZ.current - visualZ.current) * lerpT
+      moveArc.current *= Math.exp(-5.5 * delta)
+    }
     meshRef.current.position.x = visualX.current
     meshRef.current.position.z = visualZ.current
-
-    // Arc decays quickly — gives a lift-and-glide feel during travel
-    moveArc.current *= Math.exp(-5.5 * delta)
 
     // Menu fade — lerp opacity based on phase
     const targetOpacity = (menuPhase === 'hiding' || menuPhase === 'hidden') ? 0 : 1
