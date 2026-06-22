@@ -146,8 +146,8 @@ function AnimatedBoard({ children, menuOpen, snapFlipRef }: {
     }
 
     const target = menuOpen ? 1 : 0
-    if (snapFlipRef.current) {
-      flipProgress.current = target
+    if (snapFlipRef.current && menuOpen) {
+      flipProgress.current = 1
       snapFlipRef.current = false
     } else {
       flipProgress.current += (target - flipProgress.current) * Math.min(delta * 4, 1)
@@ -197,23 +197,21 @@ function CameraLock({ locked }: { locked: boolean }) {
     const usableH = Math.max(size.height - 280, 100)
     const hVert = (11 * size.height) / (2 * tan * usableH)
     const h = Math.max(22, hHoriz, hVert)
-    // Shift target 30 screen-px below centre → world Z offset
-    const worldUnitsPerPx = (2 * h * tan) / size.height
-    const zOffset = 30 * worldUnitsPerPx
-    return { pos: new Vector3(0, h, 0.01), target: new Vector3(0, 0, zOffset) }
+    return new Vector3(0, h, 0.01)
   }, [size.width, size.height])
 
-  const lockedTarget = useMemo(() => new Vector3(), [])
+  const prevLocked = useRef(false)
 
   useFrame(({ camera, controls }, delta) => {
-    if (!locked) return
-    const speed = Math.min(delta * 5, 1)
-    camera.position.lerp(topDownCam.pos, speed)
-    lockedTarget.copy(topDownCam.target)
+    if (!locked) { prevLocked.current = false; return }
+    const firstFrame = !prevLocked.current
+    prevLocked.current = true
+    const speed = firstFrame ? 1 : Math.min(delta * 5, 1)
+    camera.position.lerp(topDownCam, speed)
     if (controls) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const c = controls as any
-      c.target.lerp(lockedTarget, speed)
+      c.target.lerp(DEFAULT_CAM_TARGET, speed)
       c.update()
     }
   })

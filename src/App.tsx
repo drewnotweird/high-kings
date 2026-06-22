@@ -613,10 +613,10 @@ function App() {
       </div>
 
       {introStarted && <>
-        <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ position: 'absolute', top: 24, left: 16, zIndex: 15, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.3s ease', pointerEvents: (menuOpen || setupAnimating) ? 'none' : undefined }}>
+        <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ position: 'absolute', top: 24, left: 16, zIndex: 15, animation: 'sceneFadeIn 2s ease-out', opacity: menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (menuOpen || setupAnimating) ? 'none' : undefined }}>
           <HintButton onClick={() => {}} />
         </div>
-        <div className="ui-button-wrapper ui-button-wrapper--menu" style={{ position: 'absolute', top: 24, right: 16, zIndex: 15, animation: 'sceneFadeIn 2s ease-out forwards', opacity: setupAnimating ? 0.2 : 1, transition: 'opacity 0.3s ease', pointerEvents: setupAnimating ? 'none' : undefined }}>
+        <div className="ui-button-wrapper ui-button-wrapper--menu" style={{ position: 'absolute', top: 24, right: 16, zIndex: 15, animation: 'sceneFadeIn 2s ease-out', opacity: setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: setupAnimating ? 'none' : undefined }}>
           <MenuButton isOpen={menuOpen} onClick={() => setMenuOpen(o => !o)} />
         </div>
       </>}
