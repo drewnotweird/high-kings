@@ -121,7 +121,7 @@ export function Board({ theme }: BoardProps) {
         else if (defenderSet.has(key)) overlay = 'defender'
         else if (attackerSet.has(key)) overlay = 'attacker'
 
-        result.push({ row, col, x, z, variantIdx, overlay, isCornerTile: isCorner(row, col) })
+        result.push({ row, col, x, z, variantIdx, overlay, isCornerTile: isCorner(row, col) || isThrone(row, col) })
       }
     }
     return result
