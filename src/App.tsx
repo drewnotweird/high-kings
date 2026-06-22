@@ -6,6 +6,9 @@ import { useGameStore } from './store/gameStore'
 import type { PlayerSide, Difficulty, Rules } from './store/gameStore'
 
 const fireCSS = `
+body, button, input, select {
+  font-family: 'MedievalSharp', serif;
+}
 @keyframes sceneFadeIn {
   0%   { opacity: 0; }
   100% { opacity: 1; }
@@ -177,10 +180,6 @@ const fireCSS = `
   width: min(320px, calc(100vw - 32px));
   flex-shrink: 0;
   filter: drop-shadow(0 16px 48px rgba(0,0,0,0.85));
-  animation: creditsUnroll 1.3s cubic-bezier(0.15,0.7,0.25,1) 0.25s both;
-}
-.credits-scroll--closing {
-  animation: creditsRollUp 0.65s cubic-bezier(0.7,0,0.9,0.4) forwards;
 }
 @keyframes creditsUnroll {
   from { clip-path: inset(0 0 100% 0); }
@@ -191,37 +190,28 @@ const fireCSS = `
   to   { clip-path: inset(0 0 100% 0); }
 }
 .credits-scroll__top-roll {
-  height: 28px;
-  background: linear-gradient(180deg,
-    #3d2808 0%, #6b4818 8%, #a87830 22%,
-    #d4a848 36%, #f0d070 50%,
-    #d4a848 64%, #a87830 78%, #6b4818 92%, #3d2808 100%
-  );
+  position: relative;
+  z-index: 2;
+  height: 50px;
+  background: #4488ff;
   border-radius: 4px 4px 3px 3px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.7), 0 2px 5px rgba(0,0,0,0.5);
 }
 .credits-scroll__parchment {
   position: relative;
-  background:
-    radial-gradient(ellipse 110px 75px at 15% 10%, rgba(100,52,6,0.22) 0%, transparent 70%),
-    radial-gradient(ellipse 75px 95px at 85% 52%, rgba(78,38,4,0.17) 0%, transparent 70%),
-    radial-gradient(ellipse 130px 55px at 52% 90%, rgba(108,58,5,0.15) 0%, transparent 70%),
-    radial-gradient(ellipse 55px 85px at 6%  72%, rgba(72,35,4,0.13) 0%, transparent 70%),
-    radial-gradient(ellipse 85px 65px at 94% 18%, rgba(92,46,4,0.17) 0%, transparent 70%),
-    linear-gradient(168deg,
-      #b88c2a 0%, #cc9e38 12%, #e0b84e 28%,
-      #eecb64 45%, #f2d878 55%,
-      #e8c460 70%, #d4a840 85%, #bc8c24 100%
-    );
-  padding: 26px 26px 50px;
-  box-shadow:
-    inset 6px 0 20px rgba(50,22,0,0.18),
-    inset -6px 0 20px rgba(50,22,0,0.18),
-    inset 0 10px 24px rgba(50,22,0,0.10);
+  z-index: 1;
+  margin-top: -25px;
+  background: #f0e060;
+  padding: 50px 26px 50px;
+  animation: creditsUnroll 1.3s cubic-bezier(0.15,0.7,0.25,1) 0.25s both;
+  transform-origin: top center;
+}
+.credits-scroll--closing .credits-scroll__parchment {
+  animation: creditsRollUp 0.65s cubic-bezier(0.7,0,0.9,0.4) forwards;
 }
 .credits-scroll__content {
   opacity: 0;
-  animation: creditsContentIn 0.5s ease-out 1.35s forwards;
+  animation: creditsContentIn 0.5s ease-out 1.4s forwards;
 }
 @keyframes creditsContentIn { from { opacity:0 } to { opacity:1 } }
 .credits-scroll__scroll-title {
@@ -250,11 +240,11 @@ const fireCSS = `
   margin: 0 0 18px;
 }
 .credits-scroll__body-text {
+  font-family: 'MedievalSharp', serif;
   font-size: 13px;
   line-height: 1.85;
   color: #3d2008;
   margin: 0 0 22px;
-  font-style: italic;
   text-align: center;
 }
 .credits-scroll__names {
@@ -265,11 +255,10 @@ const fireCSS = `
   margin: 0 0 26px;
 }
 .credits-scroll__name {
+  font-family: 'MedievalSharp', serif;
   font-size: 12px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
+  letter-spacing: 2px;
   color: #2e1606;
-  font-weight: 600;
 }
 .credits-scroll__close-btn {
   display: block;
@@ -277,8 +266,9 @@ const fireCSS = `
   background: transparent;
   border: 1px solid rgba(60,28,0,0.4);
   color: #3d2008;
+  font-family: 'MedievalSharp', serif;
   font-size: 10px;
-  letter-spacing: 2.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
   padding: 8px 22px;
   border-radius: 1px;
@@ -513,9 +503,6 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
         <div className="credits-scroll__top-roll" />
         <div className="credits-scroll__parchment">
           <div className="credits-scroll__content">
-            <h2 className="credits-scroll__scroll-title">High Kings</h2>
-            <p className="credits-scroll__era">circa 2010</p>
-            <hr className="credits-scroll__rule" />
             <p className="credits-scroll__body-text">
               High Kings was originally created around 2010 by three friends who wanted to bring an ancient Viking strategy game to life. We had an enormous amount of fun building it together, and this site lives on its memory.
             </p>
@@ -527,7 +514,7 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
             <button className="credits-scroll__close-btn" onClick={handleClose}>Roll Up</button>
           </div>
           <svg className="credits-scroll__torn" viewBox="0 0 320 40" preserveAspectRatio="none" aria-hidden="true">
-            <path d={TORN_EDGE_PATH} fill="#bc8c24" />
+            <path d={TORN_EDGE_PATH} fill="#f0e060" />
           </svg>
         </div>
       </div>
