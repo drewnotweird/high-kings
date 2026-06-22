@@ -1,4 +1,4 @@
-import { useRef, Suspense, useState, useEffect, useContext, useCallback } from 'react'
+import { useRef, Suspense, useState, useEffect, useContext } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Environment, useProgress } from '@react-three/drei'
 import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group, Vector3 } from 'three'
@@ -9,11 +9,12 @@ import { themes } from '../../lib/themes'
 import { IntroStartContext } from '../../contexts/intro'
 
 const BOARD_ARRIVE = 1.2
+const PIECE_STAGGER = 0.07
 const BOARD_DURATION = 1.1
 const PIECE_ANIM_DURATION = 0.36
 const BOARD_START_Y = -20
 
-function FadingLights() {
+function FadingLights({ menuOpen }: { menuOpen: boolean }) {
   const introStartMs = useContext(IntroStartContext)
   const ambientRef = useRef<AmbientLight>(null)
   const moonRef = useRef<DirectionalLight>(null)
@@ -21,18 +22,26 @@ function FadingLights() {
   const frontRef = useRef<DirectionalLight>(null)
   const bounceRef = useRef<PointLight>(null)
   const backRef = useRef<PointLight>(null)
+  const menuScale = useRef(1)
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
     const f = (start: number, dur: number) => 1 - Math.pow(1 - Math.min(Math.max((t - start) / dur, 0), 1), 2)
 
+    if (menuOpen) {
+      menuScale.current = 0
+    } else {
+      menuScale.current += (1 - menuScale.current) * Math.min(delta * 4, 1)
+    }
+    const ms = menuScale.current
+
     if (ambientRef.current)  ambientRef.current.intensity  = 0.02 * f(0.0, 0.5)
     if (moonRef.current)     moonRef.current.intensity     = 0.25 * f(0.3, 0.5)
-    if (spotRef.current)     spotRef.current.intensity     = 20   * f(0.6, 0.5)
-    if (frontRef.current)    frontRef.current.intensity    = 0.2  * f(0.9, 0.4)
+    if (spotRef.current)     spotRef.current.intensity     = 20   * f(0.6, 0.5) * ms
+    if (frontRef.current)    frontRef.current.intensity    = 0.2  * f(0.9, 0.4) * ms
 
     const late = f(BOARD_DURATION, 1.2)
-    if (bounceRef.current)   bounceRef.current.intensity   = 5 * late
+    if (bounceRef.current)   bounceRef.current.intensity   = 5 * late * ms
     if (backRef.current)     backRef.current.intensity     = 3 * late
   })
 
@@ -134,7 +143,6 @@ function AnimatedBoard({ children, menuOpen }: { children: React.ReactNode; menu
       return
     }
 
-    // Menu flip
     const target = menuOpen ? 1 : 0
     flipProgress.current += (target - flipProgress.current) * Math.min(delta * 3, 1)
     groupRef.current.rotation.x = flipProgress.current * -Math.PI
@@ -166,47 +174,63 @@ function CameraReset({ menuOpen }: { menuOpen: boolean }) {
 
 const HIDE_DURATION_MS = Math.round(PIECE_ANIM_DURATION * 1000) + 50
 
-function SceneInner({ menuOpen }: { menuOpen: boolean }) {
+interface SceneInnerProps {
+  menuOpen: boolean
+  dropStartMs: number | null
+  dropKey: number
+}
+
+function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
   const { pieces, selectedId, theme: themeName, selectPiece } = useGameStore()
   const theme = themes[themeName]
   const [menuPhase, setMenuPhase] = useState<MenuPhase>('idle')
   const everOpened = useRef(false)
 
-  // Suppress exhaustive-deps: tryStartFade intentionally omitted (stable pattern)
-  const schedulePhase = useCallback((phase: MenuPhase, delayMs: number) => {
-    const t = setTimeout(() => setMenuPhase(phase), delayMs)
-    return () => clearTimeout(t)
-  }, [])
-
   useEffect(() => {
     if (menuOpen) {
       everOpened.current = true
       setMenuPhase('hiding')
-      return schedulePhase('hidden', HIDE_DURATION_MS)
+      const t = setTimeout(() => setMenuPhase('hidden'), HIDE_DURATION_MS)
+      return () => clearTimeout(t)
     } else if (everOpened.current) {
       setMenuPhase('appearing')
-      return schedulePhase('idle', HIDE_DURATION_MS)
+      const t = setTimeout(() => setMenuPhase('idle'), HIDE_DURATION_MS)
+      return () => clearTimeout(t)
     }
   }, [menuOpen])
 
-  const delayMap = new Map(pieces.map(p => [p.id, BOARD_ARRIVE]))
+  // On new game (dropKey change): reset menu phase so pieces do fresh intro drop
+  useEffect(() => {
+    if (dropKey > 0) {
+      setMenuPhase('idle')
+      everOpened.current = false
+    }
+  }, [dropKey])
+
+  const ordered = [
+    ...pieces.filter(p => p.type === 'king'),
+    ...pieces.filter(p => p.type === 'defender'),
+    ...pieces.filter(p => p.type === 'attacker'),
+  ]
+  const delayMap = new Map(ordered.map((p, i) => [p.id, BOARD_ARRIVE + i * PIECE_STAGGER]))
 
   return (
     <>
       <fog attach="fog" args={["#0a0800", 28, 55]} />
       <Environment preset="night" environmentIntensity={0.0} />
-      <FadingLights />
+      <FadingLights menuOpen={menuOpen} />
       <FireLight menuOpen={menuOpen} />
       <AnimatedBoard menuOpen={menuOpen}>
         <Board theme={theme} />
       </AnimatedBoard>
       {pieces.map((piece) => (
         <Piece
-          key={piece.id}
+          key={`${piece.id}-${dropKey}`}
           piece={piece}
           theme={theme}
           isSelected={selectedId === piece.id}
           dropDelay={delayMap.get(piece.id) ?? BOARD_ARRIVE}
+          dropStartMs={dropStartMs}
           menuPhase={menuPhase}
           onClick={() => selectPiece(selectedId === piece.id ? null : piece.id)}
         />
@@ -246,7 +270,6 @@ function LoadingOverlay({ onDone }: { onDone: () => void }) {
     }
   }
 
-  // Minimum 1s hold
   useEffect(() => {
     const t = setTimeout(() => {
       minHoldMet.current = true
@@ -255,7 +278,6 @@ function LoadingOverlay({ onDone }: { onDone: () => void }) {
     return () => clearTimeout(t)
   }, [])
 
-  // Wait for textures
   useEffect(() => {
     if (!active && phase === 'loading') {
       loadingDone.current = true
@@ -288,8 +310,25 @@ function LoadingOverlay({ onDone }: { onDone: () => void }) {
   )
 }
 
-export function Scene({ onIntroStart, menuOpen }: { onIntroStart?: () => void; menuOpen?: boolean }) {
+export function Scene({ onIntroStart, menuOpen, onNewGame }: {
+  onIntroStart?: () => void
+  menuOpen?: boolean
+  onNewGame?: () => void
+}) {
   const [introStartMs, setIntroStartMs] = useState<number | null>(null)
+  const [dropStartMs, setDropStartMs] = useState<number | null>(null)
+  const [dropKey, setDropKey] = useState(0)
+  const { gameKey } = useGameStore()
+  const prevGameKey = useRef(0)
+
+  useEffect(() => {
+    if (gameKey > prevGameKey.current) {
+      prevGameKey.current = gameKey
+      setDropStartMs(Date.now())
+      setDropKey(k => k + 1)
+      onNewGame?.()
+    }
+  }, [gameKey])
 
   return (
     <IntroStartContext.Provider value={introStartMs}>
@@ -300,10 +339,15 @@ export function Scene({ onIntroStart, menuOpen }: { onIntroStart?: () => void; m
           gl={{ antialias: true, alpha: true }}
         >
           <Suspense fallback={null}>
-            <SceneInner menuOpen={!!menuOpen} />
+            <SceneInner menuOpen={!!menuOpen} dropStartMs={dropStartMs} dropKey={dropKey} />
           </Suspense>
         </Canvas>
-        <LoadingOverlay onDone={() => { setIntroStartMs(Date.now()); onIntroStart?.() }} />
+        <LoadingOverlay onDone={() => {
+          const now = Date.now()
+          setIntroStartMs(now)
+          setDropStartMs(now)
+          onIntroStart?.()
+        }} />
       </div>
     </IntroStartContext.Provider>
   )

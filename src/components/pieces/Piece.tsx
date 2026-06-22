@@ -1,10 +1,9 @@
-import { useRef, useMemo, useContext } from 'react'
+import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import { Mesh, Vector2 } from 'three'
 import type { Piece as PieceData } from '../../game/hnefatafl'
 import type { ThemeConfig } from '../../lib/themes'
-import { IntroStartContext } from '../../contexts/intro'
 
 const BOARD_OFFSET = 5
 const W = 1.35
@@ -19,13 +18,13 @@ interface PieceProps {
   theme: ThemeConfig
   isSelected: boolean
   dropDelay: number
+  dropStartMs: number | null
   menuPhase: MenuPhase
   onClick: () => void
 }
 
-export function Piece({ piece, theme: _theme, isSelected, dropDelay, menuPhase, onClick }: PieceProps) {
+export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs, menuPhase, onClick }: PieceProps) {
   const meshRef = useRef<Mesh>(null)
-  const introStartMs = useContext(IntroStartContext)
   const landed = useRef(false)
   const landTime = useRef(0)
   const prevMenuPhase = useRef<MenuPhase>('idle')
@@ -72,7 +71,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, menuPhase, 
   useFrame((_, delta) => {
     if (!meshRef.current) return
 
-    const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
+    const t = dropStartMs ? (Date.now() - dropStartMs) / 1000 : -1
 
     // Intro drop (runs once before piece has landed)
     if (!landed.current) {

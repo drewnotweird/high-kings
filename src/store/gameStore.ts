@@ -11,8 +11,10 @@ interface GameStore {
   theme: Theme
   currentTurn: PlayerSide
   scores: Record<PlayerSide, number>
+  gameKey: number
   setTheme: (theme: Theme) => void
   selectPiece: (id: string | null) => void
+  resetGame: () => void
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -21,6 +23,14 @@ export const useGameStore = create<GameStore>((set) => ({
   theme: 'natural',
   currentTurn: 'defender',
   scores: { attacker: 0, defender: 0 },
+  gameKey: 0,
   setTheme: (theme) => set({ theme }),
   selectPiece: (id) => set({ selectedId: id }),
+  resetGame: () => set((s) => ({
+    pieces: createInitialPieces(),
+    selectedId: null,
+    currentTurn: 'defender',
+    scores: { attacker: 0, defender: 0 },
+    gameKey: s.gameKey + 1,
+  })),
 }))

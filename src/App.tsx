@@ -94,19 +94,6 @@ const fireCSS = `
   text-align: center;
 }
 .menu-overlay__item:hover { border-color: rgba(200,160,40,0.9); background: rgba(30,15,0,0.9); }
-.menu-overlay__close {
-  background: transparent;
-  border: none;
-  color: #8a7a5a;
-  font-size: 12px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  cursor: pointer;
-  padding: 8px;
-  font-family: inherit;
-  margin-top: 8px;
-}
-.menu-overlay__close:hover { color: #e8d8b8; }
 @media (min-width: 1024px) {
   .score-panel__inner {
     flex-direction: column !important;
@@ -237,13 +224,18 @@ function MenuButton({ onClick, isOpen }: { onClick: () => void; isOpen: boolean 
   )
 }
 
-function MenuOverlay({ isOpen, isVisible, onClose }: { isOpen: boolean; isVisible: boolean; onClose: () => void }) {
+function MenuOverlay({ isOpen, isVisible, onResume, onNewGame }: {
+  isOpen: boolean
+  isVisible: boolean
+  onResume: () => void
+  onNewGame: () => void
+}) {
   if (!isOpen) return null
   return (
     <div className={`menu-overlay${isVisible ? ' menu-overlay--visible' : ''}`} style={{ opacity: isVisible ? 1 : 0 }}>
-      <button className="menu-overlay__item">New Game</button>
+      <button className="menu-overlay__item" onClick={onResume}>Resume Game</button>
+      <button className="menu-overlay__item" onClick={onNewGame}>New Game</button>
       <button className="menu-overlay__item">How to Play</button>
-      <button className="menu-overlay__close" onClick={onClose}>✕ Close Menu</button>
     </div>
   )
 }
@@ -290,7 +282,7 @@ function App() {
   const [introStarted, setIntroStarted] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuVisible, setMenuVisible] = useState(false)
-  const { currentTurn, scores } = useGameStore()
+  const { currentTurn, scores, resetGame } = useGameStore()
 
   useEffect(() => {
     if (menuOpen) {
@@ -368,8 +360,17 @@ function App() {
       ))}
 
       <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
-        <Scene onIntroStart={() => setIntroStarted(true)} menuOpen={menuOpen} />
-        <MenuOverlay isOpen={menuOpen} isVisible={menuVisible} onClose={() => setMenuOpen(false)} />
+        <Scene
+          onIntroStart={() => setIntroStarted(true)}
+          menuOpen={menuOpen}
+          onNewGame={() => setMenuOpen(false)}
+        />
+        <MenuOverlay
+          isOpen={menuOpen}
+          isVisible={menuVisible}
+          onResume={() => setMenuOpen(false)}
+          onNewGame={() => resetGame()}
+        />
       </div>
 
       {/* Score panels */}
