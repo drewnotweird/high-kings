@@ -115,6 +115,21 @@ body, button, input, select {
   box-sizing: border-box;
 }
 .menu-overlay__item:hover { border-color: rgba(200,160,40,0.9); background: rgba(30,15,0,0.9); }
+.settings-panels {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+@media (min-width: 600px) {
+  .settings-panels {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .settings-panels .settings-panel {
+    flex: 1;
+  }
+}
 .settings-panel {
   width: 100%;
   background: rgba(0,0,0,0.88);
@@ -604,49 +619,51 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
           </div>
         ) : (
           <div className="menu-overlay__screen">
-            <div className="settings-panel">
-              <div className="settings-row">
-                <span className="settings-row__label">Power Saving</span>
-                <Toggle on={draft.powerSaving} onClick={() => setDraft(d => ({ ...d, powerSaving: !d.powerSaving, cameraLocked: !d.powerSaving ? true : d.cameraLocked }))} />
+            <div className="settings-panels">
+              <div className="settings-panel">
+                <div className="settings-row">
+                  <span className="settings-row__label">Power Saving</span>
+                  <Toggle on={draft.powerSaving} onClick={() => setDraft(d => ({ ...d, powerSaving: !d.powerSaving, cameraLocked: !d.powerSaving ? true : d.cameraLocked }))} />
+                </div>
+                <div className="settings-row">
+                  <span className="settings-row__label">View</span>
+                  <Cycler<'Free' | 'Top-down'>
+                    options={['Free', 'Top-down']}
+                    value={draft.powerSaving ? 'Top-down' : draft.cameraLocked ? 'Top-down' : 'Free'}
+                    onChange={v => {
+                      if (v === 'Top-down') {
+                        setDraft(d => ({ ...d, cameraLocked: true }))
+                      } else {
+                        setDraft(d => ({ ...d, cameraLocked: false, powerSaving: false }))
+                      }
+                    }}
+                  />
+                </div>
+                <div className="settings-row">
+                  <button className="menu-overlay__item" onClick={handleResume}>Resume Game</button>
+                </div>
               </div>
-              <div className="settings-row">
-                <span className="settings-row__label">View</span>
-                <Cycler<'Free' | 'Top-down'>
-                  options={['Free', 'Top-down']}
-                  value={draft.powerSaving ? 'Top-down' : draft.cameraLocked ? 'Top-down' : 'Free'}
-                  onChange={v => {
-                    if (v === 'Top-down') {
-                      setDraft(d => ({ ...d, cameraLocked: true }))
-                    } else {
-                      setDraft(d => ({ ...d, cameraLocked: false, powerSaving: false }))
-                    }
-                  }}
-                />
-              </div>
-              <div className="settings-row">
-                <button className="menu-overlay__item" onClick={handleResume}>Resume Game</button>
-              </div>
-            </div>
 
-            <div className="settings-panel">
-              <div className="settings-row">
-                <span className="settings-row__label">Difficulty</span>
-                <Cycler<Difficulty>
-                  options={['easy', 'medium', 'hard']}
-                  value={draft.difficulty}
-                  onChange={v => setDraft(d => ({ ...d, difficulty: v }))}
-                />
-              </div>
-              <div className="settings-row">
-                <span className="settings-row__label">Rules</span>
-                <Cycler<Rules>
-                  options={['Tablut', 'Copenhagen', 'Tawlbwrdd', 'Brandub']}
-                  value={draft.rules}
-                  onChange={v => setDraft(d => ({ ...d, rules: v }))}
-                />
-              </div>
-              <div className="settings-row">
-                <button className="menu-overlay__item" onClick={handleRestart}>Restart Game</button>
+              <div className="settings-panel">
+                <div className="settings-row">
+                  <span className="settings-row__label">Difficulty</span>
+                  <Cycler<Difficulty>
+                    options={['easy', 'medium', 'hard']}
+                    value={draft.difficulty}
+                    onChange={v => setDraft(d => ({ ...d, difficulty: v }))}
+                  />
+                </div>
+                <div className="settings-row">
+                  <span className="settings-row__label">Rules</span>
+                  <Cycler<Rules>
+                    options={['Tablut', 'Copenhagen', 'Tawlbwrdd', 'Brandub']}
+                    value={draft.rules}
+                    onChange={v => setDraft(d => ({ ...d, rules: v }))}
+                  />
+                </div>
+                <div className="settings-row">
+                  <button className="menu-overlay__item" onClick={handleRestart}>Restart Game</button>
+                </div>
               </div>
             </div>
 
