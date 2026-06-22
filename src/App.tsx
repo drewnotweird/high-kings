@@ -553,11 +553,32 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
   const [screensOpacity, setScreensOpacity] = useState(1)
   const { cameraLocked, difficulty, rules, powerSaving, setSetting } = useGameStore()
 
-  useEffect(() => { if (!isOpen) setScreen('main') }, [isOpen])
+  // Local draft — changes only committed on Resume/Restart
+  const [draft, setDraft] = useState({ powerSaving, cameraLocked, difficulty, rules })
+
+  // Reset draft and screen when menu opens
+  useEffect(() => {
+    if (isOpen) setDraft({ powerSaving, cameraLocked, difficulty, rules })
+    else setScreen('main')
+  }, [isOpen])
 
   const switchScreen = (next: 'main' | 'settings') => {
     setScreensOpacity(0)
     setTimeout(() => { setScreen(next); setScreensOpacity(1) }, 250)
+  }
+
+  const handleResume = () => {
+    setSetting('powerSaving', draft.powerSaving)
+    setSetting('cameraLocked', draft.cameraLocked)
+    onResume()
+  }
+
+  const handleRestart = () => {
+    setSetting('powerSaving', draft.powerSaving)
+    setSetting('cameraLocked', draft.cameraLocked)
+    setSetting('difficulty', draft.difficulty)
+    setSetting('rules', draft.rules)
+    onNewGame()
   }
 
   if (!isOpen) return null
@@ -587,26 +608,25 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
           <div className="settings-panel">
             <div className="settings-row">
               <span className="settings-row__label">Power Saving</span>
-              <Toggle on={powerSaving} onClick={() => setSetting('powerSaving', !powerSaving)} />
+              <Toggle on={draft.powerSaving} onClick={() => setDraft(d => ({ ...d, powerSaving: !d.powerSaving, cameraLocked: !d.powerSaving ? true : d.cameraLocked }))} />
             </div>
             <div className="settings-row">
               <span className="settings-row__label">View</span>
               <Chips<'Free' | 'Top-down'>
                 options={['Free', 'Top-down']}
-                value={powerSaving ? 'Top-down' : cameraLocked ? 'Top-down' : 'Free'}
+                value={draft.powerSaving ? 'Top-down' : draft.cameraLocked ? 'Top-down' : 'Free'}
                 onChange={v => {
                   if (v === 'Top-down') {
-                    setSetting('cameraLocked', true)
+                    setDraft(d => ({ ...d, cameraLocked: true }))
                   } else {
-                    setSetting('cameraLocked', false)
-                    setSetting('powerSaving', false)
+                    setDraft(d => ({ ...d, cameraLocked: false, powerSaving: false }))
                   }
                 }}
               />
             </div>
 
             <div className="settings-row">
-              <button className="menu-overlay__item" onClick={onResume}>Resume Game</button>
+              <button className="menu-overlay__item" onClick={handleResume}>Resume Game</button>
             </div>
           </div>
 
@@ -615,20 +635,20 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
               <span className="settings-row__label">Difficulty</span>
               <Chips<Difficulty>
                 options={['easy', 'medium', 'hard']}
-                value={difficulty}
-                onChange={v => setSetting('difficulty', v)}
+                value={draft.difficulty}
+                onChange={v => setDraft(d => ({ ...d, difficulty: v }))}
               />
             </div>
             <div className="settings-row">
               <span className="settings-row__label">Rules</span>
               <Chips<Rules>
                 options={['Copenhagen', 'Fetlar', 'Tablut', 'Historical']}
-                value={rules}
-                onChange={v => setSetting('rules', v)}
+                value={draft.rules}
+                onChange={v => setDraft(d => ({ ...d, rules: v }))}
               />
             </div>
             <div className="settings-row">
-              <button className="menu-overlay__item" onClick={onNewGame}>Restart Game</button>
+              <button className="menu-overlay__item" onClick={handleRestart}>Restart Game</button>
             </div>
           </div>
 
