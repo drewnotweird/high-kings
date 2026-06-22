@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
-import { Scene } from './components/board/Scene'
+import { useState, useEffect, useRef } from 'react'
+import { Scene, INTRO_DURATION_MS } from './components/board/Scene'
+import { Board2D } from './components/board/Board2D'
 import { ThemeSwitcher } from './components/ui/ThemeSwitcher'
 import { useGameStore } from './store/gameStore'
 import type { PlayerSide, Difficulty, Rules } from './store/gameStore'
@@ -366,7 +367,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame }: {
   onNewGame: () => void
 }) {
   const [screen, setScreen] = useState<'main' | 'settings'>('main')
-  const { musicEnabled, cameraLocked, difficulty, rules, setSetting } = useGameStore()
+  const { musicEnabled, cameraLocked, difficulty, rules, powerSaving, setSetting } = useGameStore()
 
   useEffect(() => { if (!isOpen) setScreen('main') }, [isOpen])
 
@@ -423,6 +424,10 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame }: {
                 onChange={v => setSetting('rules', v)}
               />
             </div>
+            <div className="settings-row">
+              <span className="settings-row__label">Power Saving</span>
+              <Toggle on={powerSaving} onClick={() => setSetting('powerSaving', !powerSaving)} />
+            </div>
           </div>
         </div>
 
@@ -471,96 +476,125 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
 
 function App() {
   const [introStarted, setIntroStarted] = useState(false)
+  const [setupAnimating, setSetupAnimating] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuVisible, setMenuVisible] = useState(false)
-  const { currentTurn, scores, resetGame } = useGameStore()
+  const { currentTurn, scores, resetGame, powerSaving } = useGameStore()
+  const setupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const startSetupAnim = () => {
+    if (setupTimerRef.current) clearTimeout(setupTimerRef.current)
+    setSetupAnimating(true)
+    setupTimerRef.current = setTimeout(() => setSetupAnimating(false), INTRO_DURATION_MS)
+  }
+
+  // In power-saving mode there's no 3D intro — show UI immediately
+  useEffect(() => {
+    if (powerSaving && !introStarted) setIntroStarted(true)
+  }, [powerSaving])
 
   useEffect(() => {
     if (menuOpen) {
-      const t = setTimeout(() => setMenuVisible(true), 500)
+      // Power-saving has no board-flip delay, so show menu instantly
+      const delay = powerSaving ? 0 : 500
+      const t = setTimeout(() => setMenuVisible(true), delay)
       return () => clearTimeout(t)
     } else {
       setMenuVisible(false)
     }
-  }, [menuOpen])
+  }, [menuOpen, powerSaving])
 
   return (
     <div className="relative w-full h-full" style={{ background: '#000' }}>
       <style>{fireCSS}</style>
 
-      {/* Steady dark base — only fades in once loader finishes */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: 'radial-gradient(ellipse at 50% 65%, #2a1200 0%, #0a0800 55%, #000 100%)', opacity: introStarted ? undefined : 0, animation: introStarted ? 'sceneFadeIn 2.5s ease-out forwards' : 'none' }} />
-      {/* Flickering layers wrapped so their container fades in */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: introStarted ? undefined : 0, animation: introStarted ? 'sceneFadeIn 2.5s ease-out forwards' : 'none' }}>
-        <div
-          style={{
-            position: 'absolute', inset: 0,
-            background: 'radial-gradient(ellipse at 50% 72%, #5a2400 0%, #1a0800 45%, transparent 70%)',
-            animation: 'fireFlicker 2.8s ease-in-out infinite',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute', inset: 0,
-            background: 'radial-gradient(ellipse at 46% 78%, #6b2000 0%, transparent 50%)',
-            animation: 'fireFlicker 1.9s ease-in-out infinite reverse',
-          }}
-        />
-      </div>
-
-      {/* Mist wisps — fade in container prevents snap-on */}
-      {introStarted && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0, animation: 'sceneFadeIn 3s ease-out forwards' }}>
-          {mists.map(m => (
-            <Mist
-              key={m.id}
-              style={{
-                left: m.left,
-                bottom: m.bottom,
-                width: m.width,
-                height: m.height,
-                ['--dur' as string]: m.dur,
-                ['--mx' as string]: m.mx,
-                ['--peak' as string]: m.peak,
-                animationDelay: m.delay,
-              }}
-            />
-          ))}
+      {!powerSaving && <>
+        {/* Steady dark base — only fades in once loader finishes */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: 'radial-gradient(ellipse at 50% 65%, #2a1200 0%, #0a0800 55%, #000 100%)', opacity: introStarted ? undefined : 0, animation: introStarted ? 'sceneFadeIn 2.5s ease-out forwards' : 'none' }} />
+        {/* Flickering layers wrapped so their container fades in */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: introStarted ? undefined : 0, animation: introStarted ? 'sceneFadeIn 2.5s ease-out forwards' : 'none' }}>
+          <div
+            style={{
+              position: 'absolute', inset: 0,
+              background: 'radial-gradient(ellipse at 50% 72%, #5a2400 0%, #1a0800 45%, transparent 70%)',
+              animation: 'fireFlicker 2.8s ease-in-out infinite',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute', inset: 0,
+              background: 'radial-gradient(ellipse at 46% 78%, #6b2000 0%, transparent 50%)',
+              animation: 'fireFlicker 1.9s ease-in-out infinite reverse',
+            }}
+          />
         </div>
+
+        {/* Mist wisps — fade in container prevents snap-on */}
+        {introStarted && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 0, animation: 'sceneFadeIn 3s ease-out forwards' }}>
+            {mists.map(m => (
+              <Mist
+                key={m.id}
+                style={{
+                  left: m.left,
+                  bottom: m.bottom,
+                  width: m.width,
+                  height: m.height,
+                  ['--dur' as string]: m.dur,
+                  ['--mx' as string]: m.mx,
+                  ['--peak' as string]: m.peak,
+                  animationDelay: m.delay,
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Ember particles — only mount after intro starts */}
+        {introStarted && embers.map(e => (
+          <Ember
+            key={e.id}
+            variant={e.variant}
+            style={{
+              left: e.left,
+              bottom: e.bottom,
+              ['--dur' as string]: e.dur,
+              ['--rise' as string]: e.rise,
+              ['--dx1' as string]: e.dx1,
+              ['--dx2' as string]: e.dx2,
+              ['--dx3' as string]: e.dx3,
+              ['--a1' as string]: e.a1,
+              ['--a2' as string]: e.a2,
+              ['--a3' as string]: e.a3,
+              animationDelay: e.delay,
+            }}
+          />
+        ))}
+      </>}
+
+      {/* Power-saving: simple dark static background */}
+      {powerSaving && (
+        <div className="board2d-bg" style={{ position: 'absolute', inset: 0, zIndex: 0, background: '#0e0c08' }} />
       )}
 
-      {/* Ember particles — only mount after intro starts */}
-      {introStarted && embers.map(e => (
-        <Ember
-          key={e.id}
-          variant={e.variant}
-          style={{
-            left: e.left,
-            bottom: e.bottom,
-            ['--dur' as string]: e.dur,
-            ['--rise' as string]: e.rise,
-            ['--dx1' as string]: e.dx1,
-            ['--dx2' as string]: e.dx2,
-            ['--dx3' as string]: e.dx3,
-            ['--a1' as string]: e.a1,
-            ['--a2' as string]: e.a2,
-            ['--a3' as string]: e.a3,
-            animationDelay: e.delay,
-          }}
-        />
-      ))}
-
       <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
-        <Scene
-          onIntroStart={() => setIntroStarted(true)}
-          menuOpen={menuOpen}
-          onNewGame={() => setMenuOpen(false)}
-        />
+        {/* Scene stays mounted always so piece state (landed refs) is preserved across mode switches */}
+        <div style={{ position: 'absolute', inset: 0, display: powerSaving ? 'none' : 'block' }}>
+          <Scene
+            onIntroStart={() => { setIntroStarted(true); startSetupAnim() }}
+            menuOpen={menuOpen && !powerSaving}
+            onNewGame={() => { setMenuOpen(false); startSetupAnim() }}
+          />
+        </div>
+        {powerSaving && <Board2D menuOpen={menuOpen} />}
         <MenuOverlay
           isOpen={menuOpen}
           isVisible={menuVisible}
           onResume={() => setMenuOpen(false)}
-          onNewGame={() => resetGame()}
+          onNewGame={() => {
+            resetGame()
+            if (powerSaving) setMenuOpen(false)
+          }}
         />
       </div>
 
@@ -579,10 +613,10 @@ function App() {
       </div>
 
       {introStarted && <>
-        <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ position: 'absolute', top: 24, left: 16, zIndex: 15, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
+        <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ position: 'absolute', top: 24, left: 16, zIndex: 15, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.3s ease', pointerEvents: (menuOpen || setupAnimating) ? 'none' : undefined }}>
           <HintButton onClick={() => {}} />
         </div>
-        <div className="ui-button-wrapper ui-button-wrapper--menu" style={{ position: 'absolute', top: 24, right: 16, zIndex: 15, animation: 'sceneFadeIn 2s ease-out forwards' }}>
+        <div className="ui-button-wrapper ui-button-wrapper--menu" style={{ position: 'absolute', top: 24, right: 16, zIndex: 15, animation: 'sceneFadeIn 2s ease-out forwards', opacity: setupAnimating ? 0.2 : 1, transition: 'opacity 0.3s ease', pointerEvents: setupAnimating ? 'none' : undefined }}>
           <MenuButton isOpen={menuOpen} onClick={() => setMenuOpen(o => !o)} />
         </div>
       </>}

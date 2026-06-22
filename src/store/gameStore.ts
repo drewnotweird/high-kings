@@ -19,10 +19,11 @@ interface GameStore {
   cameraLocked: boolean
   difficulty: Difficulty
   rules: Rules
+  powerSaving: boolean
   setTheme: (theme: Theme) => void
   selectPiece: (id: string | null) => void
   resetGame: () => void
-  setSetting: <K extends 'musicEnabled' | 'cameraLocked' | 'difficulty' | 'rules'>(
+  setSetting: <K extends 'musicEnabled' | 'cameraLocked' | 'difficulty' | 'rules' | 'powerSaving'>(
     key: K, value: GameStore[K]
   ) => void
 }
@@ -38,6 +39,7 @@ export const useGameStore = create<GameStore>((set) => ({
   cameraLocked: false,
   difficulty: 'medium',
   rules: 'Copenhagen',
+  powerSaving: false,
   setTheme: (theme) => set({ theme }),
   selectPiece: (id) => set({ selectedId: id }),
   resetGame: () => set((s) => ({

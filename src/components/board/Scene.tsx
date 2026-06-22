@@ -1,5 +1,5 @@
-import { useRef, Suspense, useState, useEffect, useContext } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { useRef, Suspense, useState, useEffect, useContext, useMemo } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Environment, useProgress } from '@react-three/drei'
 import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group, Vector3 } from 'three'
 import { Board } from './Board'
@@ -12,6 +12,10 @@ const BOARD_ARRIVE = 1.2
 const PIECE_STAGGER = 0.07
 const BOARD_DURATION = 1.1
 const PIECE_ANIM_DURATION = 0.36
+const NUM_PIECES = 37 // 1 king + 12 defenders + 24 attackers
+export const INTRO_DURATION_MS = Math.ceil(
+  (BOARD_ARRIVE + (NUM_PIECES - 1) * PIECE_STAGGER + PIECE_ANIM_DURATION) * 1000
+) + 300
 const BOARD_START_Y = -20
 
 function FadingLights({ menuOpen }: { menuOpen: boolean }) {
@@ -171,16 +175,35 @@ const HIDE_MS = Math.round(PIECE_ANIM_DURATION * 1000) + 50
 // How long to wait after board starts returning before restoring lights / showing pieces
 const BOARD_RETURN_MS = 1000
 
-const TOP_DOWN_CAM = new Vector3(0, 22, 0.01)
-
 function CameraLock({ locked }: { locked: boolean }) {
+  const { size } = useThree()
+  // Compute height so the board (≈12 world units wide) fits horizontally with margin
+  const topDownCam = useMemo(() => {
+    const aspect = size.width / size.height
+    const fovHalfRad = (45 * Math.PI) / 180 / 2
+    const tan = Math.tan(fovHalfRad)
+    // Horizontal fit (portrait screens): board ~12 world units wide
+    const hHoriz = 6.6 / (tan * aspect)
+    // Vertical fit: board must occupy ≤ (100vh - 480px) of screen height
+    const usableH = Math.max(size.height - 480, 100)
+    const hVert = (11 * size.height) / (2 * tan * usableH)
+    const h = Math.max(22, hHoriz, hVert)
+    // Shift target 30 screen-px below centre → world Z offset
+    const worldUnitsPerPx = (2 * h * tan) / size.height
+    const zOffset = 30 * worldUnitsPerPx
+    return { pos: new Vector3(0, h, 0.01), target: new Vector3(0, 0, zOffset) }
+  }, [size.width, size.height])
+
+  const lockedTarget = useMemo(() => new Vector3(), [])
+
   useFrame(({ camera, controls }) => {
     if (!locked) return
-    camera.position.lerp(TOP_DOWN_CAM, 0.06)
+    camera.position.lerp(topDownCam.pos, 0.06)
+    lockedTarget.copy(topDownCam.target)
     if (controls) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const c = controls as any
-      c.target.lerp(DEFAULT_CAM_TARGET, 0.06)
+      c.target.lerp(lockedTarget, 0.06)
       c.update()
     }
   })
@@ -281,8 +304,8 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
         enablePan={false}
         minDistance={6}
         maxDistance={32}
-        minPolarAngle={cameraLocked ? Math.PI * 0.01 : 0.3}
-        maxPolarAngle={cameraLocked ? Math.PI * 0.01 : Math.PI / 2.2}
+        minPolarAngle={(!menuOpen && cameraLocked) ? Math.PI * 0.01 : 0.3}
+        maxPolarAngle={(!menuOpen && cameraLocked) ? Math.PI * 0.01 : Math.PI / 2.2}
         target={[0, 0, 0]}
         dampingFactor={0.08}
         enableDamping
