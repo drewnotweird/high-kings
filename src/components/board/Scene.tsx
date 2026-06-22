@@ -92,17 +92,21 @@ function FadingLights() {
   )
 }
 
-function FireLight() {
+function FireLight({ menuOpen }: { menuOpen: boolean }) {
   const introStartMs = useContext(IntroStartContext)
   const ref = useRef<PointLight>(null)
-  useFrame(() => {
+  const menuScale = useRef(1)
+
+  useFrame((_, delta) => {
     if (!ref.current) return
     const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
     const fade = Math.min(Math.max((t - BOARD_DURATION) / 1.2, 0), 1)
     const e = 1 - Math.pow(1 - fade, 2)
     const now = Date.now() / 1000
     const flicker = 1 + 0.35 * Math.sin(now * 7.3) + 0.2 * Math.sin(now * 13.1) + 0.1 * Math.sin(now * 3.7)
-    ref.current.intensity = 6 * flicker * e
+    const target = menuOpen ? 0 : 1
+    menuScale.current += (target - menuScale.current) * Math.min(delta * 4, 1)
+    ref.current.intensity = 6 * flicker * e * menuScale.current
   })
   return <pointLight ref={ref} position={[0, -0.5, 3]} color="#ff6010" distance={20} decay={2} intensity={0} />
 }
@@ -163,7 +167,7 @@ function SceneInner({ menuOpen }: { menuOpen: boolean }) {
       <fog attach="fog" args={["#0a0800", 28, 55]} />
       <Environment preset="night" environmentIntensity={0.0} />
       <FadingLights />
-      <FireLight />
+      <FireLight menuOpen={menuOpen} />
       <AnimatedBoard menuOpen={menuOpen}>
         <Board theme={theme} />
       </AnimatedBoard>
