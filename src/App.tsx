@@ -260,7 +260,7 @@ body, button, input, select {
 }
 .credits-scroll__body-text {
   font-family: 'MedievalSharp', serif;
-  font-size: 14px;
+  font-size: 18px;
   line-height: 1.85;
   color: #3d2008;
   margin: 0 0 22px;
@@ -275,7 +275,7 @@ body, button, input, select {
 }
 .credits-scroll__name {
   font-family: 'MedievalSharp', serif;
-  font-size: 15px;
+  font-size: 16px;
   letter-spacing: 2px;
   color: #2e1606;
 }
