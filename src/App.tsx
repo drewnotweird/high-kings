@@ -588,77 +588,76 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
     <div className={`menu-overlay${isVisible ? ' menu-overlay--visible' : ''}`} style={{ opacity: isVisible ? 1 : 0 }}>
       <div className="menu-overlay__screens" style={{ opacity: screensOpacity, transition: 'opacity 0.25s ease' }}>
 
-        {/* Main screen */}
-        <div className={`menu-overlay__screen${screen !== 'main' ? ' menu-overlay__screen--hidden' : ''}`}>
-          <button className="menu-overlay__item" onClick={onResume}>Resume Game</button>
-          <button className="menu-overlay__item" onClick={() => switchScreen('settings')}>Settings</button>
-          <button className="menu-overlay__item" onClick={onNewGame}>New Game</button>
-          <button className="menu-overlay__item">How to Play</button>
-          <button className="menu-overlay__item" onClick={onCredits}>Credits</button>
-          <button className="ui-button ui-button--menu" onClick={onResume} style={{ marginTop: 16 }}>
-            <svg className="ui-button__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-              <line x1="4" y1="4" x2="16" y2="16" /><line x1="16" y1="4" x2="4" y2="16" />
-            </svg>
-            <span className="ui-button__label">Close</span>
-          </button>
-        </div>
-
-        {/* Settings screen */}
-        <div className={`menu-overlay__screen${screen !== 'settings' ? ' menu-overlay__screen--hidden' : ''}`}>
-          <div className="settings-panel">
-            <div className="settings-row">
-              <span className="settings-row__label">Power Saving</span>
-              <Toggle on={draft.powerSaving} onClick={() => setDraft(d => ({ ...d, powerSaving: !d.powerSaving, cameraLocked: !d.powerSaving ? true : d.cameraLocked }))} />
-            </div>
-            <div className="settings-row">
-              <span className="settings-row__label">View</span>
-              <Chips<'Free' | 'Top-down'>
-                options={['Free', 'Top-down']}
-                value={draft.powerSaving ? 'Top-down' : draft.cameraLocked ? 'Top-down' : 'Free'}
-                onChange={v => {
-                  if (v === 'Top-down') {
-                    setDraft(d => ({ ...d, cameraLocked: true }))
-                  } else {
-                    setDraft(d => ({ ...d, cameraLocked: false, powerSaving: false }))
-                  }
-                }}
-              />
-            </div>
-
-            <div className="settings-row">
-              <button className="menu-overlay__item" onClick={handleResume}>Resume Game</button>
-            </div>
+        {screen === 'main' ? (
+          <div className="menu-overlay__screen">
+            <button className="menu-overlay__item" onClick={onResume}>Resume Game</button>
+            <button className="menu-overlay__item" onClick={() => switchScreen('settings')}>Settings</button>
+            <button className="menu-overlay__item" onClick={onNewGame}>New Game</button>
+            <button className="menu-overlay__item">How to Play</button>
+            <button className="menu-overlay__item" onClick={onCredits}>Credits</button>
+            <button className="ui-button ui-button--menu" onClick={onResume} style={{ marginTop: 16 }}>
+              <svg className="ui-button__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <line x1="4" y1="4" x2="16" y2="16" /><line x1="16" y1="4" x2="4" y2="16" />
+              </svg>
+              <span className="ui-button__label">Close</span>
+            </button>
           </div>
+        ) : (
+          <div className="menu-overlay__screen">
+            <div className="settings-panel">
+              <div className="settings-row">
+                <span className="settings-row__label">Power Saving</span>
+                <Toggle on={draft.powerSaving} onClick={() => setDraft(d => ({ ...d, powerSaving: !d.powerSaving, cameraLocked: !d.powerSaving ? true : d.cameraLocked }))} />
+              </div>
+              <div className="settings-row">
+                <span className="settings-row__label">View</span>
+                <Chips<'Free' | 'Top-down'>
+                  options={['Free', 'Top-down']}
+                  value={draft.powerSaving ? 'Top-down' : draft.cameraLocked ? 'Top-down' : 'Free'}
+                  onChange={v => {
+                    if (v === 'Top-down') {
+                      setDraft(d => ({ ...d, cameraLocked: true }))
+                    } else {
+                      setDraft(d => ({ ...d, cameraLocked: false, powerSaving: false }))
+                    }
+                  }}
+                />
+              </div>
+              <div className="settings-row">
+                <button className="menu-overlay__item" onClick={handleResume}>Resume Game</button>
+              </div>
+            </div>
 
-          <div className="settings-panel" style={{ marginTop: 16 }}>
-            <div className="settings-row">
-              <span className="settings-row__label">Difficulty</span>
-              <Chips<Difficulty>
-                options={['easy', 'medium', 'hard']}
-                value={draft.difficulty}
-                onChange={v => setDraft(d => ({ ...d, difficulty: v }))}
-              />
+            <div className="settings-panel" style={{ marginTop: 16 }}>
+              <div className="settings-row">
+                <span className="settings-row__label">Difficulty</span>
+                <Chips<Difficulty>
+                  options={['easy', 'medium', 'hard']}
+                  value={draft.difficulty}
+                  onChange={v => setDraft(d => ({ ...d, difficulty: v }))}
+                />
+              </div>
+              <div className="settings-row">
+                <span className="settings-row__label">Rules</span>
+                <Chips<Rules>
+                  options={['Copenhagen', 'Fetlar', 'Tablut', 'Historical']}
+                  value={draft.rules}
+                  onChange={v => setDraft(d => ({ ...d, rules: v }))}
+                />
+              </div>
+              <div className="settings-row">
+                <button className="menu-overlay__item" onClick={handleRestart}>Restart Game</button>
+              </div>
             </div>
-            <div className="settings-row">
-              <span className="settings-row__label">Rules</span>
-              <Chips<Rules>
-                options={['Copenhagen', 'Fetlar', 'Tablut', 'Historical']}
-                value={draft.rules}
-                onChange={v => setDraft(d => ({ ...d, rules: v }))}
-              />
-            </div>
-            <div className="settings-row">
-              <button className="menu-overlay__item" onClick={handleRestart}>Restart Game</button>
-            </div>
+
+            <button className="ui-button ui-button--menu" onClick={() => switchScreen('main')} style={{ marginTop: 16 }}>
+              <svg className="ui-button__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <line x1="4" y1="4" x2="16" y2="16" /><line x1="16" y1="4" x2="4" y2="16" />
+              </svg>
+              <span className="ui-button__label">Cancel</span>
+            </button>
           </div>
-
-          <button className="ui-button ui-button--menu" onClick={() => switchScreen('main')} style={{ marginTop: 16 }}>
-            <svg className="ui-button__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-              <line x1="4" y1="4" x2="16" y2="16" /><line x1="16" y1="4" x2="4" y2="16" />
-            </svg>
-            <span className="ui-button__label">Cancel</span>
-          </button>
-        </div>
+        )}
 
       </div>
     </div>
