@@ -220,7 +220,7 @@ body, button, input, select {
   z-index: 1;
   margin-top: -40px;
   background: #f0e060;
-  padding: 50px;
+  padding: 80px 50px 50px 50px;
   animation: creditsUnroll 1.3s cubic-bezier(0.15,0.7,0.25,1) 0.25s both;
   transform-origin: top center;
 }
