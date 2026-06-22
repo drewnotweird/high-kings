@@ -1,13 +1,70 @@
 import { useRef, Suspense, useState, useEffect, useContext, useMemo } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Environment, useProgress } from '@react-three/drei'
-import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group, Vector3 } from 'three'
+import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group, Vector3, BufferGeometry, PointsMaterial } from 'three'
 import { Board } from './Board'
 import { Piece, type MenuPhase } from '../pieces/Piece'
 import { useGameStore } from '../../store/gameStore'
 import { getBoardConfig } from '../../game/hnefatafl'
 import { themes } from '../../lib/themes'
 import { IntroStartContext } from '../../contexts/intro'
+
+const DUST_COUNT = 14
+const DUST_DURATION = 0.7
+
+function DustCloud({ x, z, onDone }: { x: number; z: number; onDone: () => void }) {
+  const geomRef = useRef<BufferGeometry>(null)
+  const matRef = useRef<PointsMaterial>(null)
+  const elapsed = useRef(0)
+  const called = useRef(false)
+
+  const { positions, velocities } = useMemo(() => {
+    const pos = new Float32Array(DUST_COUNT * 3)
+    const vel = Array.from({ length: DUST_COUNT }, () => ({
+      vx: (Math.random() - 0.5) * 4,
+      vy: 0.8 + Math.random() * 2.2,
+      vz: (Math.random() - 0.5) * 4,
+    }))
+    for (let i = 0; i < DUST_COUNT; i++) {
+      pos[i * 3]     = x + (Math.random() - 0.5) * 0.3
+      pos[i * 3 + 1] = 0.4 + Math.random() * 0.3
+      pos[i * 3 + 2] = z + (Math.random() - 0.5) * 0.3
+    }
+    return { positions: pos, velocities: vel }
+  }, [])
+
+  useFrame((_, delta) => {
+    if (called.current || !geomRef.current || !matRef.current) return
+    elapsed.current += delta
+
+    const t = Math.min(elapsed.current / DUST_DURATION, 1)
+    matRef.current.opacity = Math.max(0, 1 - t * 1.3)
+    matRef.current.size = 0.10 + t * 0.12
+
+    const pos = geomRef.current.attributes.position.array as Float32Array
+    for (let i = 0; i < DUST_COUNT; i++) {
+      pos[i * 3]     += velocities[i].vx * delta
+      pos[i * 3 + 1] += (velocities[i].vy - 5 * elapsed.current) * delta
+      pos[i * 3 + 2] += velocities[i].vz * delta
+      if (pos[i * 3 + 1] < 0.05) pos[i * 3 + 1] = 0.05
+    }
+    geomRef.current.attributes.position.needsUpdate = true
+
+    if (elapsed.current >= DUST_DURATION && !called.current) {
+      called.current = true
+      onDone()
+    }
+  })
+
+  return (
+    <points>
+      <bufferGeometry ref={geomRef}>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial ref={matRef} color="#c8a55a" size={0.10} sizeAttenuation transparent opacity={1} depthWrite={false} />
+    </points>
+  )
+}
 
 const BOARD_ARRIVE = 1.2
 const PIECE_STAGGER = 0.035
@@ -227,9 +284,38 @@ interface SceneInnerProps {
 }
 
 function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
-  const { pieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving } = useGameStore()
+  const { pieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules, gameKey } = useGameStore()
   const theme = themes[themeName]
   const [menuPhase, setMenuPhase] = useState<MenuPhase>('idle')
+
+  // Capture dust clouds
+  const [dustClouds, setDustClouds] = useState<{ key: number; x: number; z: number }[]>([])
+  const prevPiecesRef = useRef(pieces)
+  const prevGameKeyRef = useRef(gameKey)
+
+  useEffect(() => {
+    // On new game reset, just sync — don't spawn dust for all removed pieces
+    if (gameKey !== prevGameKeyRef.current) {
+      prevGameKeyRef.current = gameKey
+      prevPiecesRef.current = pieces
+      setDustClouds([])
+      return
+    }
+    const { boardSize } = getBoardConfig(rules)
+    const boardOffset = (boardSize - 1) / 2
+    const removed = prevPiecesRef.current.filter(p => !pieces.find(pp => pp.id === p.id))
+    if (removed.length > 0) {
+      setDustClouds(prev => [
+        ...prev,
+        ...removed.map(p => ({
+          key: Date.now() + Math.random() * 1000,
+          x: p.col - boardOffset,
+          z: p.row - boardOffset,
+        })),
+      ])
+    }
+    prevPiecesRef.current = pieces
+  }, [pieces, gameKey])
   // boardFlipOpen is delayed: pieces hide first, THEN board flips
   const [boardFlipOpen, setBoardFlipOpen] = useState(false)
   // lights cut immediately on open, restored only after board has returned
@@ -320,6 +406,14 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
           dropStartMs={dropStartMs}
           menuPhase={menuPhase}
           onClick={() => selectPiece(selectedId === piece.id ? null : piece.id)}
+        />
+      ))}
+      {dustClouds.map(dc => (
+        <DustCloud
+          key={dc.key}
+          x={dc.x}
+          z={dc.z}
+          onDone={() => setDustClouds(prev => prev.filter(d => d.key !== dc.key))}
         />
       ))}
       <CameraReset menuOpen={menuOpen} />

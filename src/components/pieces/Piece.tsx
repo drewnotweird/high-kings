@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import { Mesh, Vector2, MeshPhysicalMaterial } from 'three'
@@ -34,6 +34,25 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
   const boardOffset = (getBoardConfig(rules).boardSize - 1) / 2
   const x = piece.col - boardOffset
   const z = piece.row - boardOffset
+
+  // Animated position — owned entirely by useFrame, never set via JSX prop
+  const visualX = useRef(x)
+  const visualZ = useRef(z)
+  const targetX = useRef(x)
+  const targetZ = useRef(z)
+  const moveArc = useRef(0) // extra Y lift that decays during travel
+
+  useEffect(() => {
+    const dx = x - visualX.current
+    const dz = z - visualZ.current
+    const dist = Math.sqrt(dx * dx + dz * dz)
+    // Only arc when moving during live gameplay (not intro drop)
+    if (dist > 0.05 && landed.current) {
+      moveArc.current = Math.min(dist * 0.22, 0.55)
+    }
+    targetX.current = x
+    targetZ.current = z
+  }, [x, z])
 
   const isKing = piece.type === 'king'
   const isDefender = piece.type === 'defender'
@@ -72,6 +91,11 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
 
   useFrame((_, delta) => {
     if (!meshRef.current) return
+
+    // useFrame owns position.x and position.z entirely — never set via JSX prop
+    meshRef.current.position.x = visualX.current
+    meshRef.current.position.z = visualZ.current
+
     const t = dropStartMs ? (Date.now() - dropStartMs) / 1000 : -1
 
     // Intro drop (runs once before piece has landed)
@@ -96,6 +120,17 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
       return
     }
 
+    // Smooth horizontal movement toward target
+    const moveSpeed = 9
+    const lerpT = 1 - Math.exp(-moveSpeed * delta)
+    visualX.current += (targetX.current - visualX.current) * lerpT
+    visualZ.current += (targetZ.current - visualZ.current) * lerpT
+    meshRef.current.position.x = visualX.current
+    meshRef.current.position.z = visualZ.current
+
+    // Arc decays quickly — gives a lift-and-glide feel during travel
+    moveArc.current *= Math.exp(-5.5 * delta)
+
     // Menu fade — lerp opacity based on phase
     const targetOpacity = (menuPhase === 'hiding' || menuPhase === 'hidden') ? 0 : 1
     menuOpacity.current += (targetOpacity - menuOpacity.current) * Math.min(delta * 7, 1)
@@ -106,18 +141,18 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
 
     if (menuPhase === 'hiding' || menuPhase === 'hidden') return
 
-    // idle / appearing — normal gameplay position
+    // idle / appearing — normal gameplay position + travel arc
     meshRef.current.rotation.y = Math.PI
     const settle = (Date.now() - landTime.current) / 1000
     const knock = settle < 0.14 ? Math.sin((settle / 0.14) * Math.PI) * -0.055 : 0
-    const targetY = (isSelected ? 0.55 : REST_Y) + knock
+    const targetY = (isSelected ? 0.55 : REST_Y) + moveArc.current + knock
     meshRef.current.position.y += (targetY - meshRef.current.position.y) * Math.min(delta * 8, 1)
   })
 
   return (
     <mesh
       ref={meshRef}
-      position={[x, REST_Y, z]}
+      position={[0, REST_Y, 0]}
       castShadow
       onClick={(e) => {
         e.stopPropagation()

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useGameStore } from '../../store/gameStore'
 import { getBoardConfig, isCorner, isThrone } from '../../game/hnefatafl'
+import type { PieceType } from '../../game/hnefatafl'
 
 const CELL = 40
 const PAD = 24
@@ -21,6 +22,27 @@ const KING_FILL        = '#d4a820'
 const KING_STROKE      = '#f0d060'
 const SELECTED_GLOW    = 'rgba(255,220,60,0.85)'
 
+function pieceColor(type: PieceType) {
+  if (type === 'king') return KING_FILL
+  if (type === 'defender') return DEFENDER_FILL
+  return ATTACKER_FILL
+}
+
+interface DyingPiece {
+  key: number
+  x: number
+  y: number
+  fill: string
+  particles: { dx: number; dy: number }[]
+}
+
+const BURST_CSS = `
+@keyframes board2d-particle {
+  0%   { transform: translate(0px, 0px); opacity: 0.85; }
+  100% { transform: translate(var(--pdx), var(--pdy)); opacity: 0; }
+}
+`
+
 export function Board2D({ menuOpen }: { menuOpen: boolean }) {
   const { pieces, selectedId, selectPiece, movePiece, validMoves, gameKey, rules } = useGameStore()
   const { boardSize, center } = getBoardConfig(rules)
@@ -29,6 +51,38 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
   const [mounted, setMounted] = useState(false)
   const [visibleCount, setVisibleCount] = useState(pieces.length) // start fully visible (mid-game switch)
   const prevGameKey = useRef(gameKey)
+
+  // Dying piece burst animations
+  const [dyingPieces, setDyingPieces] = useState<DyingPiece[]>([])
+  const prevPiecesRef = useRef(pieces)
+  const prevGameKeyRef = useRef(gameKey)
+
+  useEffect(() => {
+    if (gameKey !== prevGameKeyRef.current) {
+      prevGameKeyRef.current = gameKey
+      prevPiecesRef.current = pieces
+      setDyingPieces([])
+      return
+    }
+    const removed = prevPiecesRef.current.filter(p => !pieces.find(pp => pp.id === p.id))
+    if (removed.length > 0) {
+      setDyingPieces(prev => [
+        ...prev,
+        ...removed.map(p => ({
+          key: Date.now() + Math.random() * 1000,
+          x: pcx(p.col),
+          y: pcy(p.row),
+          fill: pieceColor(p.type),
+          particles: Array.from({ length: 8 }, (_, i) => {
+            const angle = (i / 8) * Math.PI * 2 + 0.4
+            const dist = 14 + (i % 3) * 6
+            return { dx: Math.cos(angle) * dist, dy: Math.sin(angle) * dist }
+          }),
+        })),
+      ])
+    }
+    prevPiecesRef.current = pieces
+  }, [pieces, gameKey])
 
   // Board fade-in
   useEffect(() => {
@@ -80,6 +134,7 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
         pointerEvents: menuOpen ? 'none' : undefined,
       }}
     >
+      <style>{BURST_CSS}</style>
       <svg
         className="board2d__svg"
         viewBox={`0 0 ${TOTAL} ${TOTAL}`}
@@ -189,10 +244,8 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
           </g>
         ))}
 
-        {/* Pieces */}
+        {/* Pieces — use CSS transform so position changes animate smoothly */}
         {pieces.map(piece => {
-          const x = pcx(piece.col)
-          const y = pcy(piece.row)
           const selected = selectedId === piece.id
           const isKing = piece.type === 'king'
           const isDefender = piece.type === 'defender'
@@ -211,22 +264,45 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
               style={{
                 cursor: 'pointer',
                 opacity: visible ? 1 : 0,
-                transition: 'opacity 0.3s ease',
+                transform: `translate(${pcx(piece.col)}px, ${pcy(piece.row)}px)`,
+                transition: 'opacity 0.3s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
               {selected && (
-                <circle cx={x} cy={y} r={r + 5} fill={SELECTED_GLOW} opacity={0.35} />
+                <circle cx={0} cy={0} r={r + 5} fill={SELECTED_GLOW} opacity={0.35} />
               )}
-              <circle cx={x} cy={y} r={r} fill={fill} stroke={stroke} strokeWidth={1.5} />
+              <circle cx={0} cy={0} r={r} fill={fill} stroke={stroke} strokeWidth={1.5} />
               {isKing && (
-                <circle cx={x} cy={y} r={4} fill={KING_STROKE} opacity={0.9} />
+                <circle cx={0} cy={0} r={4} fill={KING_STROKE} opacity={0.9} />
               )}
               {selected && (
-                <circle cx={x} cy={y} r={r + 2} fill="none" stroke={SELECTED_GLOW} strokeWidth={1.5} />
+                <circle cx={0} cy={0} r={r + 2} fill="none" stroke={SELECTED_GLOW} strokeWidth={1.5} />
               )}
             </g>
           )
         })}
+
+        {/* Capture burst particles */}
+        {dyingPieces.flatMap(dp =>
+          dp.particles.map((p, i) => (
+            <circle
+              key={`${dp.key}-${i}`}
+              cx={dp.x}
+              cy={dp.y}
+              r={3.5}
+              fill={dp.fill}
+              style={{
+                ['--pdx' as string]: `${p.dx}px`,
+                ['--pdy' as string]: `${p.dy}px`,
+                animation: `board2d-particle 0.45s ease-out ${i * 0.015}s forwards`,
+                pointerEvents: 'none',
+              } as React.CSSProperties}
+              onAnimationEnd={i === dp.particles.length - 1
+                ? () => setDyingPieces(prev => prev.filter(d => d.key !== dp.key))
+                : undefined}
+            />
+          ))
+        )}
       </svg>
     </div>
   )
