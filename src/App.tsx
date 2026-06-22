@@ -202,12 +202,12 @@ body, button, input, select {
   to   { transform: translateY(-110vh); }
 }
 @keyframes creditsUnroll {
-  from { clip-path: inset(0 0 100% 0); }
-  to   { clip-path: inset(0 0 0%   0); }
+  from { max-height: 0; }
+  to   { max-height: 1200px; }
 }
 @keyframes creditsRollUp {
-  from { clip-path: inset(0 0 0%   0); }
-  to   { clip-path: inset(0 0 100% 0); }
+  from { max-height: 1200px; }
+  to   { max-height: 0; }
 }
 .credits-scroll__top-roll {
   position: relative;
@@ -217,10 +217,10 @@ body, button, input, select {
 .credits-scroll__parchment {
   position: relative;
   z-index: 1;
+  overflow: hidden;
   margin-top: -25px;
   padding: 30px 40px 0 40px;
   animation: creditsUnroll 1.3s cubic-bezier(0.15,0.7,0.25,1) 0.25s both;
-  transform-origin: top center;
 }
 .credits-scroll--closing .credits-scroll__parchment {
   animation: creditsRollUp 0.45s cubic-bezier(0.7,0,0.9,0.4) forwards;
