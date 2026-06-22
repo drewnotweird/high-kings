@@ -345,6 +345,7 @@ function LoadingOverlay({ onDone }: { onDone: () => void }) {
   const [phase, setPhase] = useState<LoaderPhase>('loading')
   const minHoldMet = useRef(false)
   const loadingDone = useRef(false)
+  const wasActive = useRef(false)
 
   const tryStartFade = () => {
     if (minHoldMet.current && loadingDone.current) {
@@ -352,7 +353,7 @@ function LoadingOverlay({ onDone }: { onDone: () => void }) {
       setTimeout(() => {
         setPhase('done')
         onDone()
-      }, 1000)
+      }, 600)
     }
   }
 
@@ -365,7 +366,10 @@ function LoadingOverlay({ onDone }: { onDone: () => void }) {
   }, [])
 
   useEffect(() => {
-    if (!active && phase === 'loading') {
+    if (active) {
+      wasActive.current = true
+    } else if (wasActive.current && phase === 'loading') {
+      // active went true then false — real load cycle completed
       loadingDone.current = true
       setPhase('holding')
       tryStartFade()
