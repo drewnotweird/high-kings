@@ -184,7 +184,8 @@ body, button, input, select {
 .credits-scroll {
   position: relative;
   z-index: 1;
-  width: min(320px, calc(100vw - 32px));
+  max-width: 460px;
+  width: 100%;
   flex-shrink: 0;
   filter: drop-shadow(0 16px 48px rgba(0,0,0,0.85));
   animation: creditsScrollEnter 0.55s cubic-bezier(0.2,0.8,0.3,1) forwards;
