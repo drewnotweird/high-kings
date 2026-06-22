@@ -391,6 +391,35 @@ body, button, input, select {
     bottom: calc(50vh - 45px) !important;
   }
 }
+.winner-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: rgba(0,0,0,0.75);
+  animation: sceneFadeIn 0.6s ease-out forwards;
+}
+.winner-overlay__title {
+  font-size: 13px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #c8b888;
+  margin: 0;
+}
+.winner-overlay__name {
+  font-size: clamp(28px, 6vw, 52px);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #e8d8b8;
+  margin: 0;
+  text-shadow: 0 0 40px rgba(232,192,64,0.6);
+}
+.winner-overlay__name--defender { color: #e0d0b0; }
+.winner-overlay__name--attacker { color: #7ab0e8; }
 @keyframes mistDrift {
   0%   { transform: translateX(0px)   translateY(0px);  opacity: 0;    }
   15%  { opacity: var(--peak); }
@@ -724,6 +753,17 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
   )
 }
 
+function WinnerOverlay({ winner, onNewGame }: { winner: 'attacker' | 'defender'; onNewGame: () => void }) {
+  const label = winner === 'defender' ? 'Defenders' : 'Attackers'
+  return (
+    <div className="winner-overlay">
+      <p className="winner-overlay__title">Victory</p>
+      <p className={`winner-overlay__name winner-overlay__name--${winner}`}>{label} Win</p>
+      <button className="menu-overlay__item" style={{ maxWidth: 280 }} onClick={onNewGame}>New Game</button>
+    </div>
+  )
+}
+
 function App() {
   const [introStarted, setIntroStarted] = useState(false)
   const [uiVisible, setUiVisible] = useState(false)
@@ -731,7 +771,7 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuVisible, setMenuVisible] = useState(false)
   const [showCredits, setShowCredits] = useState(false)
-  const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces } = useGameStore()
+  const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, winner } = useGameStore()
   const setupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ?ps=true in the URL activates power-saving mode on load
@@ -889,6 +929,12 @@ function App() {
 
       <ThemeSwitcher />
       {showCredits && <CreditsScroll onClose={() => setShowCredits(false)} />}
+      {winner && (
+        <WinnerOverlay
+          winner={winner}
+          onNewGame={() => { resetGame(); setMenuOpen(false) }}
+        />
+      )}
     </div>
   )
 }

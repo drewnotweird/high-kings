@@ -1,7 +1,8 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { useTexture } from '@react-three/drei'
-import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2 } from 'three'
-import { getBoardConfig, isCorner, isThrone } from '../../game/hnefatafl'
+import { useFrame } from '@react-three/fiber'
+import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, MeshStandardMaterial } from 'three'
+import { getBoardConfig, isCorner, isThrone, isValidMove } from '../../game/hnefatafl'
 import { useGameStore } from '../../store/gameStore'
 import type { ThemeConfig } from '../../lib/themes'
 
@@ -51,8 +52,38 @@ interface BoardProps {
   theme: ThemeConfig
 }
 
+function ValidMoveMarker({ x, z, row, col }: { x: number; z: number; row: number; col: number }) {
+  const matRef = useRef<MeshStandardMaterial>(null)
+  const { movePiece } = useGameStore()
+  useFrame(({ clock }) => {
+    if (matRef.current) {
+      matRef.current.opacity = 0.25 + 0.15 * Math.sin(clock.elapsedTime * 3)
+    }
+  })
+  return (
+    <mesh
+      position={[x, TILE_TOP + 0.005, z]}
+      rotation={[-Math.PI / 2, 0, 0]}
+      onClick={(e) => { e.stopPropagation(); movePiece(row, col) }}
+    >
+      <planeGeometry args={[SQUARE_SIZE * 0.82, SQUARE_SIZE * 0.82]} />
+      <meshStandardMaterial
+        ref={matRef}
+        color="#e8c040"
+        emissive="#e8c040"
+        emissiveIntensity={1.2}
+        transparent
+        opacity={0.3}
+        depthWrite={false}
+        polygonOffset
+        polygonOffsetFactor={-2}
+      />
+    </mesh>
+  )
+}
+
 export function Board({ theme }: BoardProps) {
-  const { rules } = useGameStore()
+  const { rules, validMoves, selectedId, selectPiece } = useGameStore()
   const { boardSize, center, attackerStarts, defenderStarts } = getBoardConfig(rules)
   const boardOffset = (boardSize - 1) / 2
 
@@ -141,33 +172,45 @@ export function Board({ theme }: BoardProps) {
         />
       </mesh>
 
-      {squares.map(({ row, col, x, z, variantIdx, overlay, isCornerTile }) => (
-        <group key={`${row}-${col}`} position={[x, 0, z]}>
-          <mesh rotation={[-Math.PI / 2, 0, 0]} geometry={tileGeometry} receiveShadow>
-            <meshStandardMaterial
-              map={isCornerTile ? cornerTileTexture : tileTextures[variantIdx]}
-              roughness={theme.boardRoughness}
-              metalness={theme.boardMetalness}
-            />
-          </mesh>
-
-          {overlay && (
-            <mesh position={[0, TILE_TOP + 0.003, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[SQUARE_SIZE * 0.96, SQUARE_SIZE * 0.96]} />
+      {squares.map(({ row, col, x, z, variantIdx, overlay, isCornerTile }) => {
+        const validTarget = isValidMove(row, col, validMoves)
+        return (
+          <group
+            key={`${row}-${col}`}
+            position={[x, 0, z]}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (!validTarget && selectedId) selectPiece(null)
+            }}
+          >
+            <mesh rotation={[-Math.PI / 2, 0, 0]} geometry={tileGeometry} receiveShadow>
               <meshStandardMaterial
-                map={overlays[overlay]}
-                transparent
-                alphaTest={0.1}
-                roughness={0.8}
-                metalness={0}
-                depthWrite={false}
-                polygonOffset
-                polygonOffsetFactor={-1}
+                map={isCornerTile ? cornerTileTexture : tileTextures[variantIdx]}
+                roughness={theme.boardRoughness}
+                metalness={theme.boardMetalness}
               />
             </mesh>
-          )}
-        </group>
-      ))}
+
+            {overlay && (
+              <mesh position={[0, TILE_TOP + 0.003, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <planeGeometry args={[SQUARE_SIZE * 0.96, SQUARE_SIZE * 0.96]} />
+                <meshStandardMaterial
+                  map={overlays[overlay]}
+                  transparent
+                  alphaTest={0.1}
+                  roughness={0.8}
+                  metalness={0}
+                  depthWrite={false}
+                  polygonOffset
+                  polygonOffsetFactor={-1}
+                />
+              </mesh>
+            )}
+
+            {validTarget && <ValidMoveMarker x={0} z={0} row={row} col={col} />}
+          </group>
+        )
+      })}
     </group>
   )
 }

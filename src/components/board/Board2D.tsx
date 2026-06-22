@@ -22,7 +22,7 @@ const KING_STROKE      = '#f0d060'
 const SELECTED_GLOW    = 'rgba(255,220,60,0.85)'
 
 export function Board2D({ menuOpen }: { menuOpen: boolean }) {
-  const { pieces, selectedId, selectPiece, gameKey, rules } = useGameStore()
+  const { pieces, selectedId, selectPiece, movePiece, validMoves, gameKey, rules } = useGameStore()
   const { boardSize, center } = getBoardConfig(rules)
   const TOTAL = boardSize * CELL + PAD * 2
 
@@ -83,6 +83,7 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
       <svg
         className="board2d__svg"
         viewBox={`0 0 ${TOTAL} ${TOTAL}`}
+        onClick={() => { if (selectedId) selectPiece(null) }}
         style={{
           width: 'min(100vw, calc(100vh - 280px))',
           height: 'min(100vw, calc(100vh - 280px))',
@@ -166,6 +167,27 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
           stroke="rgba(180,140,60,0.45)"
           strokeWidth={1.2}
         />
+
+        {/* Valid move targets */}
+        {validMoves.map(([r, c]) => (
+          <g
+            key={`vm-${r}-${c}`}
+            className="board2d__valid-move"
+            onClick={(e) => { e.stopPropagation(); movePiece(r, c) }}
+            style={{ cursor: 'pointer' }}
+          >
+            <rect
+              x={cx(c)} y={cy(r)}
+              width={CELL} height={CELL}
+              fill="rgba(232,192,64,0.18)"
+            />
+            <circle
+              cx={pcx(c)} cy={pcy(r)}
+              r={9}
+              fill="rgba(232,192,64,0.65)"
+            />
+          </g>
+        ))}
 
         {/* Pieces */}
         {pieces.map(piece => {
