@@ -99,6 +99,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
     menuOpacity.current += (targetOpacity - menuOpacity.current) * Math.min(delta * 7, 1)
     const op = menuOpacity.current
     meshRef.current.visible = op > 0.01
+    meshRef.current.castShadow = op > 0.5
     if (materialRef.current) materialRef.current.opacity = op
 
     if (menuPhase === 'hiding' || menuPhase === 'hidden') return
