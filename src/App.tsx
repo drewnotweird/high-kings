@@ -598,10 +598,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
                 }}
               />
             </div>
-            <div className="settings-row">
-              <span className="settings-row__label">Music</span>
-              <Toggle on={musicEnabled} onClick={() => setSetting('musicEnabled', !musicEnabled)} />
-            </div>
+
           </div>
           <button className="menu-overlay__item" onClick={onResume} style={{ marginTop: 8 }}>Resume Playing</button>
 
