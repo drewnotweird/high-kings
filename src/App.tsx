@@ -104,7 +104,7 @@ body, button, input, select {
   border-radius: 6px;
   color: #e8d8b8;
   padding: 14px 48px;
-  font-size: 16px;
+  font-size: 14px;
   letter-spacing: 2px;
   text-transform: uppercase;
   cursor: pointer;
@@ -260,7 +260,7 @@ body, button, input, select {
 }
 .credits-scroll__body-text {
   font-family: 'MedievalSharp', serif;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.85;
   color: #3d2008;
   margin: 0 0 22px;
