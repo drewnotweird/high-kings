@@ -213,8 +213,6 @@ body, button, input, select {
   z-index: 2;
   height: 50px;
   background: #4488ff;
-  border-radius: 4px 4px 3px 3px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.7), 0 2px 5px rgba(0,0,0,0.5);
 }
 .credits-scroll__parchment {
   position: relative;
