@@ -533,9 +533,7 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
             </div>
             <button className="credits-scroll__close-btn" onClick={handleClose}>Roll Up</button>
           </div>
-          <svg className="credits-scroll__torn" viewBox="0 0 320 40" preserveAspectRatio="none" aria-hidden="true">
-            <path d={TORN_EDGE_PATH} fill="#f0e060" />
-          </svg>
+
         </div>
       </div>
     </div>
