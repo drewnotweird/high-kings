@@ -212,7 +212,7 @@ body, button, input, select {
 .credits-scroll__top-roll {
   position: relative;
   z-index: 2;
-  height: 80px;
+  height: 120px;
 }
 .credits-scroll__parchment {
   position: relative;
