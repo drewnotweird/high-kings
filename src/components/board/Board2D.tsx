@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useGameStore } from '../../store/gameStore'
 import { BOARD_SIZE, isCorner, isThrone } from '../../game/hnefatafl'
 
 const CELL = 40
 const PAD = 24
 const TOTAL = BOARD_SIZE * CELL + PAD * 2
+
+const BOARD_ARRIVE = 1.2
+const PIECE_STAGGER = 0.035
 
 function cx(col: number) { return PAD + col * CELL }
 function cy(row: number) { return PAD + row * CELL }
@@ -20,9 +23,59 @@ const KING_STROKE      = '#f0d060'
 const SELECTED_GLOW    = 'rgba(255,220,60,0.85)'
 
 export function Board2D({ menuOpen }: { menuOpen: boolean }) {
-  const { pieces, selectedId, selectPiece } = useGameStore()
+  const { pieces, selectedId, selectPiece, gameKey } = useGameStore()
   const [mounted, setMounted] = useState(false)
-  useEffect(() => { const t = setTimeout(() => setMounted(true), 30); return () => clearTimeout(t) }, [])
+  const [visibleCount, setVisibleCount] = useState(0)
+  const prevGameKey = useRef(gameKey)
+  const isNewGame = useRef(true)
+
+  // Board fade-in
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 30)
+    return () => clearTimeout(t)
+  }, [])
+
+  // Detect new game vs mode switch
+  useEffect(() => {
+    if (gameKey !== prevGameKey.current) {
+      // Actual new game — re-run sequence
+      prevGameKey.current = gameKey
+      isNewGame.current = true
+      setVisibleCount(0)
+    }
+  }, [gameKey])
+
+  // Sequential piece reveal
+  useEffect(() => {
+    if (!isNewGame.current) return
+
+    const ordered = [
+      ...pieces.filter(p => p.type === 'king'),
+      ...pieces.filter(p => p.type === 'defender'),
+      ...pieces.filter(p => p.type === 'attacker'),
+    ]
+
+    const timers: ReturnType<typeof setTimeout>[] = []
+    ordered.forEach((_, i) => {
+      timers.push(setTimeout(() => {
+        setVisibleCount(i + 1)
+      }, (BOARD_ARRIVE + i * PIECE_STAGGER) * 1000))
+    })
+
+    // After last piece, mark sequence done
+    timers.push(setTimeout(() => {
+      isNewGame.current = false
+    }, (BOARD_ARRIVE + (ordered.length - 1) * PIECE_STAGGER) * 1000 + 400))
+
+    return () => timers.forEach(clearTimeout)
+  }, [gameKey])
+
+  const ordered = [
+    ...pieces.filter(p => p.type === 'king'),
+    ...pieces.filter(p => p.type === 'defender'),
+    ...pieces.filter(p => p.type === 'attacker'),
+  ]
+  const orderMap = new Map(ordered.map((p, i) => [p.id, i]))
 
   return (
     <div
@@ -132,6 +185,8 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
           const selected = selectedId === piece.id
           const isKing = piece.type === 'king'
           const isDefender = piece.type === 'defender'
+          const pieceIndex = orderMap.get(piece.id) ?? 0
+          const visible = pieceIndex < visibleCount
 
           const fill = isKing ? KING_FILL : isDefender ? DEFENDER_FILL : ATTACKER_FILL
           const stroke = isKing ? KING_STROKE : isDefender ? DEFENDER_STROKE : ATTACKER_STROKE
@@ -142,19 +197,19 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
               key={piece.id}
               className={`board2d__piece board2d__piece--${piece.type}${selected ? ' board2d__piece--selected' : ''}`}
               onClick={() => selectPiece(selectedId === piece.id ? null : piece.id)}
-              style={{ cursor: 'pointer' }}
+              style={{
+                cursor: 'pointer',
+                opacity: visible ? 1 : 0,
+                transition: 'opacity 0.3s ease',
+              }}
             >
-              {/* Selection glow */}
               {selected && (
                 <circle cx={x} cy={y} r={r + 5} fill={SELECTED_GLOW} opacity={0.35} />
               )}
-              {/* Piece body */}
               <circle cx={x} cy={y} r={r} fill={fill} stroke={stroke} strokeWidth={1.5} />
-              {/* King crown dot */}
               {isKing && (
                 <circle cx={x} cy={y} r={4} fill={KING_STROKE} opacity={0.9} />
               )}
-              {/* Selection ring */}
               {selected && (
                 <circle cx={x} cy={y} r={r + 2} fill="none" stroke={SELECTED_GLOW} strokeWidth={1.5} />
               )}
