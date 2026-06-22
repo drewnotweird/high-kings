@@ -25,6 +25,7 @@ interface PieceProps {
 
 export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs, menuPhase, onClick }: PieceProps) {
   const meshRef = useRef<Mesh>(null)
+  const materialRef = useRef<MeshPhysicalMaterial>(null)
   const landed = useRef(false)
   const landTime = useRef(0)
   const menuOpacity = useRef(1)
@@ -69,8 +70,6 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
 
   useFrame((_, delta) => {
     if (!meshRef.current) return
-    const mat = meshRef.current.material as MeshPhysicalMaterial
-
     const t = dropStartMs ? (Date.now() - dropStartMs) / 1000 : -1
 
     // Intro drop (runs once before piece has landed)
@@ -81,10 +80,9 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
         meshRef.current.rotation.y = Math.PI + Math.PI * 2
         return
       }
-      meshRef.current.visible = true
       menuOpacity.current = 1
-      mat.transparent = false
-      mat.opacity = 1
+      if (materialRef.current) materialRef.current.opacity = 1
+      meshRef.current.visible = true
       const progress = Math.min((t - dropDelay) / JUMP_DURATION, 1)
       meshRef.current.position.y = REST_Y + JUMP_PEAK * 4 * progress * (1 - progress)
       const rotEased = 1 - Math.pow(1 - progress, 2)
@@ -98,19 +96,10 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
 
     // Menu fade — lerp opacity based on phase
     const targetOpacity = (menuPhase === 'hiding' || menuPhase === 'hidden') ? 0 : 1
-    menuOpacity.current += (targetOpacity - menuOpacity.current) * Math.min(delta * 9, 1)
+    menuOpacity.current += (targetOpacity - menuOpacity.current) * Math.min(delta * 7, 1)
     const op = menuOpacity.current
-
-    if (op < 0.01) {
-      meshRef.current.visible = false
-      mat.transparent = true
-      mat.opacity = 0
-      return
-    }
-
-    meshRef.current.visible = true
-    mat.transparent = op < 0.999
-    mat.opacity = op
+    meshRef.current.visible = op > 0.01
+    if (materialRef.current) materialRef.current.opacity = op
 
     if (menuPhase === 'hiding' || menuPhase === 'hidden') return
 
@@ -134,6 +123,8 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
     >
       <latheGeometry args={[points, 32]} />
       <meshPhysicalMaterial
+        ref={materialRef}
+        transparent
         map={texture}
         bumpMap={roughnessMap}
         bumpScale={0.6}
