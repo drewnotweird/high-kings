@@ -591,7 +591,6 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
                 onChange={v => {
                   if (v === 'Top-down') {
                     setSetting('cameraLocked', true)
-                    setSetting('powerSaving', true)
                   } else {
                     setSetting('cameraLocked', false)
                     setSetting('powerSaving', false)
