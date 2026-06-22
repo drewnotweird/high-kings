@@ -125,9 +125,11 @@ body, button, input, select {
   .settings-panels {
     flex-direction: row;
     align-items: flex-start;
+    width: min(560px, calc(100vw - 32px));
   }
   .settings-panels .settings-panel {
     flex: 1;
+    min-width: 0;
   }
 }
 .settings-panel {
