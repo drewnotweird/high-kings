@@ -76,7 +76,8 @@ body, button, input, select {
   z-index: 20;
   pointer-events: none;
   transition: opacity 0.4s ease;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 .menu-overlay--visible { pointer-events: auto; }
 .menu-overlay__screens {
