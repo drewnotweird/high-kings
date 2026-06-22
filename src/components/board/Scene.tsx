@@ -107,23 +107,30 @@ function FireLight() {
   return <pointLight ref={ref} position={[0, -0.5, 3]} color="#ff6010" distance={20} decay={2} intensity={0} />
 }
 
-function AnimatedBoard({ children }: { children: React.ReactNode }) {
+function AnimatedBoard({ children, menuOpen }: { children: React.ReactNode; menuOpen: boolean }) {
   const introStartMs = useContext(IntroStartContext)
   const groupRef = useRef<Group>(null)
-  const done = useRef(false)
+  const introDone = useRef(false)
+  const flipProgress = useRef(0)
 
-  useFrame(() => {
-    if (!groupRef.current || done.current) return
-    const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
-    if (t < 0) {
-      groupRef.current.position.y = BOARD_START_Y
+  useFrame((_, delta) => {
+    if (!groupRef.current) return
+
+    if (!introDone.current) {
+      const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
+      if (t < 0) { groupRef.current.position.y = BOARD_START_Y; return }
+      const progress = Math.min(t / BOARD_DURATION, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      groupRef.current.position.y = BOARD_START_Y + (-BOARD_START_Y) * eased
+      groupRef.current.rotation.x = (1 - eased) * -1.2
+      if (progress >= 1) introDone.current = true
       return
     }
-    const progress = Math.min(t / BOARD_DURATION, 1)
-    const eased = 1 - Math.pow(1 - progress, 3)
-    groupRef.current.position.y = BOARD_START_Y + (-BOARD_START_Y) * eased
-    groupRef.current.rotation.x = (1 - eased) * -1.2
-    if (progress >= 1) done.current = true
+
+    // Menu flip
+    const target = menuOpen ? 1 : 0
+    flipProgress.current += (target - flipProgress.current) * Math.min(delta * 3, 1)
+    groupRef.current.rotation.x = flipProgress.current * Math.PI
   })
 
   return (
@@ -133,7 +140,7 @@ function AnimatedBoard({ children }: { children: React.ReactNode }) {
   )
 }
 
-function SceneInner() {
+function SceneInner({ menuOpen }: { menuOpen: boolean }) {
   const { pieces, selectedId, theme: themeName, selectPiece } = useGameStore()
   const theme = themes[themeName]
 
@@ -150,7 +157,7 @@ function SceneInner() {
       <Environment preset="night" environmentIntensity={0.0} />
       <FadingLights />
       <FireLight />
-      <AnimatedBoard>
+      <AnimatedBoard menuOpen={menuOpen}>
         <Board theme={theme} />
       </AnimatedBoard>
       {pieces.map((piece) => (
@@ -160,10 +167,12 @@ function SceneInner() {
           theme={theme}
           isSelected={selectedId === piece.id}
           dropDelay={delayMap.get(piece.id) ?? BOARD_ARRIVE}
+          hidden={menuOpen}
           onClick={() => selectPiece(selectedId === piece.id ? null : piece.id)}
         />
       ))}
       <OrbitControls
+        enabled={!menuOpen}
         enablePan={false}
         minDistance={6}
         maxDistance={32}
@@ -237,7 +246,7 @@ function LoadingOverlay({ onDone }: { onDone: () => void }) {
   )
 }
 
-export function Scene({ onIntroStart }: { onIntroStart?: () => void }) {
+export function Scene({ onIntroStart, menuOpen }: { onIntroStart?: () => void; menuOpen?: boolean }) {
   const [introStartMs, setIntroStartMs] = useState<number | null>(null)
 
   return (
@@ -249,7 +258,7 @@ export function Scene({ onIntroStart }: { onIntroStart?: () => void }) {
           gl={{ antialias: true, alpha: true }}
         >
           <Suspense fallback={null}>
-            <SceneInner />
+            <SceneInner menuOpen={!!menuOpen} />
           </Suspense>
         </Canvas>
         <LoadingOverlay onDone={() => { setIntroStartMs(Date.now()); onIntroStart?.() }} />

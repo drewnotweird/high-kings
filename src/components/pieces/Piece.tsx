@@ -17,10 +17,11 @@ interface PieceProps {
   theme: ThemeConfig
   isSelected: boolean
   dropDelay: number  // seconds before this piece starts falling
+  hidden: boolean
   onClick: () => void
 }
 
-export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: PieceProps) {
+export function Piece({ piece, theme: _theme, isSelected, dropDelay, hidden, onClick }: PieceProps) {
   const meshRef = useRef<Mesh>(null)
   const introStartMs = useContext(IntroStartContext)
   const landed = useRef(false)
@@ -66,6 +67,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, onClick }: 
 
   useFrame((_, delta) => {
     if (!meshRef.current) return
+    if (hidden) { meshRef.current.visible = false; return }
     const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
 
     if (!landed.current) {

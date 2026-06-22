@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Scene } from './components/board/Scene'
 import { ThemeSwitcher } from './components/ui/ThemeSwitcher'
 import { useGameStore } from './store/gameStore'
@@ -45,6 +45,68 @@ const fireCSS = `
   box-sizing: border-box;
   padding: 14px !important;
 }
+.ui-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(200,160,40,0.3);
+  border-radius: 6px;
+  color: #e8d8b8;
+  padding: 8px 12px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+.ui-button:hover { border-color: rgba(200,160,40,0.8); }
+.ui-button__icon { width: 20px; height: 20px; flex-shrink: 0; }
+.ui-button__label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; }
+@media (max-width: 600px) {
+  .ui-button { flex-direction: column; gap: 3px; padding: 6px 10px; }
+}
+.menu-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  z-index: 20;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.menu-overlay--visible { pointer-events: auto; }
+.menu-overlay__item {
+  background: rgba(0,0,0,0.8);
+  border: 1px solid rgba(200,160,40,0.4);
+  border-radius: 6px;
+  color: #e8d8b8;
+  padding: 14px 48px;
+  font-size: 16px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  font-family: inherit;
+  width: 240px;
+  text-align: center;
+}
+.menu-overlay__item:hover { border-color: rgba(200,160,40,0.9); background: rgba(30,15,0,0.9); }
+.menu-overlay__close {
+  background: transparent;
+  border: none;
+  color: #8a7a5a;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 8px;
+  font-family: inherit;
+  margin-top: 8px;
+}
+.menu-overlay__close:hover { color: #e8d8b8; }
 @media (min-width: 1024px) {
   .score-panel__inner {
     flex-direction: column !important;
@@ -148,6 +210,44 @@ const embers = Array.from({ length: 12 }, (_, i) => {
   }
 })
 
+function HintButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button className="ui-button ui-button--hint" onClick={onClick}>
+      <svg className="ui-button__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="10" cy="10" r="8" />
+        <path d="M10 6v.5M10 9.5c0-1 1.5-1.5 1.5-3a2.5 2.5 0 00-5 0" strokeLinecap="round" />
+        <circle cx="10" cy="13.5" r="0.75" fill="currentColor" stroke="none" />
+      </svg>
+      <span className="ui-button__label">Hint</span>
+    </button>
+  )
+}
+
+function MenuButton({ onClick, isOpen }: { onClick: () => void; isOpen: boolean }) {
+  return (
+    <button className="ui-button ui-button--menu" onClick={onClick}>
+      <svg className="ui-button__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        {isOpen
+          ? <><line x1="4" y1="4" x2="16" y2="16" /><line x1="16" y1="4" x2="4" y2="16" /></>
+          : <><line x1="3" y1="6" x2="17" y2="6" /><line x1="3" y1="10" x2="17" y2="10" /><line x1="3" y1="14" x2="17" y2="14" /></>
+        }
+      </svg>
+      <span className="ui-button__label">{isOpen ? 'Close' : 'Menu'}</span>
+    </button>
+  )
+}
+
+function MenuOverlay({ isOpen, isVisible, onClose }: { isOpen: boolean; isVisible: boolean; onClose: () => void }) {
+  if (!isOpen) return null
+  return (
+    <div className={`menu-overlay${isVisible ? ' menu-overlay--visible' : ''}`} style={{ opacity: isVisible ? 1 : 0 }}>
+      <button className="menu-overlay__item">New Game</button>
+      <button className="menu-overlay__item">How to Play</button>
+      <button className="menu-overlay__close" onClick={onClose}>✕ Close Menu</button>
+    </div>
+  )
+}
+
 function PieceIcon({ side }: { side: PlayerSide }) {
   const src = side === 'defender'
     ? `${import.meta.env.BASE_URL}white-piece.png`
@@ -188,7 +288,18 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
 
 function App() {
   const [introStarted, setIntroStarted] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuVisible, setMenuVisible] = useState(false)
   const { currentTurn, scores } = useGameStore()
+
+  useEffect(() => {
+    if (menuOpen) {
+      const t = setTimeout(() => setMenuVisible(true), 500)
+      return () => clearTimeout(t)
+    } else {
+      setMenuVisible(false)
+    }
+  }, [menuOpen])
 
   return (
     <div className="relative w-full h-full" style={{ background: '#000' }}>
@@ -257,7 +368,8 @@ function App() {
       ))}
 
       <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
-        <Scene onIntroStart={() => setIntroStarted(true)} />
+        <Scene onIntroStart={() => setIntroStarted(true)} menuOpen={menuOpen} />
+        <MenuOverlay isOpen={menuOpen} isVisible={menuVisible} onClose={() => setMenuOpen(false)} />
       </div>
 
       {/* Score panels */}
@@ -273,6 +385,16 @@ function App() {
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
         <img src={`${import.meta.env.BASE_URL}logo.png`} alt="High Kings" className="h-32 w-auto select-none" />
       </div>
+
+      {introStarted && <>
+        <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ position: 'absolute', top: 24, left: 16, zIndex: 15, animation: 'sceneFadeIn 2s ease-out forwards' }}>
+          <HintButton onClick={() => {}} />
+        </div>
+        <div className="ui-button-wrapper ui-button-wrapper--menu" style={{ position: 'absolute', top: 24, right: 16, zIndex: 15, animation: 'sceneFadeIn 2s ease-out forwards' }}>
+          <MenuButton isOpen={menuOpen} onClick={() => setMenuOpen(o => !o)} />
+        </div>
+      </>}
+
       <ThemeSwitcher />
     </div>
   )
