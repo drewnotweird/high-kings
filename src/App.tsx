@@ -213,7 +213,9 @@ body, button, input, select {
   position: relative;
   z-index: 2;
   height: 80px;
-  background: #4488ff;
+  background: url('/highkings/topscroll.png') no-repeat;
+  background-size: contain;
+  background-position: bottom;
 }
 .credits-scroll__parchment {
   position: relative;
