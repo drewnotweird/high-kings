@@ -600,8 +600,10 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
               />
             </div>
 
+            <div className="settings-row">
+              <button className="menu-overlay__item" onClick={onResume}>Resume Playing</button>
+            </div>
           </div>
-          <button className="menu-overlay__item" onClick={onResume} style={{ marginTop: 8 }}>Resume Playing</button>
 
           <div className="settings-panel" style={{ marginTop: 16 }}>
             <div className="settings-row">
@@ -620,8 +622,10 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
                 onChange={v => setSetting('rules', v)}
               />
             </div>
+            <div className="settings-row">
+              <button className="menu-overlay__item" onClick={onNewGame}>Restart Game</button>
+            </div>
           </div>
-          <button className="menu-overlay__item" onClick={onNewGame} style={{ marginTop: 8 }}>Restart Game</button>
 
           <button className="ui-button ui-button--menu" onClick={() => setScreen('main')} style={{ marginTop: 16 }}>
             <svg className="ui-button__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
