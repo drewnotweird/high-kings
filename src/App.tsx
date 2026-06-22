@@ -397,16 +397,28 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame }: {
               <span className="settings-panel__title">Settings</span>
             </div>
             <div className="settings-row">
-              <span className="settings-row__label">Music</span>
-              <Toggle on={musicEnabled} onClick={() => setSetting('musicEnabled', !musicEnabled)} />
+              <span className="settings-row__label">Power Saving</span>
+              <Toggle on={powerSaving} onClick={() => setSetting('powerSaving', !powerSaving)} />
             </div>
             <div className="settings-row">
-              <span className="settings-row__label">Camera</span>
+              <span className="settings-row__label">View</span>
               <Chips<'Free' | 'Top-down'>
                 options={['Free', 'Top-down']}
-                value={cameraLocked ? 'Top-down' : 'Free'}
-                onChange={v => setSetting('cameraLocked', v === 'Top-down')}
+                value={powerSaving ? 'Top-down' : cameraLocked ? 'Top-down' : 'Free'}
+                onChange={v => {
+                  if (v === 'Top-down') {
+                    setSetting('cameraLocked', true)
+                    setSetting('powerSaving', true)
+                  } else {
+                    setSetting('cameraLocked', false)
+                    setSetting('powerSaving', false)
+                  }
+                }}
               />
+            </div>
+            <div className="settings-row">
+              <span className="settings-row__label">Music</span>
+              <Toggle on={musicEnabled} onClick={() => setSetting('musicEnabled', !musicEnabled)} />
             </div>
             <div className="settings-row">
               <span className="settings-row__label">Difficulty</span>
@@ -423,10 +435,6 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame }: {
                 value={rules}
                 onChange={v => setSetting('rules', v)}
               />
-            </div>
-            <div className="settings-row">
-              <span className="settings-row__label">Power Saving</span>
-              <Toggle on={powerSaving} onClick={() => setSetting('powerSaving', !powerSaving)} />
             </div>
           </div>
         </div>
