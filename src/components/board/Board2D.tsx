@@ -34,16 +34,10 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
     return () => clearTimeout(t)
   }, [])
 
-  // Only animate when gameKey increments (actual new game)
+  // Sequential piece reveal — only when gameKey increments (actual new game)
   useEffect(() => {
     if (gameKey === prevGameKey.current) return
     prevGameKey.current = gameKey
-    setVisibleCount(0)
-  }, [gameKey])
-
-  // Sequential piece reveal — only runs when visibleCount is reset to 0
-  useEffect(() => {
-    if (visibleCount !== 0) return
 
     const ordered = [
       ...pieces.filter(p => p.type === 'king'),
@@ -51,13 +45,14 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
       ...pieces.filter(p => p.type === 'attacker'),
     ]
 
+    setVisibleCount(0)
     const timers: ReturnType<typeof setTimeout>[] = []
     ordered.forEach((_, i) => {
       timers.push(setTimeout(() => setVisibleCount(i + 1), (BOARD_ARRIVE + i * PIECE_STAGGER) * 1000))
     })
 
     return () => timers.forEach(clearTimeout)
-  }, [visibleCount])
+  }, [gameKey])
 
   const ordered = [
     ...pieces.filter(p => p.type === 'king'),
