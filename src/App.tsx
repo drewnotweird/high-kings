@@ -520,7 +520,7 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
     setTimeout(onClose, 1500)
   }
   return (
-    <div className={`credits-scroll-overlay${closing ? ' credits-scroll-overlay--closing' : ''}`}>
+    <div className={`credits-scroll-overlay${closing ? ' credits-scroll-overlay--closing' : ''}`} onClick={handleClose} style={{ cursor: 'pointer' }}>
       <div className="credits-scroll-overlay__scrim" />
       <div className={`credits-scroll${closing ? ' credits-scroll--closing' : ''}`}>
         <div className="credits-scroll__top-roll" style={{ backgroundImage: `url(${import.meta.env.BASE_URL}topscroll.png)`, backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'bottom' }} />
@@ -534,7 +534,6 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
               <span className="credits-scroll__name">Lewis MacKenzie</span>
               <span className="credits-scroll__name">Andrew Nicolson</span>
             </div>
-            <button className="credits-scroll__close-btn" onClick={handleClose}>Roll Up</button>
           </div>
 
         </div>
