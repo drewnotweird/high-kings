@@ -185,7 +185,7 @@ function CameraLock({ locked }: { locked: boolean }) {
     // Horizontal fit (portrait screens): board ~12 world units wide
     const hHoriz = 6.6 / (tan * aspect)
     // Vertical fit: board must occupy ≤ (100vh - 480px) of screen height
-    const usableH = Math.max(size.height - 480, 100)
+    const usableH = Math.max(size.height - 280, 100)
     const hVert = (11 * size.height) / (2 * tan * usableH)
     const h = Math.max(22, hHoriz, hVert)
     // Shift target 30 screen-px below centre → world Z offset

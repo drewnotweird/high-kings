@@ -42,10 +42,10 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
         className="board2d__svg"
         viewBox={`0 0 ${TOTAL} ${TOTAL}`}
         style={{
-          width: 'min(100vw, calc(100vh - 480px))',
-          height: 'min(100vw, calc(100vh - 480px))',
-          maxWidth: 'calc(100vh - 480px)',
-          maxHeight: 'calc(100vh - 480px)',
+          width: 'min(100vw, calc(100vh - 280px))',
+          height: 'min(100vw, calc(100vh - 280px))',
+          maxWidth: 'calc(100vh - 280px)',
+          maxHeight: 'calc(100vh - 280px)',
           marginTop: 30,
           flexShrink: 0,
           display: 'block',
