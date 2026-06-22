@@ -551,21 +551,27 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
   onCredits: () => void
 }) {
   const [screen, setScreen] = useState<'main' | 'settings'>('main')
+  const [screensOpacity, setScreensOpacity] = useState(1)
   const { musicEnabled, cameraLocked, difficulty, rules, powerSaving, setSetting } = useGameStore()
 
   useEffect(() => { if (!isOpen) setScreen('main') }, [isOpen])
+
+  const switchScreen = (next: 'main' | 'settings') => {
+    setScreensOpacity(0)
+    setTimeout(() => { setScreen(next); setScreensOpacity(1) }, 250)
+  }
 
   if (!isOpen) return null
 
   return (
     <>
     <div className={`menu-overlay${isVisible ? ' menu-overlay--visible' : ''}`} style={{ opacity: isVisible ? 1 : 0 }}>
-      <div className="menu-overlay__screens">
+      <div className="menu-overlay__screens" style={{ opacity: screensOpacity, transition: 'opacity 0.25s ease' }}>
 
         {/* Main screen */}
         <div className={`menu-overlay__screen${screen !== 'main' ? ' menu-overlay__screen--hidden' : ''}`}>
           <button className="menu-overlay__item" onClick={onResume}>Resume Game</button>
-          <button className="menu-overlay__item" onClick={() => setScreen('settings')}>Settings</button>
+          <button className="menu-overlay__item" onClick={() => switchScreen('settings')}>Settings</button>
           <button className="menu-overlay__item" onClick={onNewGame}>New Game</button>
           <button className="menu-overlay__item">How to Play</button>
           <button className="menu-overlay__item" onClick={onCredits}>Credits</button>
@@ -627,7 +633,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
             </div>
           </div>
 
-          <button className="ui-button ui-button--menu" onClick={() => setScreen('main')} style={{ marginTop: 16 }}>
+          <button className="ui-button ui-button--menu" onClick={() => switchScreen('main')} style={{ marginTop: 16 }}>
             <svg className="ui-button__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
               <line x1="4" y1="4" x2="16" y2="16" /><line x1="16" y1="4" x2="4" y2="16" />
             </svg>
