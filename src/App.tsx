@@ -831,7 +831,7 @@ function App() {
         <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ position: 'absolute', top: 24, left: 16, zIndex: 15, opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
           <HintButton onClick={() => {}} />
         </div>
-        <div className="ui-button-wrapper ui-button-wrapper--menu" style={{ position: 'absolute', top: 24, right: 16, zIndex: 15, opacity: !uiVisible ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || setupAnimating) ? 'none' : undefined }}>
+        <div className="ui-button-wrapper ui-button-wrapper--menu" style={{ position: 'absolute', top: 24, right: 16, zIndex: 15, opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
           <MenuButton isOpen={false} onClick={() => setMenuOpen(o => !o)} />
         </div>
       </>}
