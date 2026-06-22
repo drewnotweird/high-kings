@@ -479,8 +479,15 @@ function App() {
   const [setupAnimating, setSetupAnimating] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuVisible, setMenuVisible] = useState(false)
-  const { currentTurn, scores, resetGame, powerSaving } = useGameStore()
+  const { currentTurn, scores, resetGame, powerSaving, setSetting } = useGameStore()
   const setupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // ?ps=true in the URL activates power-saving mode on load
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('ps') === 'true') {
+      setSetting('powerSaving', true)
+    }
+  }, [])
 
   const startSetupAnim = () => {
     if (setupTimerRef.current) clearTimeout(setupTimerRef.current)
