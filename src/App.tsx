@@ -222,7 +222,7 @@ body, button, input, select {
   padding: 30px 40px 0 40px;
   display: flex;
   align-items: flex-end;
-  animation: creditsUnroll 2.5s cubic-bezier(0.15,0.7,0.25,1) 0.25s both;
+  animation: creditsUnroll 2.5s cubic-bezier(0.15,0.6,0.1,0.97) 0.25s both;
 }
 .credits-scroll--closing .credits-scroll__parchment {
   animation: creditsRollUp 1s cubic-bezier(0.7,0,0.9,0.4) forwards;
