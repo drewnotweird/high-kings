@@ -276,6 +276,7 @@ body, button, input, select {
   font-family: 'MedievalSharp', serif;
   font-size: 16px;
   letter-spacing: 2px;
+  text-transform: uppercase;
   color: #2e1606;
 }
 .credits-scroll__close-btn {
