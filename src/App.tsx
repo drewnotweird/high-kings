@@ -568,6 +568,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
           <button className="menu-overlay__item" onClick={onNewGame}>New Game</button>
           <button className="menu-overlay__item">How to Play</button>
           <button className="menu-overlay__item" onClick={onCredits}>Credits</button>
+          <button className="menu-overlay__item" onClick={onResume}>Close</button>
         </div>
 
         {/* Settings screen */}
