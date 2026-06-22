@@ -211,13 +211,13 @@ body, button, input, select {
 .credits-scroll__top-roll {
   position: relative;
   z-index: 2;
-  height: 50px;
+  height: 80px;
   background: #4488ff;
 }
 .credits-scroll__parchment {
   position: relative;
   z-index: 1;
-  margin-top: -25px;
+  margin-top: -40px;
   background: #f0e060;
   padding: 50px 26px 50px;
   animation: creditsUnroll 1.3s cubic-bezier(0.15,0.7,0.25,1) 0.25s both;
