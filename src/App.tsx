@@ -297,6 +297,7 @@ body, button, input, select {
   .credits-scroll__body-text { font-size: 22px; }
   .credits-scroll__name { font-size: 20px; }
   .credits-scroll__close-btn { font-size: 16px; }
+  .credits-scroll__parchment { padding: 40px 50px 0 50px; }
 }
 .credits-scroll__torn {
   position: absolute;
