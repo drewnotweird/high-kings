@@ -87,7 +87,7 @@ body, button, input, select {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
+  gap: 10px;
   transition: opacity 0.25s ease;
 }
 .menu-overlay__screen--hidden {
@@ -628,7 +628,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
               </div>
             </div>
 
-            <div className="settings-panel" style={{ marginTop: 16 }}>
+            <div className="settings-panel">
               <div className="settings-row">
                 <span className="settings-row__label">Difficulty</span>
                 <Cycler<Difficulty>
