@@ -293,6 +293,11 @@ body, button, input, select {
   transition: background 0.2s, border-color 0.2s;
 }
 .credits-scroll__close-btn:hover { background: rgba(60,28,0,0.12); border-color: rgba(60,28,0,0.6); }
+@media (min-width: 768px) {
+  .credits-scroll__body-text { font-size: 22px; }
+  .credits-scroll__name { font-size: 20px; }
+  .credits-scroll__close-btn { font-size: 16px; }
+}
 .credits-scroll__torn {
   position: absolute;
   bottom: -1px;
