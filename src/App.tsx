@@ -167,19 +167,38 @@ body, button, input, select {
   align-items: flex-start;
   justify-content: center;
   padding: 50px 16px 60px;
+  overflow: hidden;
+}
+.credits-scroll-overlay__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   background: #000;
   animation: creditsOverlayIn 0.4s ease-out forwards;
-  overflow-y: auto;
 }
-.credits-scroll-overlay--closing {
-  animation: creditsOverlayOut 0.55s ease-in forwards;
+.credits-scroll-overlay--closing .credits-scroll-overlay__scrim {
+  animation: creditsOverlayOut 0.6s ease-in forwards;
 }
 @keyframes creditsOverlayIn { from { opacity:0 } to { opacity:1 } }
 @keyframes creditsOverlayOut { from { opacity:1 } to { opacity:0 } }
 .credits-scroll {
+  position: relative;
+  z-index: 1;
   width: min(320px, calc(100vw - 32px));
   flex-shrink: 0;
   filter: drop-shadow(0 16px 48px rgba(0,0,0,0.85));
+  animation: creditsScrollEnter 0.55s cubic-bezier(0.2,0.8,0.3,1) forwards;
+}
+.credits-scroll--closing {
+  animation: creditsScrollExit 0.65s cubic-bezier(0.6,0,0.85,0.4) forwards;
+}
+@keyframes creditsScrollEnter {
+  from { transform: translateY(-120px); }
+  to   { transform: translateY(0); }
+}
+@keyframes creditsScrollExit {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-110vh); }
 }
 @keyframes creditsUnroll {
   from { clip-path: inset(0 0 100% 0); }
@@ -207,7 +226,7 @@ body, button, input, select {
   transform-origin: top center;
 }
 .credits-scroll--closing .credits-scroll__parchment {
-  animation: creditsRollUp 0.65s cubic-bezier(0.7,0,0.9,0.4) forwards;
+  animation: creditsRollUp 0.45s cubic-bezier(0.7,0,0.9,0.4) forwards;
 }
 .credits-scroll__content {
   opacity: 0;
@@ -495,10 +514,11 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
   const [closing, setClosing] = useState(false)
   const handleClose = () => {
     setClosing(true)
-    setTimeout(onClose, 1050)
+    setTimeout(onClose, 700)
   }
   return (
     <div className={`credits-scroll-overlay${closing ? ' credits-scroll-overlay--closing' : ''}`}>
+      <div className="credits-scroll-overlay__scrim" />
       <div className={`credits-scroll${closing ? ' credits-scroll--closing' : ''}`}>
         <div className="credits-scroll__top-roll" />
         <div className="credits-scroll__parchment">
