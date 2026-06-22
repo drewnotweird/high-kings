@@ -156,6 +156,27 @@ const fireCSS = `
   color: #c8b888;
   flex-shrink: 0;
 }
+.credits-panel {
+  padding: 20px 20px 24px;
+}
+.credits-panel__body {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #b8a878;
+  margin: 0 0 24px;
+  font-style: italic;
+}
+.credits-panel__names {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.credits-panel__name {
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #e8d8a0;
+}
 .settings-toggle {
   width: 40px;
   height: 22px;
@@ -366,7 +387,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame }: {
   onResume: () => void
   onNewGame: () => void
 }) {
-  const [screen, setScreen] = useState<'main' | 'settings'>('main')
+  const [screen, setScreen] = useState<'main' | 'settings' | 'credits'>('main')
   const { musicEnabled, cameraLocked, difficulty, rules, powerSaving, setSetting } = useGameStore()
 
   useEffect(() => { if (!isOpen) setScreen('main') }, [isOpen])
@@ -378,11 +399,34 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame }: {
       <div className="menu-overlay__screens">
 
         {/* Main screen */}
-        <div className={`menu-overlay__screen${screen === 'settings' ? ' menu-overlay__screen--hidden' : ''}`}>
+        <div className={`menu-overlay__screen${screen !== 'main' ? ' menu-overlay__screen--hidden' : ''}`}>
           <button className="menu-overlay__item" onClick={onResume}>Resume Game</button>
           <button className="menu-overlay__item" onClick={() => setScreen('settings')}>Settings</button>
           <button className="menu-overlay__item" onClick={onNewGame}>New Game</button>
           <button className="menu-overlay__item">How to Play</button>
+          <button className="menu-overlay__item" onClick={() => setScreen('credits')}>Credits</button>
+        </div>
+
+        {/* Credits screen */}
+        <div className={`menu-overlay__screen${screen !== 'credits' ? ' menu-overlay__screen--hidden' : ''}`}>
+          <div className="settings-panel">
+            <div className="settings-panel__header" onClick={() => setScreen('main')}>
+              <span className="settings-panel__back">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10 3L5 8l5 5" />
+                </svg>
+              </span>
+              <span className="settings-panel__title">Credits</span>
+            </div>
+            <div className="credits-panel">
+              <p className="credits-panel__body">High Kings was originally created around 2010 by three friends who wanted to bring an ancient Viking strategy game to life. We had an enormous amount of fun building it together, and this site exists so that game lives on.</p>
+              <div className="credits-panel__names">
+                <span className="credits-panel__name">Jason Frame</span>
+                <span className="credits-panel__name">Lewis MacKenzie</span>
+                <span className="credits-panel__name">Andrew Nicolson</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Settings screen */}
