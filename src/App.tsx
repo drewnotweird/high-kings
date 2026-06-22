@@ -579,14 +579,6 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
         {/* Settings screen */}
         <div className={`menu-overlay__screen${screen !== 'settings' ? ' menu-overlay__screen--hidden' : ''}`}>
           <div className="settings-panel">
-            <div className="settings-panel__header" onClick={() => setScreen('main')}>
-              <span className="settings-panel__back">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10 3L5 8l5 5" />
-                </svg>
-              </span>
-              <span className="settings-panel__title">Settings</span>
-            </div>
             <div className="settings-row">
               <span className="settings-row__label">Power Saving</span>
               <Toggle on={powerSaving} onClick={() => setSetting('powerSaving', !powerSaving)} />
@@ -610,6 +602,10 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
               <span className="settings-row__label">Music</span>
               <Toggle on={musicEnabled} onClick={() => setSetting('musicEnabled', !musicEnabled)} />
             </div>
+          </div>
+          <button className="menu-overlay__item" onClick={onResume} style={{ marginTop: 8 }}>Resume Playing</button>
+
+          <div className="settings-panel" style={{ marginTop: 16 }}>
             <div className="settings-row">
               <span className="settings-row__label">Difficulty</span>
               <Chips<Difficulty>
@@ -627,6 +623,14 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
               />
             </div>
           </div>
+          <button className="menu-overlay__item" onClick={onNewGame} style={{ marginTop: 8 }}>Restart Game</button>
+
+          <button className="ui-button ui-button--menu" onClick={() => setScreen('main')} style={{ marginTop: 16 }}>
+            <svg className="ui-button__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <line x1="4" y1="4" x2="16" y2="16" /><line x1="16" y1="4" x2="4" y2="16" />
+            </svg>
+            <span className="ui-button__label">Cancel</span>
+          </button>
         </div>
 
       </div>
