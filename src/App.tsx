@@ -213,9 +213,6 @@ body, button, input, select {
   position: relative;
   z-index: 2;
   height: 80px;
-  background: url('/highkings/topscroll.png') no-repeat;
-  background-size: contain;
-  background-position: bottom;
 }
 .credits-scroll__parchment {
   position: relative;
@@ -522,7 +519,7 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
     <div className={`credits-scroll-overlay${closing ? ' credits-scroll-overlay--closing' : ''}`}>
       <div className="credits-scroll-overlay__scrim" />
       <div className={`credits-scroll${closing ? ' credits-scroll--closing' : ''}`}>
-        <div className="credits-scroll__top-roll" />
+        <div className="credits-scroll__top-roll" style={{ backgroundImage: `url(${import.meta.env.BASE_URL}topscroll.png)`, backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'bottom' }} />
         <div className="credits-scroll__parchment">
           <div className="credits-scroll__content">
             <p className="credits-scroll__body-text">
