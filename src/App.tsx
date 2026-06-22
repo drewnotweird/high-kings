@@ -527,7 +527,7 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
         <div className="credits-scroll__parchment" style={{ backgroundImage: `url(${import.meta.env.BASE_URL}pagescroll.png)`, backgroundSize: 'cover', backgroundPosition: 'bottom' }}>
           <div className="credits-scroll__content">
             <p className="credits-scroll__body-text">
-              High Kings was originally created around 2010 by three friends who wanted to bring an ancient Viking strategy game to life. We had an enormous amount of fun building it together, and this site lives on its memory.
+              High Kings was originally forged around 2010 by three warriors who wanted to bring an ancient Viking strategy game to life. They had an enormous amount of fun building it together, and this site was created to appease the Gods.
             </p>
             <div className="credits-scroll__names">
               <span className="credits-scroll__name">Jason Frame</span>
