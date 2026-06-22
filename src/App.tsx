@@ -667,6 +667,7 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
 
 function App() {
   const [introStarted, setIntroStarted] = useState(false)
+  const [uiVisible, setUiVisible] = useState(false)
   const [setupAnimating, setSetupAnimating] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuVisible, setMenuVisible] = useState(false)
@@ -691,6 +692,12 @@ function App() {
   useEffect(() => {
     if (powerSaving && !introStarted) setIntroStarted(true)
   }, [powerSaving])
+
+  // Track when the sceneFadeIn animation completes so buttons start visibly disabled
+  useEffect(() => {
+    const t = setTimeout(() => setUiVisible(true), powerSaving ? 0 : 2000)
+    return () => clearTimeout(t)
+  }, [])
 
   useEffect(() => {
     if (menuOpen) {
@@ -813,10 +820,10 @@ function App() {
       </div>
 
       {introStarted && <>
-        <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ position: 'absolute', top: 24, left: 16, zIndex: 15, animation: 'sceneFadeIn 2s ease-out', opacity: menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (menuOpen || setupAnimating) ? 'none' : undefined }}>
+        <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ position: 'absolute', top: 24, left: 16, zIndex: 15, opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
           <HintButton onClick={() => {}} />
         </div>
-        <div className="ui-button-wrapper ui-button-wrapper--menu" style={{ position: 'absolute', top: 24, right: 16, zIndex: 15, animation: 'sceneFadeIn 2s ease-out', opacity: setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: setupAnimating ? 'none' : undefined }}>
+        <div className="ui-button-wrapper ui-button-wrapper--menu" style={{ position: 'absolute', top: 24, right: 16, zIndex: 15, opacity: !uiVisible ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || setupAnimating) ? 'none' : undefined }}>
           <MenuButton isOpen={menuOpen} onClick={() => setMenuOpen(o => !o)} />
         </div>
       </>}
