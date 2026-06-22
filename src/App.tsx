@@ -3,7 +3,9 @@ import { Scene, getIntroDurationMs } from './components/board/Scene'
 import { Board2D } from './components/board/Board2D'
 import { ThemeSwitcher } from './components/ui/ThemeSwitcher'
 import { useGameStore } from './store/gameStore'
-import type { PlayerSide, Difficulty, Rules } from './store/gameStore'
+import type { PlayerSide, GameMode, Difficulty, Rules } from './store/gameStore'
+import { getBestMove } from './game/ai'
+import { getBoardConfig } from './game/hnefatafl'
 
 const fireCSS = `
 body, button, input, select {
@@ -420,6 +422,54 @@ body, button, input, select {
 }
 .winner-overlay__name--defender { color: #e0d0b0; }
 .winner-overlay__name--attacker { color: #7ab0e8; }
+.role-select-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: rgba(0,0,0,0.82);
+  animation: sceneFadeIn 0.4s ease-out forwards;
+}
+.role-select__title {
+  font-size: 13px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #c8b888;
+  margin: 0;
+}
+.role-select__options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(320px, calc(100vw - 48px));
+}
+.role-select__option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(0,0,0,0.8);
+  border: 1px solid rgba(200,160,40,0.4);
+  border-radius: 8px;
+  color: #e8d8b8;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+}
+.role-select__option:hover { border-color: rgba(200,160,40,0.9); background: rgba(30,15,0,0.9); }
+.role-select__option--selected { border-color: rgba(200,160,40,0.9); }
+.role-select__option-icon { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
+.role-select__option-icon--2p { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; gap: 3px; flex-shrink: 0; }
+.role-select__option-text { display: flex; flex-direction: column; gap: 3px; }
+.role-select__option-name { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; }
+.role-select__option-desc { font-size: 11px; letter-spacing: 0.5px; color: #a09070; }
 @keyframes mistDrift {
   0%   { transform: translateX(0px)   translateY(0px);  opacity: 0;    }
   15%  { opacity: var(--peak); }
@@ -753,13 +803,53 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
   )
 }
 
-function WinnerOverlay({ winner, onNewGame }: { winner: 'attacker' | 'defender'; onNewGame: () => void }) {
-  const label = winner === 'defender' ? 'Defenders' : 'Attackers'
+function WinnerOverlay({ winner, playerMode, onNewGame }: { winner: 'attacker' | 'defender'; playerMode: GameMode; onNewGame: () => void }) {
+  const isPlayer = playerMode === '2player'
+    ? true
+    : (winner === playerMode)
+  const title = playerMode === '2player' ? 'Victory' : isPlayer ? 'Victory' : 'Defeat'
+  const label = winner === 'defender' ? 'Defenders Win' : 'Attackers Win'
+  const subtitle = playerMode !== '2player' ? (isPlayer ? 'You Win' : 'You Lose') : null
   return (
     <div className="winner-overlay">
-      <p className="winner-overlay__title">Victory</p>
-      <p className={`winner-overlay__name winner-overlay__name--${winner}`}>{label} Win</p>
+      <p className="winner-overlay__title">{title}</p>
+      {subtitle && <p className={`winner-overlay__name winner-overlay__name--${winner}`}>{subtitle}</p>}
+      <p style={{ margin: 0, fontSize: 13, letterSpacing: 2, textTransform: 'uppercase', color: '#a09070' }}>{label}</p>
       <button className="menu-overlay__item" style={{ maxWidth: 280 }} onClick={onNewGame}>New Game</button>
+    </div>
+  )
+}
+
+function RoleSelectOverlay({ onConfirm }: { onConfirm: (mode: GameMode) => void }) {
+  return (
+    <div className="role-select-overlay">
+      <p className="role-select__title">Choose Your Side</p>
+      <div className="role-select__options">
+        <button className="role-select__option" onClick={() => onConfirm('defender')}>
+          <img className="role-select__option-icon" src={`${import.meta.env.BASE_URL}white-piece.png`} alt="" />
+          <div className="role-select__option-text">
+            <span className="role-select__option-name">Defend</span>
+            <span className="role-select__option-desc">Play as the light — escort the King to safety</span>
+          </div>
+        </button>
+        <button className="role-select__option" onClick={() => onConfirm('attacker')}>
+          <img className="role-select__option-icon" src={`${import.meta.env.BASE_URL}blue-piece.png`} alt="" />
+          <div className="role-select__option-text">
+            <span className="role-select__option-name">Attack</span>
+            <span className="role-select__option-desc">Play as the dark — surround and capture the King</span>
+          </div>
+        </button>
+        <button className="role-select__option" onClick={() => onConfirm('2player')}>
+          <div className="role-select__option-icon--2p">
+            <img style={{ width: 16, height: 16, objectFit: 'contain' }} src={`${import.meta.env.BASE_URL}white-piece.png`} alt="" />
+            <img style={{ width: 16, height: 16, objectFit: 'contain' }} src={`${import.meta.env.BASE_URL}blue-piece.png`} alt="" />
+          </div>
+          <div className="role-select__option-text">
+            <span className="role-select__option-name">2 Player</span>
+            <span className="role-select__option-desc">Play both sides locally</span>
+          </div>
+        </button>
+      </div>
     </div>
   )
 }
@@ -771,7 +861,8 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuVisible, setMenuVisible] = useState(false)
   const [showCredits, setShowCredits] = useState(false)
-  const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, winner } = useGameStore()
+  const [roleSelectOpen, setRoleSelectOpen] = useState(false)
+  const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules } = useGameStore()
   const setupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ?ps=true in the URL activates power-saving mode on load
@@ -780,6 +871,20 @@ function App() {
       setSetting('powerSaving', true)
     }
   }, [])
+
+  // Machine player — fires after each player move when not in 2-player mode
+  useEffect(() => {
+    if (playerMode === '2player' || winner || roleSelectOpen || setupAnimating) return
+    const machineSide: PlayerSide = playerMode === 'attacker' ? 'defender' : 'attacker'
+    if (currentTurn !== machineSide) return
+
+    const { boardSize, center } = getBoardConfig(rules)
+    const timer = setTimeout(() => {
+      const move = getBestMove(pieces, machineSide, boardSize, center, difficulty)
+      if (move) machineMove(move.pieceId, move.toRow, move.toCol)
+    }, 650)
+    return () => clearTimeout(timer)
+  }, [currentTurn, playerMode, winner, roleSelectOpen, setupAnimating])
 
   const startSetupAnim = () => {
     if (setupTimerRef.current) clearTimeout(setupTimerRef.current)
@@ -897,8 +1002,8 @@ function App() {
           isVisible={menuVisible}
           onResume={() => setMenuOpen(false)}
           onNewGame={() => {
-            resetGame()
-            if (powerSaving) setMenuOpen(false)
+            setMenuOpen(false)
+            setRoleSelectOpen(true)
           }}
           onCredits={() => setShowCredits(true)}
         />
@@ -932,7 +1037,18 @@ function App() {
       {winner && (
         <WinnerOverlay
           winner={winner}
-          onNewGame={() => { resetGame(); setMenuOpen(false) }}
+          playerMode={playerMode}
+          onNewGame={() => setRoleSelectOpen(true)}
+        />
+      )}
+      {roleSelectOpen && (
+        <RoleSelectOverlay
+          onConfirm={(mode) => {
+            setPlayerMode(mode)
+            resetGame()
+            setRoleSelectOpen(false)
+            if (!powerSaving) startSetupAnim()
+          }}
         />
       )}
     </div>

@@ -4,6 +4,7 @@ import type { Piece } from '../game/hnefatafl'
 
 export type Theme = 'natural'
 export type PlayerSide = 'attacker' | 'defender'
+export type GameMode = 'attacker' | 'defender' | '2player'
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type Rules = 'Tablut' | 'Copenhagen' | 'Tawlbwrdd' | 'Brandub'
 
@@ -22,10 +23,13 @@ interface GameStore {
   difficulty: Difficulty
   rules: Rules
   powerSaving: boolean
+  playerMode: GameMode
   setTheme: (theme: Theme) => void
   selectPiece: (id: string | null) => void
   movePiece: (toRow: number, toCol: number) => void
+  machineMove: (pieceId: string, toRow: number, toCol: number) => void
   resetGame: () => void
+  setPlayerMode: (mode: GameMode) => void
   setSetting: <K extends 'musicEnabled' | 'cameraLocked' | 'difficulty' | 'rules' | 'powerSaving'>(
     key: K, value: GameStore[K]
   ) => void
@@ -45,6 +49,7 @@ export const useGameStore = create<GameStore>((set) => ({
   difficulty: 'medium',
   rules: 'Copenhagen' as Rules,
   powerSaving: false,
+  playerMode: '2player' as GameMode,
 
   setTheme: (theme) => set({ theme }),
 
@@ -87,6 +92,26 @@ export const useGameStore = create<GameStore>((set) => ({
       winner: result.winner,
     }
   }),
+
+  machineMove: (pieceId, toRow, toCol) => set((s) => {
+    if (s.winner) return s
+    const { boardSize, center } = getBoardConfig(s.rules)
+    const result = applyMove(s.pieces, pieceId, toRow, toCol, boardSize, center)
+    const capturedCount = result.capturedIds.length
+    return {
+      pieces: result.pieces,
+      selectedId: null,
+      validMoves: [],
+      currentTurn: s.currentTurn === 'defender' ? 'attacker' : 'defender',
+      scores: {
+        attacker: s.scores.attacker + (s.currentTurn === 'attacker' ? capturedCount : 0),
+        defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedCount : 0),
+      },
+      winner: result.winner,
+    }
+  }),
+
+  setPlayerMode: (mode) => set({ playerMode: mode }),
 
   resetGame: () => set((s) => ({
     pieces: createInitialPieces(getBoardConfig(s.rules)),
