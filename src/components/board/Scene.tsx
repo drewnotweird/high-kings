@@ -121,7 +121,11 @@ function FireLight({ menuOpen }: { menuOpen: boolean }) {
   return <pointLight ref={ref} position={[0, -0.5, 3]} color="#ff6010" distance={20} decay={2} intensity={0} />
 }
 
-function AnimatedBoard({ children, menuOpen }: { children: React.ReactNode; menuOpen: boolean }) {
+function AnimatedBoard({ children, menuOpen, snapFlipRef }: {
+  children: React.ReactNode
+  menuOpen: boolean
+  snapFlipRef: React.MutableRefObject<boolean>
+}) {
   const introStartMs = useContext(IntroStartContext)
   const groupRef = useRef<Group>(null)
   const introDone = useRef(false)
@@ -142,7 +146,12 @@ function AnimatedBoard({ children, menuOpen }: { children: React.ReactNode; menu
     }
 
     const target = menuOpen ? 1 : 0
-    flipProgress.current += (target - flipProgress.current) * Math.min(delta * 4, 1)
+    if (snapFlipRef.current) {
+      flipProgress.current = target
+      snapFlipRef.current = false
+    } else {
+      flipProgress.current += (target - flipProgress.current) * Math.min(delta * 4, 1)
+    }
     groupRef.current.rotation.x = flipProgress.current * -Math.PI
   })
 
@@ -218,7 +227,7 @@ interface SceneInnerProps {
 }
 
 function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
-  const { pieces, selectedId, theme: themeName, selectPiece, cameraLocked } = useGameStore()
+  const { pieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving } = useGameStore()
   const theme = themes[themeName]
   const [menuPhase, setMenuPhase] = useState<MenuPhase>('idle')
   // boardFlipOpen is delayed: pieces hide first, THEN board flips
@@ -227,6 +236,9 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
   const [lightsOn, setLightsOn] = useState(true)
   const everOpened = useRef(false)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+  const snapFlipRef = useRef(false)
+  // Tracks previous powerSaving value so menuOpen effect can detect power-saving recovery
+  const prevPowerSaving = useRef(false)
 
   const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = [] }
 
@@ -235,12 +247,19 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
     if (menuOpen) {
       everOpened.current = true
       setLightsOn(false)
-      setMenuPhase('hiding')
-      // Step 2: after pieces are gone, start board flip
-      timers.current.push(setTimeout(() => {
+      if (prevPowerSaving.current) {
+        // Recovering from power-saving: menu was already open, snap board to flipped position
         setMenuPhase('hidden')
         setBoardFlipOpen(true)
-      }, HIDE_MS))
+        snapFlipRef.current = true
+      } else {
+        setMenuPhase('hiding')
+        // Step 2: after pieces are gone, start board flip
+        timers.current.push(setTimeout(() => {
+          setMenuPhase('hidden')
+          setBoardFlipOpen(true)
+        }, HIDE_MS))
+      }
     } else if (everOpened.current) {
       // Board starts returning immediately
       setBoardFlipOpen(false)
@@ -255,6 +274,12 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
     }
     return clearTimers
   }, [menuOpen])
+
+  // Keep prevPowerSaving in sync — must be declared after useEffect([menuOpen]) so the
+  // menuOpen effect reads the OLD value when both deps change in the same render
+  useEffect(() => {
+    prevPowerSaving.current = powerSaving
+  }, [powerSaving])
 
   // New game: clear timers, reset state — pieces remount and do sequential intro drop
   useEffect(() => {
@@ -282,7 +307,7 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
       <Environment preset="night" environmentIntensity={0.0} />
       <FadingLights menuOpen={!lightsOn} />
       <FireLight menuOpen={!lightsOn} />
-      <AnimatedBoard menuOpen={boardFlipOpen}>
+      <AnimatedBoard menuOpen={boardFlipOpen} snapFlipRef={snapFlipRef}>
         <Board theme={theme} />
       </AnimatedBoard>
       {pieces.map((piece) => (
