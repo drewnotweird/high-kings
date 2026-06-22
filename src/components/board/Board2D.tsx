@@ -25,9 +25,8 @@ const SELECTED_GLOW    = 'rgba(255,220,60,0.85)'
 export function Board2D({ menuOpen }: { menuOpen: boolean }) {
   const { pieces, selectedId, selectPiece, gameKey } = useGameStore()
   const [mounted, setMounted] = useState(false)
-  const [visibleCount, setVisibleCount] = useState(0)
+  const [visibleCount, setVisibleCount] = useState(pieces.length) // start fully visible (mid-game switch)
   const prevGameKey = useRef(gameKey)
-  const isNewGame = useRef(true)
 
   // Board fade-in
   useEffect(() => {
@@ -35,19 +34,16 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
     return () => clearTimeout(t)
   }, [])
 
-  // Detect new game vs mode switch
+  // Only animate when gameKey increments (actual new game)
   useEffect(() => {
-    if (gameKey !== prevGameKey.current) {
-      // Actual new game — re-run sequence
-      prevGameKey.current = gameKey
-      isNewGame.current = true
-      setVisibleCount(0)
-    }
+    if (gameKey === prevGameKey.current) return
+    prevGameKey.current = gameKey
+    setVisibleCount(0)
   }, [gameKey])
 
-  // Sequential piece reveal
+  // Sequential piece reveal — only runs when visibleCount is reset to 0
   useEffect(() => {
-    if (!isNewGame.current) return
+    if (visibleCount !== 0) return
 
     const ordered = [
       ...pieces.filter(p => p.type === 'king'),
@@ -57,18 +53,11 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
 
     const timers: ReturnType<typeof setTimeout>[] = []
     ordered.forEach((_, i) => {
-      timers.push(setTimeout(() => {
-        setVisibleCount(i + 1)
-      }, (BOARD_ARRIVE + i * PIECE_STAGGER) * 1000))
+      timers.push(setTimeout(() => setVisibleCount(i + 1), (BOARD_ARRIVE + i * PIECE_STAGGER) * 1000))
     })
 
-    // After last piece, mark sequence done
-    timers.push(setTimeout(() => {
-      isNewGame.current = false
-    }, (BOARD_ARRIVE + (ordered.length - 1) * PIECE_STAGGER) * 1000 + 400))
-
     return () => timers.forEach(clearTimeout)
-  }, [gameKey])
+  }, [visibleCount])
 
   const ordered = [
     ...pieces.filter(p => p.type === 'king'),
