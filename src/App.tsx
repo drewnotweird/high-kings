@@ -260,7 +260,7 @@ body, button, input, select {
 }
 .credits-scroll__body-text {
   font-family: 'MedievalSharp', serif;
-  font-size: 13px;
+  font-size: 16px;
   line-height: 1.85;
   color: #3d2008;
   margin: 0 0 22px;
@@ -275,7 +275,7 @@ body, button, input, select {
 }
 .credits-scroll__name {
   font-family: 'MedievalSharp', serif;
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 2px;
   color: #2e1606;
 }
@@ -286,7 +286,7 @@ body, button, input, select {
   border: 1px solid rgba(60,28,0,0.4);
   color: #3d2008;
   font-family: 'MedievalSharp', serif;
-  font-size: 10px;
+  font-size: 13px;
   letter-spacing: 1px;
   text-transform: uppercase;
   padding: 8px 22px;
