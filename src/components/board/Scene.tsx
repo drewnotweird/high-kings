@@ -9,7 +9,7 @@ import { themes } from '../../lib/themes'
 import { IntroStartContext } from '../../contexts/intro'
 
 const BOARD_ARRIVE = 1.2
-const PIECE_STAGGER = 0.07
+const PIECE_STAGGER = 0.035
 const BOARD_DURATION = 1.1
 const PIECE_ANIM_DURATION = 0.36
 const NUM_PIECES = 37 // 1 king + 12 defenders + 24 attackers
