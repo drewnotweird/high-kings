@@ -5,7 +5,7 @@ import type { Piece } from '../game/hnefatafl'
 export type Theme = 'natural'
 export type PlayerSide = 'attacker' | 'defender'
 export type Difficulty = 'easy' | 'medium' | 'hard'
-export type Rules = 'Copenhagen' | 'Fetlar' | 'Tablut' | 'Historical'
+export type Rules = 'Tablut' | 'Copenhagen' | 'Tawlbwrdd' | 'Brandub'
 
 interface GameStore {
   pieces: Piece[]
@@ -38,7 +38,7 @@ export const useGameStore = create<GameStore>((set) => ({
   musicEnabled: true,
   cameraLocked: false,
   difficulty: 'medium',
-  rules: 'Copenhagen',
+  rules: 'Copenhagen' as Rules,
   powerSaving: false,
   setTheme: (theme) => set({ theme }),
   selectPiece: (id) => set({ selectedId: id }),

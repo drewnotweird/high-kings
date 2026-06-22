@@ -331,30 +331,30 @@ body, button, input, select {
 }
 .settings-toggle--on .settings-toggle__knob { left: 21px; }
 .settings-toggle--off .settings-toggle__knob { left: 3px; }
-.settings-chips {
+.settings-cycler {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
 }
-.settings-chip {
-  font-size: 10px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid rgba(200,160,40,0.3);
-  background: transparent;
-  color: #9a8a6a;
+.settings-cycler__arrow {
+  background: none;
+  border: none;
+  color: #c8b888;
+  font-size: 22px;
+  line-height: 1;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  padding: 0 4px;
   font-family: inherit;
-  white-space: nowrap;
+  transition: color 0.15s;
 }
-.settings-chip--active {
-  background: rgba(200,160,40,0.25);
-  border-color: rgba(200,160,40,0.8);
+.settings-cycler__arrow:hover { color: #e8d8b8; }
+.settings-cycler__value {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   color: #e8d8b8;
+  min-width: 80px;
+  text-align: center;
 }
 @media (min-width: 1024px) {
   .score-panel__inner {
@@ -494,20 +494,19 @@ function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
   )
 }
 
-function Chips<T extends string>({ options, value, onChange }: {
+function Cycler<T extends string>({ options, value, onChange }: {
   options: T[]
   value: T
   onChange: (v: T) => void
 }) {
+  const idx = options.indexOf(value)
+  const prev = () => onChange(options[(idx - 1 + options.length) % options.length])
+  const next = () => onChange(options[(idx + 1) % options.length])
   return (
-    <div className="settings-chips">
-      {options.map(o => (
-        <button
-          key={o}
-          className={`settings-chip${value === o ? ' settings-chip--active' : ''}`}
-          onClick={() => onChange(o)}
-        >{o}</button>
-      ))}
+    <div className="settings-cycler">
+      <button className="settings-cycler__arrow" onClick={prev}>&#8249;</button>
+      <span className="settings-cycler__value">{value}</span>
+      <button className="settings-cycler__arrow" onClick={next}>&#8250;</button>
     </div>
   )
 }
@@ -611,7 +610,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
               </div>
               <div className="settings-row">
                 <span className="settings-row__label">View</span>
-                <Chips<'Free' | 'Top-down'>
+                <Cycler<'Free' | 'Top-down'>
                   options={['Free', 'Top-down']}
                   value={draft.powerSaving ? 'Top-down' : draft.cameraLocked ? 'Top-down' : 'Free'}
                   onChange={v => {
@@ -631,7 +630,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
             <div className="settings-panel" style={{ marginTop: 16 }}>
               <div className="settings-row">
                 <span className="settings-row__label">Difficulty</span>
-                <Chips<Difficulty>
+                <Cycler<Difficulty>
                   options={['easy', 'medium', 'hard']}
                   value={draft.difficulty}
                   onChange={v => setDraft(d => ({ ...d, difficulty: v }))}
@@ -639,8 +638,8 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
               </div>
               <div className="settings-row">
                 <span className="settings-row__label">Rules</span>
-                <Chips<Rules>
-                  options={['Copenhagen', 'Fetlar', 'Tablut', 'Historical']}
+                <Cycler<Rules>
+                  options={['Tablut', 'Copenhagen', 'Tawlbwrdd', 'Brandub']}
                   value={draft.rules}
                   onChange={v => setDraft(d => ({ ...d, rules: v }))}
                 />
