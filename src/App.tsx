@@ -573,6 +573,8 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
   // Local draft — changes only committed on Resume/Restart
   const [draft, setDraft] = useState({ powerSaving, cameraLocked, difficulty, rules })
 
+  const panel2Dirty = draft.difficulty !== difficulty || draft.rules !== rules
+
   // Reset draft and screen when menu opens
   useEffect(() => {
     if (isOpen) setDraft({ powerSaving, cameraLocked, difficulty, rules })
@@ -642,7 +644,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
                   />
                 </div>
                 <div className="settings-row">
-                  <button className="menu-overlay__item" onClick={handleResume}>Resume Game</button>
+                  <button className="menu-overlay__item" onClick={handleResume} disabled={panel2Dirty} style={{ opacity: panel2Dirty ? 0.35 : 1, cursor: panel2Dirty ? 'default' : 'pointer' }}>Resume Game</button>
                 </div>
               </div>
 
