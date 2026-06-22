@@ -2,10 +2,10 @@ import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import { Mesh, Vector2, MeshPhysicalMaterial } from 'three'
+import { getBoardConfig } from '../../game/hnefatafl'
 import type { Piece as PieceData } from '../../game/hnefatafl'
+import { useGameStore } from '../../store/gameStore'
 import type { ThemeConfig } from '../../lib/themes'
-
-const BOARD_OFFSET = 5
 const W = 1.35
 const REST_Y = 0.15
 const JUMP_PEAK = 1.4
@@ -30,8 +30,10 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
   const landTime = useRef(0)
   const menuOpacity = useRef(1)
 
-  const x = piece.col - BOARD_OFFSET
-  const z = piece.row - BOARD_OFFSET
+  const { rules } = useGameStore()
+  const boardOffset = (getBoardConfig(rules).boardSize - 1) / 2
+  const x = piece.col - boardOffset
+  const z = piece.row - boardOffset
 
   const isKing = piece.type === 'king'
   const isDefender = piece.type === 'defender'
