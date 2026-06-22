@@ -172,7 +172,10 @@ function CameraReset({ menuOpen }: { menuOpen: boolean }) {
   return null
 }
 
-const HIDE_DURATION_MS = Math.round(PIECE_ANIM_DURATION * 1000) + 50
+// How long pieces take to fly away / appear
+const HIDE_MS = Math.round(PIECE_ANIM_DURATION * 1000) + 50
+// How long to wait after board starts returning before restoring lights / showing pieces
+const BOARD_RETURN_MS = 850
 
 interface SceneInnerProps {
   menuOpen: boolean
@@ -184,26 +187,51 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
   const { pieces, selectedId, theme: themeName, selectPiece } = useGameStore()
   const theme = themes[themeName]
   const [menuPhase, setMenuPhase] = useState<MenuPhase>('idle')
+  // boardFlipOpen is delayed: pieces hide first, THEN board flips
+  const [boardFlipOpen, setBoardFlipOpen] = useState(false)
+  // lights cut immediately on open, restored only after board has returned
+  const [lightsOn, setLightsOn] = useState(true)
   const everOpened = useRef(false)
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = [] }
 
   useEffect(() => {
+    clearTimers()
     if (menuOpen) {
       everOpened.current = true
+      setLightsOn(false)
       setMenuPhase('hiding')
-      const t = setTimeout(() => setMenuPhase('hidden'), HIDE_DURATION_MS)
-      return () => clearTimeout(t)
+      // Step 2: after pieces are gone, start board flip
+      timers.current.push(setTimeout(() => {
+        setMenuPhase('hidden')
+        setBoardFlipOpen(true)
+      }, HIDE_MS))
     } else if (everOpened.current) {
-      setMenuPhase('appearing')
-      const t = setTimeout(() => setMenuPhase('idle'), HIDE_DURATION_MS)
-      return () => clearTimeout(t)
+      // Board starts returning immediately
+      setBoardFlipOpen(false)
+      // After board has returned: restore lights and show pieces
+      timers.current.push(setTimeout(() => {
+        setLightsOn(true)
+        setMenuPhase('appearing')
+      }, BOARD_RETURN_MS))
+      timers.current.push(setTimeout(() => {
+        setMenuPhase('idle')
+      }, BOARD_RETURN_MS + HIDE_MS))
     }
+    return clearTimers
   }, [menuOpen])
 
-  // On new game (dropKey change): reset menu phase so pieces do fresh intro drop
+  // New game: clear timers, reset state — pieces remount and do sequential intro drop
   useEffect(() => {
     if (dropKey > 0) {
+      clearTimers()
+      setBoardFlipOpen(false)
       setMenuPhase('idle')
+      setLightsOn(false)
       everOpened.current = false
+      // Restore lights after board has returned
+      timers.current.push(setTimeout(() => setLightsOn(true), BOARD_RETURN_MS))
     }
   }, [dropKey])
 
@@ -218,9 +246,9 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
     <>
       <fog attach="fog" args={["#0a0800", 28, 55]} />
       <Environment preset="night" environmentIntensity={0.0} />
-      <FadingLights menuOpen={menuOpen} />
-      <FireLight menuOpen={menuOpen} />
-      <AnimatedBoard menuOpen={menuOpen}>
+      <FadingLights menuOpen={!lightsOn} />
+      <FireLight menuOpen={!lightsOn} />
+      <AnimatedBoard menuOpen={boardFlipOpen}>
         <Board theme={theme} />
       </AnimatedBoard>
       {pieces.map((piece) => (
