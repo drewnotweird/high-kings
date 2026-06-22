@@ -597,7 +597,7 @@ function App() {
         <div style={{ position: 'absolute', inset: 0, display: powerSaving ? 'none' : 'block' }}>
           <Scene
             onIntroStart={() => { setIntroStarted(true); startSetupAnim() }}
-            menuOpen={menuOpen && !powerSaving}
+            menuOpen={menuOpen}
             onNewGame={() => { setMenuOpen(false); startSetupAnim() }}
           />
         </div>
