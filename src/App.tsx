@@ -111,13 +111,13 @@ body, button, input, select {
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s;
   font-family: inherit;
-  width: 260px;
+  width: 100%;
   text-align: center;
   box-sizing: border-box;
 }
 .menu-overlay__item:hover { border-color: rgba(200,160,40,0.9); background: rgba(30,15,0,0.9); }
 .settings-panel {
-  width: 260px;
+  width: 100%;
   background: rgba(0,0,0,0.88);
   border: 1px solid rgba(200,160,40,0.35);
   border-radius: 8px;
