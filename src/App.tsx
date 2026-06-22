@@ -82,7 +82,7 @@ body, button, input, select {
 .menu-overlay--visible { pointer-events: auto; }
 .menu-overlay__screens {
   position: relative;
-  width: 260px;
+  width: min(260px, calc(100vw - 32px));
 }
 .menu-overlay__screen {
   display: flex;
