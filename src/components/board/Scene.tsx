@@ -177,6 +177,22 @@ const HIDE_MS = Math.round(PIECE_ANIM_DURATION * 1000) + 50
 // How long to wait after board starts returning before restoring lights / showing pieces
 const BOARD_RETURN_MS = 850
 
+const TOP_DOWN_CAM = new Vector3(0, 22, 0.01)
+
+function CameraLock({ locked }: { locked: boolean }) {
+  useFrame(({ camera, controls }) => {
+    if (!locked) return
+    camera.position.lerp(TOP_DOWN_CAM, 0.06)
+    if (controls) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const c = controls as any
+      c.target.lerp(DEFAULT_CAM_TARGET, 0.06)
+      c.update()
+    }
+  })
+  return null
+}
+
 interface SceneInnerProps {
   menuOpen: boolean
   dropStartMs: number | null
@@ -184,7 +200,7 @@ interface SceneInnerProps {
 }
 
 function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
-  const { pieces, selectedId, theme: themeName, selectPiece } = useGameStore()
+  const { pieces, selectedId, theme: themeName, selectPiece, cameraLocked } = useGameStore()
   const theme = themes[themeName]
   const [menuPhase, setMenuPhase] = useState<MenuPhase>('idle')
   // boardFlipOpen is delayed: pieces hide first, THEN board flips
@@ -264,14 +280,15 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
         />
       ))}
       <CameraReset menuOpen={menuOpen} />
+      <CameraLock locked={cameraLocked && !menuOpen} />
       <OrbitControls
         makeDefault
-        enabled={!menuOpen}
+        enabled={!menuOpen && !cameraLocked}
         enablePan={false}
         minDistance={6}
         maxDistance={32}
-        minPolarAngle={0.3}
-        maxPolarAngle={Math.PI / 2.2}
+        minPolarAngle={cameraLocked ? Math.PI * 0.01 : 0.3}
+        maxPolarAngle={cameraLocked ? Math.PI * 0.01 : Math.PI / 2.2}
         target={[0, 0, 0]}
         dampingFactor={0.08}
         enableDamping

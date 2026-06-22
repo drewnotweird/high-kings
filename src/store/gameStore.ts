@@ -4,6 +4,8 @@ import type { Piece } from '../game/hnefatafl'
 
 export type Theme = 'natural'
 export type PlayerSide = 'attacker' | 'defender'
+export type Difficulty = 'easy' | 'medium' | 'hard'
+export type Rules = 'Copenhagen' | 'Fetlar' | 'Tablut' | 'Historical'
 
 interface GameStore {
   pieces: Piece[]
@@ -12,9 +14,17 @@ interface GameStore {
   currentTurn: PlayerSide
   scores: Record<PlayerSide, number>
   gameKey: number
+  // Settings
+  musicEnabled: boolean
+  cameraLocked: boolean
+  difficulty: Difficulty
+  rules: Rules
   setTheme: (theme: Theme) => void
   selectPiece: (id: string | null) => void
   resetGame: () => void
+  setSetting: <K extends 'musicEnabled' | 'cameraLocked' | 'difficulty' | 'rules'>(
+    key: K, value: GameStore[K]
+  ) => void
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -24,6 +34,10 @@ export const useGameStore = create<GameStore>((set) => ({
   currentTurn: 'defender',
   scores: { attacker: 0, defender: 0 },
   gameKey: 0,
+  musicEnabled: true,
+  cameraLocked: false,
+  difficulty: 'medium',
+  rules: 'Copenhagen',
   setTheme: (theme) => set({ theme }),
   selectPiece: (id) => set({ selectedId: id }),
   resetGame: () => set((s) => ({
@@ -33,4 +47,5 @@ export const useGameStore = create<GameStore>((set) => ({
     scores: { attacker: 0, defender: 0 },
     gameKey: s.gameKey + 1,
   })),
+  setSetting: (key, value) => set({ [key]: value }),
 }))

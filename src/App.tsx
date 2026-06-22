@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Scene } from './components/board/Scene'
 import { ThemeSwitcher } from './components/ui/ThemeSwitcher'
 import { useGameStore } from './store/gameStore'
-import type { PlayerSide } from './store/gameStore'
+import type { PlayerSide, Difficulty, Rules } from './store/gameStore'
 
 const fireCSS = `
 @keyframes sceneFadeIn {
@@ -67,15 +67,28 @@ const fireCSS = `
   position: absolute;
   inset: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
   z-index: 20;
   pointer-events: none;
   transition: opacity 0.4s ease;
+  overflow: hidden;
 }
 .menu-overlay--visible { pointer-events: auto; }
+.menu-overlay__screens {
+  position: relative;
+  width: 260px;
+  display: flex;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.menu-overlay__screens--settings { transform: translateX(-260px); }
+.menu-overlay__screen {
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
 .menu-overlay__item {
   background: rgba(0,0,0,0.8);
   border: 1px solid rgba(200,160,40,0.4);
@@ -88,10 +101,103 @@ const fireCSS = `
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s;
   font-family: inherit;
-  width: 240px;
+  width: 260px;
   text-align: center;
+  box-sizing: border-box;
 }
 .menu-overlay__item:hover { border-color: rgba(200,160,40,0.9); background: rgba(30,15,0,0.9); }
+.settings-panel {
+  width: 260px;
+  background: rgba(0,0,0,0.88);
+  border: 1px solid rgba(200,160,40,0.35);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.settings-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(200,160,40,0.2);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.settings-panel__header:hover { background: rgba(200,160,40,0.06); }
+.settings-panel__back {
+  color: #c8b888;
+  display: flex;
+  align-items: center;
+}
+.settings-panel__title {
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #e8d8b8;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  gap: 12px;
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-row__label {
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #c8b888;
+  flex-shrink: 0;
+}
+.settings-toggle {
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.settings-toggle--on { background: rgba(200,160,40,0.7); }
+.settings-toggle--off { background: rgba(255,255,255,0.15); }
+.settings-toggle__knob {
+  position: absolute;
+  top: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.2s;
+}
+.settings-toggle--on .settings-toggle__knob { left: 21px; }
+.settings-toggle--off .settings-toggle__knob { left: 3px; }
+.settings-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+}
+.settings-chip {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(200,160,40,0.3);
+  background: transparent;
+  color: #9a8a6a;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.settings-chip--active {
+  background: rgba(200,160,40,0.25);
+  border-color: rgba(200,160,40,0.8);
+  color: #e8d8b8;
+}
 @media (min-width: 1024px) {
   .score-panel__inner {
     flex-direction: column !important;
@@ -222,18 +328,100 @@ function MenuButton({ onClick, isOpen }: { onClick: () => void; isOpen: boolean 
   )
 }
 
+function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
+  return (
+    <button className={`settings-toggle settings-toggle--${on ? 'on' : 'off'}`} onClick={onClick}>
+      <span className="settings-toggle__knob" />
+    </button>
+  )
+}
+
+function Chips<T extends string>({ options, value, onChange }: {
+  options: T[]
+  value: T
+  onChange: (v: T) => void
+}) {
+  return (
+    <div className="settings-chips">
+      {options.map(o => (
+        <button
+          key={o}
+          className={`settings-chip${value === o ? ' settings-chip--active' : ''}`}
+          onClick={() => onChange(o)}
+        >{o}</button>
+      ))}
+    </div>
+  )
+}
+
 function MenuOverlay({ isOpen, isVisible, onResume, onNewGame }: {
   isOpen: boolean
   isVisible: boolean
   onResume: () => void
   onNewGame: () => void
 }) {
+  const [screen, setScreen] = useState<'main' | 'settings'>('main')
+  const { musicEnabled, cameraLocked, difficulty, rules, setSetting } = useGameStore()
+
+  useEffect(() => { if (!isOpen) setScreen('main') }, [isOpen])
+
   if (!isOpen) return null
+
   return (
     <div className={`menu-overlay${isVisible ? ' menu-overlay--visible' : ''}`} style={{ opacity: isVisible ? 1 : 0 }}>
-      <button className="menu-overlay__item" onClick={onResume}>Resume Game</button>
-      <button className="menu-overlay__item" onClick={onNewGame}>New Game</button>
-      <button className="menu-overlay__item">How to Play</button>
+      <div className={`menu-overlay__screens${screen === 'settings' ? ' menu-overlay__screens--settings' : ''}`}>
+
+        {/* Main screen */}
+        <div className="menu-overlay__screen">
+          <button className="menu-overlay__item" onClick={onResume}>Resume Game</button>
+          <button className="menu-overlay__item" onClick={() => setScreen('settings')}>Settings</button>
+          <button className="menu-overlay__item" onClick={onNewGame}>New Game</button>
+          <button className="menu-overlay__item">How to Play</button>
+        </div>
+
+        {/* Settings screen */}
+        <div className="menu-overlay__screen">
+          <div className="settings-panel">
+            <div className="settings-panel__header" onClick={() => setScreen('main')}>
+              <span className="settings-panel__back">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10 3L5 8l5 5" />
+                </svg>
+              </span>
+              <span className="settings-panel__title">Settings</span>
+            </div>
+            <div className="settings-row">
+              <span className="settings-row__label">Music</span>
+              <Toggle on={musicEnabled} onClick={() => setSetting('musicEnabled', !musicEnabled)} />
+            </div>
+            <div className="settings-row">
+              <span className="settings-row__label">Camera</span>
+              <Chips<'Free' | 'Top-down'>
+                options={['Free', 'Top-down']}
+                value={cameraLocked ? 'Top-down' : 'Free'}
+                onChange={v => setSetting('cameraLocked', v === 'Top-down')}
+              />
+            </div>
+            <div className="settings-row">
+              <span className="settings-row__label">Difficulty</span>
+              <Chips<Difficulty>
+                options={['easy', 'medium', 'hard']}
+                value={difficulty}
+                onChange={v => setSetting('difficulty', v)}
+              />
+            </div>
+            <div className="settings-row">
+              <span className="settings-row__label">Rules</span>
+              <Chips<Rules>
+                options={['Copenhagen', 'Fetlar', 'Tablut', 'Historical']}
+                value={rules}
+                onChange={v => setSetting('rules', v)}
+              />
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   )
 }
