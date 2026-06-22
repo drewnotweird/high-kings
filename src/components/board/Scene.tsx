@@ -5,6 +5,7 @@ import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group, Vector3 }
 import { Board } from './Board'
 import { Piece, type MenuPhase } from '../pieces/Piece'
 import { useGameStore } from '../../store/gameStore'
+import { getBoardConfig } from '../../game/hnefatafl'
 import { themes } from '../../lib/themes'
 import { IntroStartContext } from '../../contexts/intro'
 
@@ -12,10 +13,9 @@ const BOARD_ARRIVE = 1.2
 const PIECE_STAGGER = 0.035
 const BOARD_DURATION = 1.1
 const PIECE_ANIM_DURATION = 0.36
-const NUM_PIECES = 37 // 1 king + 12 defenders + 24 attackers
-export const INTRO_DURATION_MS = Math.ceil(
-  (BOARD_ARRIVE + (NUM_PIECES - 1) * PIECE_STAGGER + PIECE_ANIM_DURATION) * 1000
-) + 300
+export function getIntroDurationMs(numPieces: number): number {
+  return Math.ceil((BOARD_ARRIVE + (numPieces - 1) * PIECE_STAGGER + PIECE_ANIM_DURATION) * 1000) + 300
+}
 const BOARD_START_Y = -20
 
 function FadingLights({ menuOpen }: { menuOpen: boolean }) {
@@ -186,19 +186,21 @@ const BOARD_RETURN_MS = 1000
 
 function CameraLock({ locked }: { locked: boolean }) {
   const { size } = useThree()
-  // Compute height so the board (≈12 world units wide) fits horizontally with margin
+  const { rules } = useGameStore()
+  const boardSize = getBoardConfig(rules).boardSize
+  // Compute height so the board fits horizontally and vertically with margin
   const topDownCam = useMemo(() => {
     const aspect = size.width / size.height
     const fovHalfRad = (45 * Math.PI) / 180 / 2
     const tan = Math.tan(fovHalfRad)
-    // Horizontal fit (portrait screens): board ~12 world units wide
-    const hHoriz = 6.6 / (tan * aspect)
-    // Vertical fit: board must occupy ≤ (100vh - 480px) of screen height
+    // Horizontal fit: half-board + margin
+    const hHoriz = (boardSize / 2 + 1.1) / (tan * aspect)
+    // Vertical fit: board must occupy ≤ (100vh - 280px) of screen height
     const usableH = Math.max(size.height - 280, 100)
-    const hVert = (11 * size.height) / (2 * tan * usableH)
+    const hVert = (boardSize * size.height) / (2 * tan * usableH)
     const h = Math.max(22, hHoriz, hVert)
     return new Vector3(0, h, 0.01)
-  }, [size.width, size.height])
+  }, [size.width, size.height, boardSize])
 
   const prevLocked = useRef(false)
 

@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { useTexture } from '@react-three/drei'
 import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2 } from 'three'
-import { BOARD_SIZE, isCorner, isThrone, attackerStarts, defenderStarts } from '../../game/hnefatafl'
+import { getBoardConfig, isCorner, isThrone } from '../../game/hnefatafl'
+import { useGameStore } from '../../store/gameStore'
 import type { ThemeConfig } from '../../lib/themes'
 
 const SQUARE_SIZE = 0.88
@@ -9,7 +10,6 @@ const TILE_HEIGHT = 0.055
 const CORNER_RADIUS = 0.05
 const BEVEL = 0.038
 const TILE_TOP = TILE_HEIGHT + BEVEL
-const BOARD_OFFSET = (BOARD_SIZE - 1) / 2
 const TILE_COUNT = 10
 const HALF = SQUARE_SIZE / 2
 
@@ -21,9 +21,6 @@ function mulberry32(seed: number) {
     return ((t ^ t >>> 14) >>> 0) / 4294967296
   }
 }
-
-const attackerSet = new Set(attackerStarts.map(([r, c]) => `${r},${c}`))
-const defenderSet = new Set(defenderStarts.map(([r, c]) => `${r},${c}`))
 
 // Custom UV generator so tile texture is centred and fills the top face 0→1
 const uvGenerator = {
@@ -55,6 +52,10 @@ interface BoardProps {
 }
 
 export function Board({ theme }: BoardProps) {
+  const { rules } = useGameStore()
+  const { boardSize, center, attackerStarts, defenderStarts } = getBoardConfig(rules)
+  const boardOffset = (boardSize - 1) / 2
+
   const tileGeometry = useMemo(() => {
     const r = CORNER_RADIUS
     const h = HALF - r
@@ -82,14 +83,14 @@ export function Board({ theme }: BoardProps) {
 
   const tileAssignment = useMemo(() => {
     const map: Record<string, number> = {}
-    for (let row = 0; row < BOARD_SIZE; row++) {
-      for (let col = 0; col < BOARD_SIZE; col++) {
+    for (let row = 0; row < boardSize; row++) {
+      for (let col = 0; col < boardSize; col++) {
         const rand = mulberry32(row * 100 + col + 7)
         map[`${row},${col}`] = 1 + Math.floor(rand() * TILE_COUNT)
       }
     }
     return map
-  }, [])
+  }, [boardSize])
 
   const tilePaths = Array.from({ length: TILE_COUNT }, (_, i) => `${import.meta.env.BASE_URL}textures/tile-${i + 1}.png`)
   const tileTextures = useTexture(tilePaths)
@@ -107,30 +108,32 @@ export function Board({ theme }: BoardProps) {
   })
 
   const squares = useMemo(() => {
+    const attackerSet = new Set(attackerStarts.map(([r, c]) => `${r},${c}`))
+    const defenderSet = new Set(defenderStarts.map(([r, c]) => `${r},${c}`))
     const result = []
-    for (let row = 0; row < BOARD_SIZE; row++) {
-      for (let col = 0; col < BOARD_SIZE; col++) {
+    for (let row = 0; row < boardSize; row++) {
+      for (let col = 0; col < boardSize; col++) {
         const key = `${row},${col}`
-        const x = col - BOARD_OFFSET
-        const z = row - BOARD_OFFSET
+        const x = col - boardOffset
+        const z = row - boardOffset
         const variantIdx = (tileAssignment[key] ?? 1) - 1
 
         let overlay: 'corner' | 'throne' | 'defender' | 'attacker' | null = null
-        if (isCorner(row, col)) overlay = 'corner'
-        else if (isThrone(row, col)) overlay = 'throne'
+        if (isCorner(row, col, boardSize)) overlay = 'corner'
+        else if (isThrone(row, col, center)) overlay = 'throne'
         else if (defenderSet.has(key)) overlay = 'defender'
         else if (attackerSet.has(key)) overlay = 'attacker'
 
-        result.push({ row, col, x, z, variantIdx, overlay, isCornerTile: isCorner(row, col) || isThrone(row, col) })
+        result.push({ row, col, x, z, variantIdx, overlay, isCornerTile: isCorner(row, col, boardSize) || isThrone(row, col, center) })
       }
     }
     return result
-  }, [tileAssignment])
+  }, [boardSize, boardOffset, center, attackerStarts, defenderStarts, tileAssignment])
 
   return (
     <group>
       <mesh position={[0, -0.15, 0]} receiveShadow>
-        <boxGeometry args={[BOARD_SIZE + 1.2, 0.3, BOARD_SIZE + 1.2]} />
+        <boxGeometry args={[boardSize + 1.2, 0.3, boardSize + 1.2]} />
         <meshStandardMaterial
           map={boardTexture}
           roughness={theme.boardRoughness}

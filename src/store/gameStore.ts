@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { createInitialPieces } from '../game/hnefatafl'
+import { createInitialPieces, getBoardConfig } from '../game/hnefatafl'
 import type { Piece } from '../game/hnefatafl'
 
 export type Theme = 'natural'
@@ -29,7 +29,7 @@ interface GameStore {
 }
 
 export const useGameStore = create<GameStore>((set) => ({
-  pieces: createInitialPieces(),
+  pieces: createInitialPieces(getBoardConfig('Copenhagen')),
   selectedId: null,
   theme: 'natural',
   currentTurn: 'defender',
@@ -43,7 +43,7 @@ export const useGameStore = create<GameStore>((set) => ({
   setTheme: (theme) => set({ theme }),
   selectPiece: (id) => set({ selectedId: id }),
   resetGame: () => set((s) => ({
-    pieces: createInitialPieces(),
+    pieces: createInitialPieces(getBoardConfig(s.rules)),
     selectedId: null,
     currentTurn: 'defender',
     scores: { attacker: 0, defender: 0 },

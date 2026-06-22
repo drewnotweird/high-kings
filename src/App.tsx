@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Scene, INTRO_DURATION_MS } from './components/board/Scene'
+import { Scene, getIntroDurationMs } from './components/board/Scene'
 import { Board2D } from './components/board/Board2D'
 import { ThemeSwitcher } from './components/ui/ThemeSwitcher'
 import { useGameStore } from './store/gameStore'
@@ -731,7 +731,7 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuVisible, setMenuVisible] = useState(false)
   const [showCredits, setShowCredits] = useState(false)
-  const { currentTurn, scores, resetGame, powerSaving, setSetting } = useGameStore()
+  const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces } = useGameStore()
   const setupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ?ps=true in the URL activates power-saving mode on load
@@ -744,7 +744,7 @@ function App() {
   const startSetupAnim = () => {
     if (setupTimerRef.current) clearTimeout(setupTimerRef.current)
     setSetupAnimating(true)
-    setupTimerRef.current = setTimeout(() => setSetupAnimating(false), INTRO_DURATION_MS)
+    setupTimerRef.current = setTimeout(() => setSetupAnimating(false), getIntroDurationMs(pieces.length))
   }
 
   // In power-saving mode there's no 3D intro — show UI immediately

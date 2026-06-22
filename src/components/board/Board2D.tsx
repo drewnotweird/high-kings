@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useGameStore } from '../../store/gameStore'
-import { BOARD_SIZE, isCorner, isThrone } from '../../game/hnefatafl'
+import { getBoardConfig, isCorner, isThrone } from '../../game/hnefatafl'
 
 const CELL = 40
 const PAD = 24
-const TOTAL = BOARD_SIZE * CELL + PAD * 2
 
 const BOARD_ARRIVE = 1.2
 const PIECE_STAGGER = 0.035
@@ -23,7 +22,10 @@ const KING_STROKE      = '#f0d060'
 const SELECTED_GLOW    = 'rgba(255,220,60,0.85)'
 
 export function Board2D({ menuOpen }: { menuOpen: boolean }) {
-  const { pieces, selectedId, selectPiece, gameKey } = useGameStore()
+  const { pieces, selectedId, selectPiece, gameKey, rules } = useGameStore()
+  const { boardSize, center } = getBoardConfig(rules)
+  const TOTAL = boardSize * CELL + PAD * 2
+
   const [mounted, setMounted] = useState(false)
   const [visibleCount, setVisibleCount] = useState(pieces.length) // start fully visible (mid-game switch)
   const prevGameKey = useRef(gameKey)
@@ -61,6 +63,9 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
   ]
   const orderMap = new Map(ordered.map((p, i) => [p.id, i]))
 
+  const last = boardSize - 1
+  const corners: [number, number][] = [[0,0],[0,last],[last,0],[last,last]]
+
   return (
     <div
       className="board2d"
@@ -93,8 +98,8 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
         <rect
           className="board2d__bg"
           x={PAD - 4} y={PAD - 4}
-          width={BOARD_SIZE * CELL + 8}
-          height={BOARD_SIZE * CELL + 8}
+          width={boardSize * CELL + 8}
+          height={boardSize * CELL + 8}
           rx={6}
           fill="#1a1608"
           stroke="rgba(180,140,60,0.5)"
@@ -102,10 +107,10 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
         />
 
         {/* Cells */}
-        {Array.from({ length: BOARD_SIZE }, (_, row) =>
-          Array.from({ length: BOARD_SIZE }, (_, col) => {
-            const corner = isCorner(row, col)
-            const throne = isThrone(row, col)
+        {Array.from({ length: boardSize }, (_, row) =>
+          Array.from({ length: boardSize }, (_, col) => {
+            const corner = isCorner(row, col, boardSize)
+            const throne = isThrone(row, col, center)
             const fill = corner ? '#2c2210'
               : throne ? '#332a12'
               : (row + col) % 2 === 0 ? '#1e1a0e' : '#1a160b'
@@ -122,23 +127,23 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
         )}
 
         {/* Grid lines */}
-        {Array.from({ length: BOARD_SIZE + 1 }, (_, i) => (
+        {Array.from({ length: boardSize + 1 }, (_, i) => (
           <g key={i}>
             <line
               x1={PAD} y1={PAD + i * CELL}
-              x2={PAD + BOARD_SIZE * CELL} y2={PAD + i * CELL}
+              x2={PAD + boardSize * CELL} y2={PAD + i * CELL}
               stroke="rgba(180,140,60,0.14)" strokeWidth={0.5}
             />
             <line
               x1={PAD + i * CELL} y1={PAD}
-              x2={PAD + i * CELL} y2={PAD + BOARD_SIZE * CELL}
+              x2={PAD + i * CELL} y2={PAD + boardSize * CELL}
               stroke="rgba(180,140,60,0.14)" strokeWidth={0.5}
             />
           </g>
         ))}
 
         {/* Corner markers */}
-        {([[0,0],[0,10],[10,0],[10,10]] as [number,number][]).map(([r,c]) => (
+        {corners.map(([r, c]) => (
           <rect
             key={`corner-${r}-${c}`}
             className="board2d__corner-marker"
@@ -154,7 +159,7 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
         {/* Throne marker */}
         <rect
           className="board2d__throne-marker"
-          x={cx(5) + 5} y={cy(5) + 5}
+          x={cx(center) + 5} y={cy(center) + 5}
           width={CELL - 10} height={CELL - 10}
           rx={3}
           fill="none"
