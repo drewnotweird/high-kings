@@ -46,71 +46,6 @@ body, button, input, select {
   90%  { opacity:0.05; }
   100% { transform: translate(var(--dx2),var(--rise))            rotate(var(--a2)); opacity:0;  }
 }
-@keyframes flameDance0 {
-  0%   { transform: scaleX(1)    scaleY(1)    skewX(0deg);  }
-  12%  { transform: scaleX(0.84) scaleY(1.16) skewX(-9deg); }
-  28%  { transform: scaleX(1.14) scaleY(0.87) skewX(8deg);  }
-  45%  { transform: scaleX(0.81) scaleY(1.18) skewX(-10deg);}
-  62%  { transform: scaleX(1.12) scaleY(0.89) skewX(9deg);  }
-  80%  { transform: scaleX(0.86) scaleY(1.12) skewX(-7deg); }
-  100% { transform: scaleX(1)    scaleY(1)    skewX(0deg);  }
-}
-@keyframes flameDance1 {
-  0%   { transform: scaleX(1.06) scaleY(0.94) skewX(5deg);  }
-  15%  { transform: scaleX(0.82) scaleY(1.18) skewX(-10deg);}
-  35%  { transform: scaleX(1.16) scaleY(0.85) skewX(9deg);  }
-  55%  { transform: scaleX(0.83) scaleY(1.16) skewX(-8deg); }
-  78%  { transform: scaleX(1.10) scaleY(0.91) skewX(10deg); }
-  100% { transform: scaleX(1.06) scaleY(0.94) skewX(5deg);  }
-}
-@keyframes flameDance2 {
-  0%   { transform: scaleX(0.88) scaleY(1.10) skewX(-6deg); }
-  20%  { transform: scaleX(1.15) scaleY(0.86) skewX(10deg); }
-  42%  { transform: scaleX(0.80) scaleY(1.19) skewX(-9deg); }
-  65%  { transform: scaleX(1.13) scaleY(0.89) skewX(8deg);  }
-  88%  { transform: scaleX(0.85) scaleY(1.14) skewX(-10deg);}
-  100% { transform: scaleX(0.88) scaleY(1.10) skewX(-6deg); }
-}
-.defeat-flames {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-.defeat-flames__base {
-  position: absolute;
-  bottom: 0;
-  left: -10%;
-  right: -10%;
-  height: 40%;
-  background: radial-gradient(ellipse at 50% 100%, #ff6600 0%, #cc2200 40%, transparent 70%);
-  filter: blur(10px);
-  animation: fireFlicker 0.35s ease-in-out infinite;
-}
-.defeat-flame {
-  position: absolute;
-  bottom: -2%;
-  transform-origin: bottom center;
-  border-radius: 45% 45% 0 0 / 85% 85% 0 0;
-}
-.defeat-flame--outer {
-  background: radial-gradient(ellipse at 50% 100%, #ff6600 0%, #cc2200 45%, #660000 70%, transparent 100%);
-  filter: blur(3px);
-  opacity: 0.9;
-}
-.defeat-flame--inner {
-  background: radial-gradient(ellipse at 50% 100%, #ffcc00 0%, #ff8800 30%, #ee2200 60%, transparent 100%);
-  filter: blur(1px);
-  opacity: 0.95;
-}
-.defeat-flame--core {
-  background: radial-gradient(ellipse at 50% 100%, #ffffff 0%, #ffe060 18%, #ffaa00 42%, #ff4400 65%, transparent 100%);
-  filter: none;
-  opacity: 1;
-}
-.winner-overlay--defeat {
-  background: radial-gradient(ellipse at 50% 80%, #1a0500 0%, #050200 60%, #000 100%);
-}
 .score-panel__inner {
   width: 110px;
   box-sizing: border-box;
@@ -897,33 +832,6 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
   )
 }
 
-const defeatFlames = [
-  // outer layer — vivid orange, blurred, wide
-  { id:0,  x:2,  h:38, w:9,  layer:'outer', anim:0, delay:0     , dur:1.0 },
-  { id:1,  x:9,  h:56, w:12, layer:'outer', anim:1, delay:-0.35 , dur:0.9 },
-  { id:2,  x:18, h:46, w:10, layer:'outer', anim:2, delay:-0.70 , dur:1.1 },
-  { id:3,  x:27, h:68, w:14, layer:'outer', anim:0, delay:-0.15 , dur:1.3 },
-  { id:4,  x:36, h:58, w:11, layer:'outer', anim:1, delay:-0.90 , dur:0.9 },
-  { id:5,  x:45, h:80, w:16, layer:'outer', anim:2, delay:-0.45 , dur:1.2 },
-  { id:6,  x:54, h:63, w:13, layer:'outer', anim:0, delay:-0.25 , dur:1.0 },
-  { id:7,  x:63, h:50, w:10, layer:'outer', anim:1, delay:-0.80 , dur:0.85},
-  { id:8,  x:72, h:74, w:15, layer:'outer', anim:2, delay:-0.40 , dur:1.2 },
-  { id:9,  x:81, h:44, w:9,  layer:'outer', anim:0, delay:-0.60 , dur:1.1 },
-  { id:10, x:90, h:60, w:12, layer:'outer', anim:1, delay:-0.20 , dur:0.95},
-  { id:11, x:96, h:35, w:8,  layer:'outer', anim:2, delay:-0.50 , dur:1.0 },
-  // inner layer — orange/yellow, less blur, taller
-  { id:12, x:6,  h:30, w:5,  layer:'inner', anim:1, delay:-0.10 , dur:0.75},
-  { id:13, x:22, h:52, w:7,  layer:'inner', anim:0, delay:-0.55 , dur:0.90},
-  { id:14, x:40, h:67, w:9,  layer:'inner', anim:2, delay:-0.30 , dur:1.05},
-  { id:15, x:56, h:72, w:8,  layer:'inner', anim:1, delay:-0.65 , dur:0.85},
-  { id:16, x:74, h:55, w:7,  layer:'inner', anim:0, delay:-0.20 , dur:0.95},
-  { id:17, x:88, h:42, w:6,  layer:'inner', anim:2, delay:-0.45 , dur:0.80},
-  // core layer — white-hot, sharp, tall
-  { id:18, x:13, h:38, w:3,  layer:'core',  anim:0, delay:-0.25 , dur:0.65},
-  { id:19, x:46, h:74, w:4,  layer:'core',  anim:1, delay:-0.60 , dur:0.80},
-  { id:20, x:67, h:62, w:3,  layer:'core',  anim:2, delay:-0.15 , dur:0.70},
-  { id:21, x:85, h:46, w:3,  layer:'core',  anim:0, delay:-0.50 , dur:0.75},
-]
 
 const winnerEmbers = Array.from({ length: 10 }, (_, i) => {
   const r = (n: number) => (Math.random() - 0.5) * n
@@ -953,31 +861,12 @@ function WinnerOverlay({ winner, playerMode, powerSaving, onNewGame, onDismiss }
   onDismiss: () => void
 }) {
   const isPlayer = playerMode === '2player' ? true : (winner === playerMode)
-  const isDefeat = !isPlayer && playerMode !== '2player'
   const title = playerMode === '2player' ? 'Victory' : isPlayer ? 'Victory' : 'Defeat'
   const label = winner === 'defender' ? 'Defenders Win' : 'Attackers Win'
   const subtitle = playerMode !== '2player' ? (isPlayer ? 'You Win' : 'You Lose') : null
   return (
-    <div className={`winner-overlay${isDefeat ? ' winner-overlay--defeat' : ''}`}>
-      {!powerSaving && isDefeat && (
-        <div className="defeat-flames">
-          <div className="defeat-flames__base" />
-          {defeatFlames.map(f => (
-            <div
-              key={f.id}
-              className={`defeat-flame defeat-flame--${f.layer}`}
-              style={{
-                left: `${f.x}%`,
-                width: `${f.w}%`,
-                height: `${f.h}vh`,
-                animation: `flameDance${f.anim} ${f.dur}s ease-in-out infinite`,
-                animationDelay: `${f.delay}s`,
-              }}
-            />
-          ))}
-        </div>
-      )}
-      {!powerSaving && !isDefeat && <>
+    <div className="winner-overlay">
+      {!powerSaving && <>
         <div className="winner-overlay__fire1" />
         <div className="winner-overlay__fire2" />
         {winnerEmbers.map(e => (
