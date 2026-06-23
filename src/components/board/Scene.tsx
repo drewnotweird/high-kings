@@ -569,6 +569,11 @@ function LoadingOverlay({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     const t = setTimeout(() => {
       minHoldMet.current = true
+      // If active never went true, assets were cached — treat as loaded
+      if (!loadingDone.current) {
+        loadingDone.current = true
+        setPhase('holding')
+      }
       tryStartFade()
     }, 1000)
     return () => clearTimeout(t)

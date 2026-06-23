@@ -44,7 +44,7 @@ const BURST_CSS = `
 `
 
 export function Board2D({ menuOpen }: { menuOpen: boolean }) {
-  const { pieces, selectedId, selectPiece, movePiece, validMoves, gameKey, rules } = useGameStore()
+  const { pieces, dyingPieces: storeDyingPieces, clearDyingPieces, selectedId, selectPiece, movePiece, validMoves, gameKey, rules } = useGameStore()
   const { boardSize, center } = getBoardConfig(rules)
   const TOTAL = boardSize * CELL + PAD * 2
 
@@ -52,37 +52,28 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
   const [visibleCount, setVisibleCount] = useState(pieces.length) // start fully visible (mid-game switch)
   const prevGameKey = useRef(gameKey)
 
-  // Dying piece burst animations
+  // Dying piece burst animations — driven by store dyingPieces
   const [dyingPieces, setDyingPieces] = useState<DyingPiece[]>([])
-  const prevPiecesRef = useRef(pieces)
-  const prevGameKeyRef = useRef(gameKey)
 
   useEffect(() => {
-    if (gameKey !== prevGameKeyRef.current) {
-      prevGameKeyRef.current = gameKey
-      prevPiecesRef.current = pieces
-      setDyingPieces([])
-      return
-    }
-    const removed = prevPiecesRef.current.filter(p => !pieces.find(pp => pp.id === p.id))
-    if (removed.length > 0) {
-      setDyingPieces(prev => [
-        ...prev,
-        ...removed.map(p => ({
-          key: Date.now() + Math.random() * 1000,
-          x: pcx(p.col),
-          y: pcy(p.row),
-          fill: pieceColor(p.type),
-          particles: Array.from({ length: 8 }, (_, i) => {
-            const angle = (i / 8) * Math.PI * 2 + 0.4
-            const dist = 14 + (i % 3) * 6
-            return { dx: Math.cos(angle) * dist, dy: Math.sin(angle) * dist }
-          }),
-        })),
-      ])
-    }
-    prevPiecesRef.current = pieces
-  }, [pieces, gameKey])
+    if (storeDyingPieces.length === 0) return
+    setDyingPieces(prev => [
+      ...prev,
+      ...storeDyingPieces.map(p => ({
+        key: Date.now() + Math.random() * 1000,
+        x: pcx(p.col),
+        y: pcy(p.row),
+        fill: pieceColor(p.type),
+        particles: Array.from({ length: 8 }, (_, i) => {
+          const angle = (i / 8) * Math.PI * 2 + 0.4
+          const dist = 14 + (i % 3) * 6
+          return { dx: Math.cos(angle) * dist, dy: Math.sin(angle) * dist }
+        }),
+      })),
+    ])
+    // Remove captured pieces from the store immediately (no 3D arrival delay in 2D mode)
+    clearDyingPieces()
+  }, [storeDyingPieces])
 
   // Board fade-in
   useEffect(() => {
@@ -94,6 +85,7 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
   useEffect(() => {
     if (gameKey === prevGameKey.current) return
     prevGameKey.current = gameKey
+    setDyingPieces([])
 
     const ordered = [
       ...pieces.filter(p => p.type === 'king'),
