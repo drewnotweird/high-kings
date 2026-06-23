@@ -43,7 +43,7 @@ float fbm(vec2 p) {
 
 void main() {
   vec2 uv = vUv;
-  float t = uTime * 0.75;
+  float t = uTime * 1.3;
 
   // Single domain warp (was double — halves FBM call count)
   vec2 q = vec2(
@@ -107,7 +107,7 @@ export function DefeatFire() {
       position: 'absolute',
       bottom: 0, left: 0, right: 0,
       height: '50%',
-      filter: 'blur(6px)',
+      filter: 'blur(12px)',
       pointerEvents: 'none',
     }}>
       <Canvas
