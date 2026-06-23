@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Scene, getIntroDurationMs } from './components/board/Scene'
 import { Board2D } from './components/board/Board2D'
 import { ThemeSwitcher } from './components/ui/ThemeSwitcher'
+import { DefeatFire } from './components/ui/DefeatFire'
 import { useGameStore } from './store/gameStore'
 import type { PlayerSide, GameMode, Difficulty, Rules } from './store/gameStore'
 import { getBestMove } from './game/ai'
@@ -861,12 +862,14 @@ function WinnerOverlay({ winner, playerMode, powerSaving, onNewGame, onDismiss }
   onDismiss: () => void
 }) {
   const isPlayer = playerMode === '2player' ? true : (winner === playerMode)
+  const isDefeat = !isPlayer && playerMode !== '2player'
   const title = playerMode === '2player' ? 'Victory' : isPlayer ? 'Victory' : 'Defeat'
   const label = winner === 'defender' ? 'Defenders Win' : 'Attackers Win'
   const subtitle = playerMode !== '2player' ? (isPlayer ? 'You Win' : 'You Lose') : null
   return (
     <div className="winner-overlay">
-      {!powerSaving && <>
+      {!powerSaving && isDefeat && <DefeatFire />}
+      {!powerSaving && !isDefeat && <>
         <div className="winner-overlay__fire1" />
         <div className="winner-overlay__fire2" />
         {winnerEmbers.map(e => (
