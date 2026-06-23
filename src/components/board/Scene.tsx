@@ -1,7 +1,7 @@
 import { useRef, Suspense, useState, useEffect, useContext, useMemo } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Environment, useProgress } from '@react-three/drei'
-import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group, Vector3, BufferGeometry, PointsMaterial } from 'three'
+import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group, Vector3, Mesh, MeshStandardMaterial } from 'three'
 import { Board } from './Board'
 import { Piece, type MenuPhase } from '../pieces/Piece'
 import { useGameStore } from '../../store/gameStore'
@@ -9,46 +9,45 @@ import { getBoardConfig } from '../../game/hnefatafl'
 import { themes } from '../../lib/themes'
 import { IntroStartContext } from '../../contexts/intro'
 
-const DUST_COUNT = 14
-const DUST_DURATION = 0.7
+const DUST_COUNT = 12
+const DUST_DURATION = 0.75
 
 function DustCloud({ x, z, onDone }: { x: number; z: number; onDone: () => void }) {
-  const geomRef = useRef<BufferGeometry>(null)
-  const matRef = useRef<PointsMaterial>(null)
+  const meshRefs = useRef<(Mesh | null)[]>([])
   const elapsed = useRef(0)
   const called = useRef(false)
 
-  const { positions, velocities } = useMemo(() => {
-    const pos = new Float32Array(DUST_COUNT * 3)
-    const vel = Array.from({ length: DUST_COUNT }, () => ({
-      vx: (Math.random() - 0.5) * 4,
-      vy: 0.8 + Math.random() * 2.2,
-      vz: (Math.random() - 0.5) * 4,
-    }))
-    for (let i = 0; i < DUST_COUNT; i++) {
-      pos[i * 3]     = x + (Math.random() - 0.5) * 0.3
-      pos[i * 3 + 1] = 0.4 + Math.random() * 0.3
-      pos[i * 3 + 2] = z + (Math.random() - 0.5) * 0.3
-    }
-    return { positions: pos, velocities: vel }
-  }, [])
+  const particles = useMemo(() =>
+    Array.from({ length: DUST_COUNT }, (_, i) => {
+      const angle = (i / DUST_COUNT) * Math.PI * 2 + Math.random() * 0.5
+      const speed = 1.8 + Math.random() * 2.8
+      return {
+        vx: Math.cos(angle) * speed,
+        vy: 0.6 + Math.random() * 1.8,
+        vz: Math.sin(angle) * speed,
+        size: 0.055 + Math.random() * 0.07,
+        cx: x + (Math.random() - 0.5) * 0.25,
+        cy: 0.45 + Math.random() * 0.25,
+        cz: z + (Math.random() - 0.5) * 0.25,
+      }
+    })
+  , [])
+
+  const pos = useRef(particles.map(p => ({ x: p.cx, y: p.cy, z: p.cz })))
 
   useFrame((_, delta) => {
-    if (called.current || !geomRef.current || !matRef.current) return
+    if (called.current) return
     elapsed.current += delta
+    const opacity = Math.max(0, 1 - elapsed.current / DUST_DURATION * 1.3)
 
-    const t = Math.min(elapsed.current / DUST_DURATION, 1)
-    matRef.current.opacity = Math.max(0, 1 - t * 1.3)
-    matRef.current.size = 0.10 + t * 0.12
-
-    const pos = geomRef.current.attributes.position.array as Float32Array
-    for (let i = 0; i < DUST_COUNT; i++) {
-      pos[i * 3]     += velocities[i].vx * delta
-      pos[i * 3 + 1] += (velocities[i].vy - 5 * elapsed.current) * delta
-      pos[i * 3 + 2] += velocities[i].vz * delta
-      if (pos[i * 3 + 1] < 0.05) pos[i * 3 + 1] = 0.05
-    }
-    geomRef.current.attributes.position.needsUpdate = true
+    meshRefs.current.forEach((mesh, i) => {
+      if (!mesh) return
+      pos.current[i].x += particles[i].vx * delta
+      pos.current[i].y += particles[i].vy * delta - 5 * elapsed.current * delta
+      pos.current[i].z += particles[i].vz * delta
+      mesh.position.set(pos.current[i].x, Math.max(pos.current[i].y, 0.06), pos.current[i].z)
+      ;(mesh.material as MeshStandardMaterial).opacity = opacity
+    })
 
     if (elapsed.current >= DUST_DURATION && !called.current) {
       called.current = true
@@ -57,12 +56,14 @@ function DustCloud({ x, z, onDone }: { x: number; z: number; onDone: () => void 
   })
 
   return (
-    <points>
-      <bufferGeometry ref={geomRef}>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
-      <pointsMaterial ref={matRef} color="#c8a55a" size={0.10} sizeAttenuation transparent opacity={1} depthWrite={false} />
-    </points>
+    <>
+      {particles.map((p, i) => (
+        <mesh key={i} ref={el => { meshRefs.current[i] = el }} position={[p.cx, p.cy, p.cz]}>
+          <sphereGeometry args={[p.size, 5, 4]} />
+          <meshStandardMaterial color="#d4a855" roughness={0.9} transparent opacity={1} depthWrite={false} />
+        </mesh>
+      ))}
+    </>
   )
 }
 
