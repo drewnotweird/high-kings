@@ -402,8 +402,31 @@ body, button, input, select {
   align-items: center;
   justify-content: center;
   gap: 24px;
-  background: rgba(0,0,0,0.75);
+  background: radial-gradient(ellipse at 50% 70%, #2a0e00 0%, #0a0500 50%, #000 100%);
   animation: sceneFadeIn 0.6s ease-out forwards;
+  overflow: hidden;
+}
+.winner-overlay__fire1 {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 85%, #5a2000 0%, #1a0800 45%, transparent 70%);
+  animation: fireFlicker 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+.winner-overlay__fire2 {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 44% 90%, #6b1a00 0%, transparent 50%);
+  animation: fireFlicker 1.9s ease-in-out infinite reverse;
+  pointer-events: none;
+}
+.winner-overlay__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
 }
 .winner-overlay__title {
   font-size: 13px;
@@ -420,8 +443,22 @@ body, button, input, select {
   margin: 0;
   text-shadow: 0 0 40px rgba(232,192,64,0.6);
 }
-.winner-overlay__name--defender { color: #e0d0b0; }
-.winner-overlay__name--attacker { color: #7ab0e8; }
+.winner-overlay__name--defender { color: #e0d0b0; text-shadow: 0 0 50px rgba(232,210,160,0.7); }
+.winner-overlay__name--attacker { color: #7ab0e8; text-shadow: 0 0 50px rgba(100,160,240,0.6); }
+.winner-overlay__dismiss {
+  background: none;
+  border: none;
+  color: #6a5a3a;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 8px 16px;
+  transition: color 0.2s;
+  margin-top: -8px;
+}
+.winner-overlay__dismiss:hover { color: #a09070; }
 .role-select-overlay {
   position: fixed;
   inset: 0;
@@ -804,19 +841,60 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
   )
 }
 
-function WinnerOverlay({ winner, playerMode, onNewGame }: { winner: 'attacker' | 'defender'; playerMode: GameMode; onNewGame: () => void }) {
-  const isPlayer = playerMode === '2player'
-    ? true
-    : (winner === playerMode)
+const winnerEmbers = Array.from({ length: 10 }, (_, i) => {
+  const r = (n: number) => (Math.random() - 0.5) * n
+  const riseVal = -(220 + Math.random() * 280)
+  const dx1Val = r(50), dx2Val = r(80), dx3Val = r(40)
+  const a1 = Math.atan2(dx1Val, -riseVal * 0.3) * (180 / Math.PI)
+  const a2 = Math.atan2(dx2Val - dx1Val, -riseVal * 0.35) * (180 / Math.PI)
+  const a3 = Math.atan2(dx3Val - dx2Val, -riseVal * 0.4) * (180 / Math.PI)
+  return {
+    id: i,
+    left: `${10 + (i / 10) * 80 + r(5)}%`,
+    bottom: `${2 + Math.random() * 20}%`,
+    dur: `${0.8 + Math.random() * 1.2}s`,
+    delay: `${-Math.random() * 10}s`,
+    rise: `${riseVal}px`,
+    dx1: `${dx1Val}px`, dx2: `${dx2Val}px`, dx3: `${dx3Val}px`,
+    a1: `${a1.toFixed(1)}deg`, a2: `${a2.toFixed(1)}deg`, a3: `${a3.toFixed(1)}deg`,
+    variant: i % 3,
+  }
+})
+
+function WinnerOverlay({ winner, playerMode, powerSaving, onNewGame, onDismiss }: {
+  winner: 'attacker' | 'defender'
+  playerMode: GameMode
+  powerSaving: boolean
+  onNewGame: () => void
+  onDismiss: () => void
+}) {
+  const isPlayer = playerMode === '2player' ? true : (winner === playerMode)
   const title = playerMode === '2player' ? 'Victory' : isPlayer ? 'Victory' : 'Defeat'
   const label = winner === 'defender' ? 'Defenders Win' : 'Attackers Win'
   const subtitle = playerMode !== '2player' ? (isPlayer ? 'You Win' : 'You Lose') : null
   return (
     <div className="winner-overlay">
-      <p className="winner-overlay__title">{title}</p>
-      {subtitle && <p className={`winner-overlay__name winner-overlay__name--${winner}`}>{subtitle}</p>}
-      <p style={{ margin: 0, fontSize: 13, letterSpacing: 2, textTransform: 'uppercase', color: '#a09070' }}>{label}</p>
-      <button className="menu-overlay__item" style={{ maxWidth: 280 }} onClick={onNewGame}>New Game</button>
+      {!powerSaving && <>
+        <div className="winner-overlay__fire1" />
+        <div className="winner-overlay__fire2" />
+        {winnerEmbers.map(e => (
+          <Ember key={e.id} variant={e.variant} style={{
+            left: e.left, bottom: e.bottom,
+            ['--dur' as string]: e.dur,
+            ['--rise' as string]: e.rise,
+            ['--dx1' as string]: e.dx1, ['--dx2' as string]: e.dx2, ['--dx3' as string]: e.dx3,
+            ['--a1' as string]: e.a1, ['--a2' as string]: e.a2, ['--a3' as string]: e.a3,
+            animationDelay: e.delay,
+          }} />
+        ))}
+      </>}
+      <div className="winner-overlay__content">
+        <p className="winner-overlay__title">{title}</p>
+        {subtitle && <p className={`winner-overlay__name winner-overlay__name--${winner}`}>{subtitle}</p>}
+        <p style={{ margin: 0, fontSize: 13, letterSpacing: 2, textTransform: 'uppercase', color: '#a09070' }}>{label}</p>
+        <button className="menu-overlay__item" style={{ maxWidth: 280 }} onClick={onNewGame}>New Game</button>
+        <button className="winner-overlay__dismiss" onClick={onDismiss}>Not right now</button>
+      </div>
     </div>
   )
 }
@@ -866,6 +944,7 @@ function App() {
   const [menuVisible, setMenuVisible] = useState(false)
   const [showCredits, setShowCredits] = useState(false)
   const [roleSelectOpen, setRoleSelectOpen] = useState(false)
+  const [winnerDismissed, setWinnerDismissed] = useState(false)
   const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, selectedId, selectPiece, movePiece } = useGameStore()
   const setupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -900,6 +979,11 @@ function App() {
   useEffect(() => {
     if (powerSaving) setIntroStarted(true)
   }, [powerSaving])
+
+  // Reset winner dismissed state when a new game starts
+  useEffect(() => {
+    if (!winner) setWinnerDismissed(false)
+  }, [winner])
 
   // Track when the sceneFadeIn animation completes so buttons start visibly disabled
   useEffect(() => {
@@ -1046,11 +1130,13 @@ function App() {
 
       <ThemeSwitcher />
       {showCredits && <CreditsScroll onClose={() => setShowCredits(false)} />}
-      {winner && (
+      {winner && !winnerDismissed && (
         <WinnerOverlay
           winner={winner}
           playerMode={playerMode}
+          powerSaving={powerSaving}
           onNewGame={() => setRoleSelectOpen(true)}
+          onDismiss={() => setWinnerDismissed(true)}
         />
       )}
       {roleSelectOpen && (
