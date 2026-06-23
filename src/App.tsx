@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Scene, getIntroDurationMs } from './components/board/Scene'
+import { Board2D } from './components/board/Board2D'
 import { ThemeSwitcher } from './components/ui/ThemeSwitcher'
 import { useGameStore } from './store/gameStore'
 import type { PlayerSide, GameMode, Difficulty, Rules } from './store/gameStore'
@@ -886,14 +887,13 @@ function App() {
 
   const startSetupAnim = () => {
     if (setupTimerRef.current) clearTimeout(setupTimerRef.current)
-    if (powerSaving) return // no intro animation in power-saving mode
     setSetupAnimating(true)
     setupTimerRef.current = setTimeout(() => setSetupAnimating(false), getIntroDurationMs(pieces.length))
   }
 
   // In power-saving mode there's no 3D intro — show UI immediately
   useEffect(() => {
-    if (powerSaving && !introStarted) setIntroStarted(true)
+    if (powerSaving) setIntroStarted(true)
   }, [powerSaving])
 
   // Track when the sceneFadeIn animation completes so buttons start visibly disabled
@@ -983,11 +983,14 @@ function App() {
 
       <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
         <div style={{ position: 'absolute', inset: 0 }}>
-          <Scene
-            onIntroStart={() => { setIntroStarted(true); if (!powerSaving) startSetupAnim() }}
-            menuOpen={menuOpen}
-            onNewGame={() => { setMenuOpen(false); if (!powerSaving) startSetupAnim() }}
-          />
+          {powerSaving
+            ? <Board2D menuOpen={menuOpen} />
+            : <Scene
+                onIntroStart={() => { setIntroStarted(true); startSetupAnim() }}
+                menuOpen={menuOpen}
+                onNewGame={() => { setMenuOpen(false); startSetupAnim() }}
+              />
+          }
         </div>
         <MenuOverlay
           isOpen={menuOpen}
