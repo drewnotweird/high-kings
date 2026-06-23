@@ -49,7 +49,7 @@ export const useGameStore = create<GameStore>((set) => ({
   difficulty: 'medium',
   rules: 'Copenhagen' as Rules,
   powerSaving: false,
-  playerMode: '2player' as GameMode,
+  playerMode: 'defender' as GameMode,
 
   setTheme: (theme) => set({ theme }),
 
