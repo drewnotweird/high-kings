@@ -843,14 +843,14 @@ function RoleSelectOverlay({ onConfirm }: { onConfirm: (mode: GameMode) => void 
         </button>
         <button className="role-select__option" onClick={() => onConfirm('2player')}>
           <div className="role-select__option-icon--2p">
-            <img style={{ width: 16, height: 16, objectFit: 'contain' }} src={`${import.meta.env.BASE_URL}white-piece.png`} alt="" />
+            <img style={{ width: 36, height: 36, objectFit: 'contain' }} src={`${import.meta.env.BASE_URL}white-piece.png`} alt="" />
           </div>
           <div className="role-select__option-text">
             <span className="role-select__option-name">2 Player</span>
             <span className="role-select__option-desc">Play both sides locally</span>
           </div>
           <div className="role-select__option-icon--2p">
-            <img style={{ width: 16, height: 16, objectFit: 'contain' }} src={`${import.meta.env.BASE_URL}blue-piece.png`} alt="" />
+            <img style={{ width: 36, height: 36, objectFit: 'contain' }} src={`${import.meta.env.BASE_URL}blue-piece.png`} alt="" />
           </div>
         </button>
       </div>
