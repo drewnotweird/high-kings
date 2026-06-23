@@ -407,7 +407,7 @@ interface SceneInnerProps {
 }
 
 function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
-  const { pieces, dyingPieces, clearDyingPieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules, gameKey } = useGameStore()
+  const { pieces, dyingPieces, clearDyingPieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules } = useGameStore()
   const theme = themes[themeName]
   const [menuPhase, setMenuPhase] = useState<MenuPhase>('idle')
 
