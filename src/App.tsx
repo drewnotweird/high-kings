@@ -829,7 +829,7 @@ function RoleSelectOverlay({ onConfirm }: { onConfirm: (mode: GameMode) => void 
           <img className="role-select__option-icon" src={`${import.meta.env.BASE_URL}white-piece.png`} alt="" />
           <div className="role-select__option-text">
             <span className="role-select__option-name">Defend</span>
-            <span className="role-select__option-desc">Escort the King to safety</span>
+            <span className="role-select__option-desc">Escort the King</span>
           </div>
           <div className="role-select__option-spacer" />
         </button>
@@ -837,7 +837,7 @@ function RoleSelectOverlay({ onConfirm }: { onConfirm: (mode: GameMode) => void 
           <div className="role-select__option-spacer" />
           <div className="role-select__option-text">
             <span className="role-select__option-name">Attack</span>
-            <span className="role-select__option-desc">Surround and capture the King</span>
+            <span className="role-select__option-desc">Capture the King</span>
           </div>
           <img className="role-select__option-icon" src={`${import.meta.env.BASE_URL}blue-piece.png`} alt="" />
         </button>
@@ -847,7 +847,7 @@ function RoleSelectOverlay({ onConfirm }: { onConfirm: (mode: GameMode) => void 
           </div>
           <div className="role-select__option-text">
             <span className="role-select__option-name">2 Player</span>
-            <span className="role-select__option-desc">Play both sides locally</span>
+            <span className="role-select__option-desc">Play both sides</span>
           </div>
           <div className="role-select__option-icon--2p">
             <img style={{ width: 36, height: 36, objectFit: 'contain' }} src={`${import.meta.env.BASE_URL}blue-piece.png`} alt="" />
