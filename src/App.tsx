@@ -46,6 +46,60 @@ body, button, input, select {
   90%  { opacity:0.05; }
   100% { transform: translate(var(--dx2),var(--rise))            rotate(var(--a2)); opacity:0;  }
 }
+@keyframes flameDance0 {
+  0%   { transform: scaleX(1)    scaleY(1)    skewX(0deg);    }
+  15%  { transform: scaleX(0.93) scaleY(1.07) skewX(-3deg);   }
+  30%  { transform: scaleX(1.05) scaleY(0.94) skewX(2deg);    }
+  50%  { transform: scaleX(0.96) scaleY(1.10) skewX(-2.5deg); }
+  70%  { transform: scaleX(1.04) scaleY(0.96) skewX(3deg);    }
+  85%  { transform: scaleX(0.95) scaleY(1.05) skewX(-1deg);   }
+  100% { transform: scaleX(1)    scaleY(1)    skewX(0deg);    }
+}
+@keyframes flameDance1 {
+  0%   { transform: scaleX(1.02) scaleY(0.98) skewX(1deg);    }
+  20%  { transform: scaleX(0.94) scaleY(1.08) skewX(-3deg);   }
+  45%  { transform: scaleX(1.06) scaleY(0.93) skewX(2.5deg);  }
+  65%  { transform: scaleX(0.95) scaleY(1.08) skewX(-2deg);   }
+  85%  { transform: scaleX(1.03) scaleY(0.97) skewX(3deg);    }
+  100% { transform: scaleX(1.02) scaleY(0.98) skewX(1deg);    }
+}
+@keyframes flameDance2 {
+  0%   { transform: scaleX(0.97) scaleY(1.05) skewX(-2deg);   }
+  25%  { transform: scaleX(1.07) scaleY(0.92) skewX(3deg);    }
+  50%  { transform: scaleX(0.93) scaleY(1.09) skewX(-3deg);   }
+  75%  { transform: scaleX(1.05) scaleY(0.95) skewX(2deg);    }
+  100% { transform: scaleX(0.97) scaleY(1.05) skewX(-2deg);   }
+}
+.defeat-flames {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.defeat-flame {
+  position: absolute;
+  bottom: -2%;
+  transform-origin: bottom center;
+  border-radius: 50% 50% 20% 20% / 60% 60% 10% 10%;
+}
+.defeat-flame--outer {
+  background: radial-gradient(ellipse at 50% 95%, #cc3300 0%, #881100 35%, #440800 60%, transparent 100%);
+  filter: blur(5px);
+  opacity: 0.85;
+}
+.defeat-flame--inner {
+  background: radial-gradient(ellipse at 50% 92%, #ff8800 0%, #ff4400 30%, #cc1100 55%, transparent 100%);
+  filter: blur(2px);
+  opacity: 0.9;
+}
+.defeat-flame--core {
+  background: radial-gradient(ellipse at 50% 90%, #fff8c0 0%, #ffcc00 20%, #ff8800 50%, transparent 100%);
+  filter: blur(0.5px);
+  opacity: 1;
+}
+.winner-overlay--defeat {
+  background: radial-gradient(ellipse at 50% 80%, #1a0500 0%, #050200 60%, #000 100%);
+}
 .score-panel__inner {
   width: 110px;
   box-sizing: border-box;
@@ -446,6 +500,10 @@ body, button, input, select {
 .winner-overlay__name--defender { color: #e0d0b0; text-shadow: 0 0 50px rgba(232,210,160,0.7); }
 .winner-overlay__name--attacker { color: #7ab0e8; text-shadow: 0 0 50px rgba(100,160,240,0.6); }
 .winner-overlay__dismiss {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   background: none;
   border: none;
   color: #6a5a3a;
@@ -597,11 +655,7 @@ const embers = Array.from({ length: 12 }, (_, i) => {
 function HintButton({ onClick }: { onClick: () => void }) {
   return (
     <button className="ui-button ui-button--hint" onClick={onClick}>
-      <svg className="ui-button__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <circle cx="10" cy="10" r="8" />
-        <path d="M10 6v.5M10 9.5c0-1 1.5-1.5 1.5-3a2.5 2.5 0 00-5 0" strokeLinecap="round" />
-        <circle cx="10" cy="13.5" r="0.75" fill="currentColor" stroke="none" />
-      </svg>
+      <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/hint.svg`} alt="" />
       <span className="ui-button__label">Hint</span>
     </button>
   )
@@ -610,12 +664,7 @@ function HintButton({ onClick }: { onClick: () => void }) {
 function MenuButton({ onClick, isOpen }: { onClick: () => void; isOpen: boolean }) {
   return (
     <button className="ui-button ui-button--menu" onClick={onClick}>
-      <svg className="ui-button__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-        {isOpen
-          ? <><line x1="4" y1="4" x2="16" y2="16" /><line x1="16" y1="4" x2="4" y2="16" /></>
-          : <><line x1="3" y1="6" x2="17" y2="6" /><line x1="3" y1="10" x2="17" y2="10" /><line x1="3" y1="14" x2="17" y2="14" /></>
-        }
-      </svg>
+      <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/${isOpen ? 'close' : 'menu'}.svg`} alt="" />
       <span className="ui-button__label">{isOpen ? 'Close' : 'Menu'}</span>
     </button>
   )
@@ -732,9 +781,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
             <button className="menu-overlay__item">How to Play</button>
             <button className="menu-overlay__item" onClick={onCredits}>Credits</button>
             <button className="ui-button ui-button--menu" onClick={onResume} style={{ marginTop: 16 }}>
-              <svg className="ui-button__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                <line x1="4" y1="4" x2="16" y2="16" /><line x1="16" y1="4" x2="4" y2="16" />
-              </svg>
+              <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/close.svg`} alt="" />
               <span className="ui-button__label">Close</span>
             </button>
           </div>
@@ -789,9 +836,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
             </div>
 
             <button className="ui-button ui-button--menu" onClick={() => switchScreen('main')} style={{ marginTop: 16 }}>
-              <svg className="ui-button__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                <line x1="4" y1="4" x2="16" y2="16" /><line x1="16" y1="4" x2="4" y2="16" />
-              </svg>
+              <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/close.svg`} alt="" />
               <span className="ui-button__label">Cancel</span>
             </button>
           </div>
@@ -841,6 +886,34 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
   )
 }
 
+const defeatFlames = [
+  // outer layer — dark red/orange, blurred, wide
+  { id:0,  x:2,  h:38, w:9,  layer:'outer', anim:0, delay:0     , dur:2.1 },
+  { id:1,  x:9,  h:56, w:12, layer:'outer', anim:1, delay:-0.7  , dur:1.9 },
+  { id:2,  x:18, h:46, w:10, layer:'outer', anim:2, delay:-1.4  , dur:2.3 },
+  { id:3,  x:27, h:68, w:14, layer:'outer', anim:0, delay:-0.3  , dur:2.6 },
+  { id:4,  x:36, h:58, w:11, layer:'outer', anim:1, delay:-1.8  , dur:1.8 },
+  { id:5,  x:45, h:80, w:16, layer:'outer', anim:2, delay:-0.9  , dur:2.4 },
+  { id:6,  x:54, h:63, w:13, layer:'outer', anim:0, delay:-0.5  , dur:2.0 },
+  { id:7,  x:63, h:50, w:10, layer:'outer', anim:1, delay:-1.6  , dur:1.7 },
+  { id:8,  x:72, h:74, w:15, layer:'outer', anim:2, delay:-0.8  , dur:2.5 },
+  { id:9,  x:81, h:44, w:9,  layer:'outer', anim:0, delay:-1.2  , dur:2.2 },
+  { id:10, x:90, h:60, w:12, layer:'outer', anim:1, delay:-0.4  , dur:1.9 },
+  { id:11, x:96, h:35, w:8,  layer:'outer', anim:2, delay:-1.0  , dur:2.1 },
+  // inner layer — orange/yellow, less blur, taller
+  { id:12, x:6,  h:30, w:5,  layer:'inner', anim:1, delay:-0.2  , dur:1.5 },
+  { id:13, x:22, h:52, w:7,  layer:'inner', anim:0, delay:-1.1  , dur:1.8 },
+  { id:14, x:40, h:67, w:9,  layer:'inner', anim:2, delay:-0.6  , dur:2.1 },
+  { id:15, x:56, h:72, w:8,  layer:'inner', anim:1, delay:-1.3  , dur:1.7 },
+  { id:16, x:74, h:55, w:7,  layer:'inner', anim:0, delay:-0.4  , dur:1.9 },
+  { id:17, x:88, h:42, w:6,  layer:'inner', anim:2, delay:-0.9  , dur:1.6 },
+  // core layer — bright yellow-white, sharp, tall
+  { id:18, x:13, h:38, w:3,  layer:'core',  anim:0, delay:-0.5  , dur:1.3 },
+  { id:19, x:46, h:74, w:4,  layer:'core',  anim:1, delay:-1.2  , dur:1.6 },
+  { id:20, x:67, h:62, w:3,  layer:'core',  anim:2, delay:-0.3  , dur:1.4 },
+  { id:21, x:85, h:46, w:3,  layer:'core',  anim:0, delay:-1.0  , dur:1.5 },
+]
+
 const winnerEmbers = Array.from({ length: 10 }, (_, i) => {
   const r = (n: number) => (Math.random() - 0.5) * n
   const riseVal = -(220 + Math.random() * 280)
@@ -869,12 +942,30 @@ function WinnerOverlay({ winner, playerMode, powerSaving, onNewGame, onDismiss }
   onDismiss: () => void
 }) {
   const isPlayer = playerMode === '2player' ? true : (winner === playerMode)
+  const isDefeat = !isPlayer && playerMode !== '2player'
   const title = playerMode === '2player' ? 'Victory' : isPlayer ? 'Victory' : 'Defeat'
   const label = winner === 'defender' ? 'Defenders Win' : 'Attackers Win'
   const subtitle = playerMode !== '2player' ? (isPlayer ? 'You Win' : 'You Lose') : null
   return (
-    <div className="winner-overlay">
-      {!powerSaving && <>
+    <div className={`winner-overlay${isDefeat ? ' winner-overlay--defeat' : ''}`}>
+      {!powerSaving && isDefeat && (
+        <div className="defeat-flames">
+          {defeatFlames.map(f => (
+            <div
+              key={f.id}
+              className={`defeat-flame defeat-flame--${f.layer}`}
+              style={{
+                left: `${f.x}%`,
+                width: `${f.w}%`,
+                height: `${f.h}vh`,
+                animation: `flameDance${f.anim} ${f.dur}s ease-in-out infinite`,
+                animationDelay: `${f.delay}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+      {!powerSaving && !isDefeat && <>
         <div className="winner-overlay__fire1" />
         <div className="winner-overlay__fire2" />
         {winnerEmbers.map(e => (
@@ -893,7 +984,12 @@ function WinnerOverlay({ winner, playerMode, powerSaving, onNewGame, onDismiss }
         {subtitle && <p className={`winner-overlay__name winner-overlay__name--${winner}`}>{subtitle}</p>}
         <p style={{ margin: 0, fontSize: 13, letterSpacing: 2, textTransform: 'uppercase', color: '#a09070' }}>{label}</p>
         <button className="menu-overlay__item" style={{ maxWidth: 280 }} onClick={onNewGame}>New Game</button>
-        <button className="winner-overlay__dismiss" onClick={onDismiss}>Not right now</button>
+        <button className="winner-overlay__dismiss" onClick={onDismiss}>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <line x1="4" y1="4" x2="16" y2="16" /><line x1="16" y1="4" x2="4" y2="16" />
+          </svg>
+          <span>Not right now</span>
+        </button>
       </div>
     </div>
   )
