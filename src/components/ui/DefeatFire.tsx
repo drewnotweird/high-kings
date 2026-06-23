@@ -43,7 +43,7 @@ float fbm(vec2 p) {
 
 void main() {
   vec2 uv = vUv;
-  float t = uTime * 0.35;
+  float t = uTime * 0.75;
 
   // Single domain warp (was double — halves FBM call count)
   vec2 q = vec2(
