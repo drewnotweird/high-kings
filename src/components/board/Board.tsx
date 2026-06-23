@@ -54,9 +54,9 @@ interface BoardProps {
 
 function ValidMoveMarker({ x, z, row, col }: { x: number; z: number; row: number; col: number }) {
   const matRef = useRef<MeshStandardMaterial>(null)
-  const { movePiece } = useGameStore()
+  const { movePiece, powerSaving } = useGameStore()
   useFrame(({ clock }) => {
-    if (matRef.current) {
+    if (matRef.current && !powerSaving) {
       matRef.current.opacity = 0.25 + 0.15 * Math.sin(clock.elapsedTime * 3)
     }
   })

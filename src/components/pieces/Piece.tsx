@@ -165,7 +165,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
     <mesh
       ref={meshRef}
       position={[0, REST_Y, 0]}
-      castShadow
+      castShadow={!powerSaving}
       onClick={(e) => {
         e.stopPropagation()
         onClick()

@@ -175,7 +175,7 @@ export function getIntroDurationMs(numPieces: number): number {
 }
 const BOARD_START_Y = -20
 
-function FadingLights({ menuOpen }: { menuOpen: boolean }) {
+function FadingLights({ menuOpen, powerSaving }: { menuOpen: boolean; powerSaving: boolean }) {
   const introStartMs = useContext(IntroStartContext)
   const { pieces, rules } = useGameStore()
   const ambientRef = useRef<AmbientLight>(null)
@@ -189,6 +189,8 @@ function FadingLights({ menuOpen }: { menuOpen: boolean }) {
   const spotLerpZ = useRef(0)
 
   useFrame((_, delta) => {
+    if (powerSaving) return
+
     const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
     const f = (start: number, dur: number) => 1 - Math.pow(1 - Math.min(Math.max((t - start) / dur, 0), 1), 2)
 
@@ -232,7 +234,7 @@ function FadingLights({ menuOpen }: { menuOpen: boolean }) {
         position={[-3, 20, 5]}
         color="#c8dff8"
         intensity={0}
-        castShadow
+        castShadow={!powerSaving}
         shadow-mapSize={[1024, 1024]}
         shadow-radius={24}
         shadow-blurSamples={32}
@@ -253,7 +255,7 @@ function FadingLights({ menuOpen }: { menuOpen: boolean }) {
         angle={0.32}
         penumbra={1.0}
         decay={0.7}
-        castShadow
+        castShadow={!powerSaving}
         shadow-mapSize={[1024, 1024]}
         shadow-radius={20}
         shadow-blurSamples={32}
@@ -263,7 +265,7 @@ function FadingLights({ menuOpen }: { menuOpen: boolean }) {
         position={[2, 5, 14]}
         color="#ffffff"
         intensity={0}
-        castShadow
+        castShadow={!powerSaving}
         shadow-mapSize={[2048, 2048]}
         shadow-radius={10}
         shadow-blurSamples={16}
@@ -280,13 +282,13 @@ function FadingLights({ menuOpen }: { menuOpen: boolean }) {
   )
 }
 
-function FireLight({ menuOpen }: { menuOpen: boolean }) {
+function FireLight({ menuOpen, powerSaving }: { menuOpen: boolean; powerSaving: boolean }) {
   const introStartMs = useContext(IntroStartContext)
   const ref = useRef<PointLight>(null)
   const menuScale = useRef(1)
 
   useFrame((_, delta) => {
-    if (!ref.current) return
+    if (!ref.current || powerSaving) return
     const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
     const fade = Math.min(Math.max((t - BOARD_DURATION) / 1.2, 0), 1)
     const e = 1 - Math.pow(1 - fade, 2)
@@ -502,8 +504,8 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
     <>
       <fog attach="fog" args={["#0a0800", 28, 55]} />
       <Environment preset="night" environmentIntensity={0.0} />
-      <FadingLights menuOpen={!lightsOn} />
-      <FireLight menuOpen={!lightsOn} />
+      <FadingLights menuOpen={!lightsOn} powerSaving={powerSaving} />
+      <FireLight menuOpen={!lightsOn} powerSaving={powerSaving} />
       <AnimatedBoard menuOpen={boardFlipOpen} snapFlipRef={snapFlipRef}>
         <Board theme={theme} />
       </AnimatedBoard>
