@@ -23,6 +23,11 @@ body, button, input, select {
   75%  { opacity: 0.42; }
   100% { opacity: 0.35; }
 }
+@keyframes victoryPulse {
+  0%   { opacity: 0.55; transform: scale(1);    }
+  50%  { opacity: 0.90; transform: scale(1.06); }
+  100% { opacity: 0.55; transform: scale(1);    }
+}
 @keyframes ember0 {
   0%   { transform: translate(0px,0px)                           rotate(0deg);    opacity:0;    }
   8%   { opacity:1; }
@@ -403,22 +408,22 @@ body, button, input, select {
   align-items: center;
   justify-content: center;
   gap: 24px;
-  background: radial-gradient(ellipse at 50% 70%, #2a0e00 0%, #0a0500 50%, #000 100%);
+  background: radial-gradient(ellipse at 50% 55%, #100c00 0%, #040308 50%, #000 100%);
   animation: sceneFadeIn 0.6s ease-out forwards;
   overflow: hidden;
 }
-.winner-overlay__fire1 {
+.winner-overlay__gold1 {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 85%, #5a2000 0%, #1a0800 45%, transparent 70%);
-  animation: fireFlicker 2.8s ease-in-out infinite;
+  background: radial-gradient(ellipse at 50% 62%, #7a5000 0%, #2a1800 42%, transparent 68%);
+  animation: victoryPulse 3.2s ease-in-out infinite;
   pointer-events: none;
 }
-.winner-overlay__fire2 {
+.winner-overlay__gold2 {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 44% 90%, #6b1a00 0%, transparent 50%);
-  animation: fireFlicker 1.9s ease-in-out infinite reverse;
+  background: radial-gradient(ellipse at 50% 56%, rgba(210,148,0,0.45) 0%, transparent 32%);
+  animation: victoryPulse 2.1s ease-in-out infinite reverse;
   pointer-events: none;
 }
 .winner-overlay__content {
@@ -834,7 +839,7 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
 }
 
 
-const winnerEmbers = Array.from({ length: 10 }, (_, i) => {
+const winnerEmbers = Array.from({ length: 18 }, (_, i) => {
   const r = (n: number) => (Math.random() - 0.5) * n
   const riseVal = -(220 + Math.random() * 280)
   const dx1Val = r(50), dx2Val = r(80), dx3Val = r(40)
@@ -870,8 +875,8 @@ function WinnerOverlay({ winner, playerMode, powerSaving, onNewGame, onDismiss }
     <div className="winner-overlay">
       {!powerSaving && isDefeat && <DefeatFire />}
       {!powerSaving && !isDefeat && <>
-        <div className="winner-overlay__fire1" />
-        <div className="winner-overlay__fire2" />
+        <div className="winner-overlay__gold1" />
+        <div className="winner-overlay__gold2" />
         {winnerEmbers.map(e => (
           <Ember key={e.id} variant={e.variant} style={{
             left: e.left, bottom: e.bottom,
