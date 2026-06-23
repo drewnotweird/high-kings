@@ -467,7 +467,8 @@ body, button, input, select {
 .role-select__option--selected { border-color: rgba(200,160,40,0.9); }
 .role-select__option-icon { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
 .role-select__option-icon--2p { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; gap: 3px; flex-shrink: 0; }
-.role-select__option-text { display: flex; flex-direction: column; gap: 3px; }
+.role-select__option-spacer { width: 36px; height: 36px; flex-shrink: 0; }
+.role-select__option-text { display: flex; flex-direction: column; gap: 3px; flex: 1; align-items: center; text-align: center; }
 .role-select__option-name { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; }
 .role-select__option-desc { font-size: 11px; letter-spacing: 0.5px; color: #a09070; }
 @keyframes mistDrift {
@@ -830,22 +831,26 @@ function RoleSelectOverlay({ onConfirm }: { onConfirm: (mode: GameMode) => void 
             <span className="role-select__option-name">Defend</span>
             <span className="role-select__option-desc">Escort the King to safety</span>
           </div>
+          <div className="role-select__option-spacer" />
         </button>
         <button className="role-select__option" onClick={() => onConfirm('attacker')}>
-          <img className="role-select__option-icon" src={`${import.meta.env.BASE_URL}blue-piece.png`} alt="" />
+          <div className="role-select__option-spacer" />
           <div className="role-select__option-text">
             <span className="role-select__option-name">Attack</span>
             <span className="role-select__option-desc">Surround and capture the King</span>
           </div>
+          <img className="role-select__option-icon" src={`${import.meta.env.BASE_URL}blue-piece.png`} alt="" />
         </button>
         <button className="role-select__option" onClick={() => onConfirm('2player')}>
           <div className="role-select__option-icon--2p">
             <img style={{ width: 16, height: 16, objectFit: 'contain' }} src={`${import.meta.env.BASE_URL}white-piece.png`} alt="" />
-            <img style={{ width: 16, height: 16, objectFit: 'contain' }} src={`${import.meta.env.BASE_URL}blue-piece.png`} alt="" />
           </div>
           <div className="role-select__option-text">
             <span className="role-select__option-name">2 Player</span>
             <span className="role-select__option-desc">Play both sides locally</span>
+          </div>
+          <div className="role-select__option-icon--2p">
+            <img style={{ width: 16, height: 16, objectFit: 'contain' }} src={`${import.meta.env.BASE_URL}blue-piece.png`} alt="" />
           </div>
         </button>
       </div>
