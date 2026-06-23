@@ -107,7 +107,7 @@ export function DefeatFire() {
       position: 'absolute',
       bottom: 0, left: 0, right: 0,
       height: '50%',
-      filter: 'blur(18px)',
+      filter: 'blur(6px)',
       pointerEvents: 'none',
     }}>
       <Canvas
