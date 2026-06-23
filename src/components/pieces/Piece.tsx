@@ -134,7 +134,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
       visualX.current = targetX.current
       visualZ.current = targetZ.current
     } else {
-      const moveSpeed = 9
+      const moveSpeed = 6
       const lerpT = 1 - Math.exp(-moveSpeed * delta)
       visualX.current += (targetX.current - visualX.current) * lerpT
       visualZ.current += (targetZ.current - visualZ.current) * lerpT

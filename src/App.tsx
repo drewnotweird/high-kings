@@ -822,20 +822,19 @@ function WinnerOverlay({ winner, playerMode, onNewGame }: { winner: 'attacker' |
 function RoleSelectOverlay({ onConfirm }: { onConfirm: (mode: GameMode) => void }) {
   return (
     <div className="role-select-overlay">
-      <p className="role-select__title">Choose Your Side</p>
       <div className="role-select__options">
         <button className="role-select__option" onClick={() => onConfirm('defender')}>
           <img className="role-select__option-icon" src={`${import.meta.env.BASE_URL}white-piece.png`} alt="" />
           <div className="role-select__option-text">
             <span className="role-select__option-name">Defend</span>
-            <span className="role-select__option-desc">Play as the light — escort the King to safety</span>
+            <span className="role-select__option-desc">Escort the King to safety</span>
           </div>
         </button>
         <button className="role-select__option" onClick={() => onConfirm('attacker')}>
           <img className="role-select__option-icon" src={`${import.meta.env.BASE_URL}blue-piece.png`} alt="" />
           <div className="role-select__option-text">
             <span className="role-select__option-name">Attack</span>
-            <span className="role-select__option-desc">Play as the dark — surround and capture the King</span>
+            <span className="role-select__option-desc">Surround and capture the King</span>
           </div>
         </button>
         <button className="role-select__option" onClick={() => onConfirm('2player')}>
@@ -861,7 +860,7 @@ function App() {
   const [menuVisible, setMenuVisible] = useState(false)
   const [showCredits, setShowCredits] = useState(false)
   const [roleSelectOpen, setRoleSelectOpen] = useState(false)
-  const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules } = useGameStore()
+  const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, selectedId, selectPiece, movePiece } = useGameStore()
   const setupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ?ps=true in the URL activates power-saving mode on load
@@ -881,7 +880,7 @@ function App() {
     const timer = setTimeout(() => {
       const move = getBestMove(pieces, machineSide, boardSize, center, difficulty)
       if (move) machineMove(move.pieceId, move.toRow, move.toCol)
-    }, 650)
+    }, 1300)
     return () => clearTimeout(timer)
   }, [currentTurn, playerMode, winner, roleSelectOpen, setupAnimating])
 
@@ -1018,7 +1017,19 @@ function App() {
 
       {introStarted && <>
         <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ position: 'absolute', top: 24, left: 16, zIndex: 15, opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
-          <HintButton onClick={() => {}} />
+          <HintButton onClick={() => {
+            if (playerMode === '2player' || winner) return
+            const humanSide: PlayerSide = playerMode === 'defender' ? 'defender' : 'attacker'
+            if (currentTurn !== humanSide) return
+            const { boardSize, center } = getBoardConfig(rules)
+            const move = getBestMove(pieces, humanSide, boardSize, center, difficulty)
+            if (!move) return
+            if (selectedId === move.pieceId) {
+              movePiece(move.toRow, move.toCol)
+            } else {
+              selectPiece(move.pieceId)
+            }
+          }} />
         </div>
         <div className="ui-button-wrapper ui-button-wrapper--menu" style={{ position: 'absolute', top: 24, right: 16, zIndex: 15, opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
           <MenuButton isOpen={false} onClick={() => setMenuOpen(o => !o)} />

@@ -9,43 +9,123 @@ import { getBoardConfig } from '../../game/hnefatafl'
 import { themes } from '../../lib/themes'
 import { IntroStartContext } from '../../contexts/intro'
 
-const DUST_COUNT = 12
-const DUST_DURATION = 0.75
+const DUST_DURATION = 1.5
+// Delay between move completing in the store and dust cloud appearing — gives the
+// mover time to visually arrive at the captured piece's position before it explodes.
+const CAPTURE_DELAY_MS = 450
+
+type ParticleKind = 'debris' | 'flame' | 'smoke'
+interface Particle {
+  kind: ParticleKind
+  vx: number; vy: number; vz: number
+  // spin axis and speed
+  spinX: number; spinZ: number; spinSpeed: number
+  size: number
+  // non-uniform scale for shard effect (x, y, z multipliers)
+  sx: number; sy: number; sz: number
+  cx: number; cy: number; cz: number
+  color: string
+  maxOpacity: number
+  fadeEnd: number
+}
 
 function DustCloud({ x, z, onDone }: { x: number; z: number; onDone: () => void }) {
   const meshRefs = useRef<(Mesh | null)[]>([])
   const elapsed = useRef(0)
   const called = useRef(false)
 
-  const particles = useMemo(() =>
-    Array.from({ length: DUST_COUNT }, (_, i) => {
-      const angle = (i / DUST_COUNT) * Math.PI * 2 + Math.random() * 0.5
-      const speed = 1.8 + Math.random() * 2.8
+  const particles = useMemo<Particle[]>(() => {
+    const debris: Particle[] = Array.from({ length: 18 }, (_, i) => {
+      const angle = (i / 18) * Math.PI * 2 + (Math.random() - 0.5) * 0.5
+      const speed = 2.4 + Math.random() * 3.4
+      const s = 0.06 + Math.random() * 0.07
       return {
+        kind: 'debris',
         vx: Math.cos(angle) * speed,
-        vy: 0.6 + Math.random() * 1.8,
+        vy: 0.6 + Math.random() * 2.2,
         vz: Math.sin(angle) * speed,
-        size: 0.055 + Math.random() * 0.07,
-        cx: x + (Math.random() - 0.5) * 0.25,
-        cy: 0.45 + Math.random() * 0.25,
-        cz: z + (Math.random() - 0.5) * 0.25,
+        spinX: (Math.random() - 0.5) * 2,
+        spinZ: (Math.random() - 0.5) * 2,
+        spinSpeed: 4 + Math.random() * 8,
+        size: s,
+        sx: 0.5 + Math.random() * 1.2,
+        sy: 1.0 + Math.random() * 2.0,
+        sz: 0.4 + Math.random() * 0.8,
+        cx: x + (Math.random() - 0.5) * 0.2,
+        cy: 0.5 + Math.random() * 0.3,
+        cz: z + (Math.random() - 0.5) * 0.2,
+        color: Math.random() > 0.5 ? '#d4a855' : '#b88830',
+        maxOpacity: 1.0,
+        fadeEnd: 0.55,
       }
     })
-  , [])
+    const flames: Particle[] = Array.from({ length: 10 }, (_, i) => ({
+      kind: 'flame' as const,
+      vx: (Math.random() - 0.5) * 1.6,
+      vy: 2.0 + Math.random() * 4.0,
+      vz: (Math.random() - 0.5) * 1.6,
+      spinX: (Math.random() - 0.5),
+      spinZ: (Math.random() - 0.5),
+      spinSpeed: 3 + Math.random() * 5,
+      size: 0.055 + Math.random() * 0.055,
+      sx: 0.4 + Math.random() * 0.6,
+      sy: 1.5 + Math.random() * 2.0,
+      sz: 0.4 + Math.random() * 0.6,
+      cx: x + (Math.random() - 0.5) * 0.35,
+      cy: 0.3 + Math.random() * 0.3,
+      cz: z + (Math.random() - 0.5) * 0.35,
+      color: i % 3 === 0 ? '#ff2200' : i % 3 === 1 ? '#ff6600' : '#ffaa00',
+      maxOpacity: 0.95,
+      fadeEnd: 0.38,
+    }))
+    const smoke: Particle[] = Array.from({ length: 8 }, () => ({
+      kind: 'smoke' as const,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: 0.4 + Math.random() * 0.7,
+      vz: (Math.random() - 0.5) * 0.5,
+      spinX: 0, spinZ: 0, spinSpeed: 0,
+      size: 0.18 + Math.random() * 0.22,
+      sx: 1, sy: 1, sz: 1,
+      cx: x + (Math.random() - 0.5) * 0.6,
+      cy: 0.5 + Math.random() * 0.4,
+      cz: z + (Math.random() - 0.5) * 0.6,
+      color: '#2a2a2a',
+      maxOpacity: 0.13,
+      fadeEnd: 1.0,
+    }))
+    return [...debris, ...flames, ...smoke]
+  }, [])
 
   const pos = useRef(particles.map(p => ({ x: p.cx, y: p.cy, z: p.cz })))
 
   useFrame((_, delta) => {
     if (called.current) return
     elapsed.current += delta
-    const opacity = Math.max(0, 1 - elapsed.current / DUST_DURATION * 1.3)
+    const t = elapsed.current / DUST_DURATION
 
     meshRefs.current.forEach((mesh, i) => {
       if (!mesh) return
-      pos.current[i].x += particles[i].vx * delta
-      pos.current[i].y += particles[i].vy * delta - 5 * elapsed.current * delta
-      pos.current[i].z += particles[i].vz * delta
-      mesh.position.set(pos.current[i].x, Math.max(pos.current[i].y, 0.06), pos.current[i].z)
+      const p = particles[i]
+      const gravity = p.kind === 'smoke' ? 0.5 : p.kind === 'flame' ? 1.2 : 5
+      pos.current[i].x += p.vx * delta
+      pos.current[i].y += p.vy * delta - gravity * elapsed.current * delta
+      pos.current[i].z += p.vz * delta
+      const yFloor = p.kind === 'smoke' ? 0.3 : 0.04
+      mesh.position.set(pos.current[i].x, Math.max(pos.current[i].y, yFloor), pos.current[i].z)
+
+      // Spin shards
+      if (p.spinSpeed > 0) {
+        mesh.rotation.x += p.spinX * p.spinSpeed * delta
+        mesh.rotation.z += p.spinZ * p.spinSpeed * delta
+      }
+
+      // Smoke expands as it rises
+      if (p.kind === 'smoke') {
+        const scale = 1 + t * 2.5
+        mesh.scale.setScalar(scale)
+      }
+
+      const opacity = p.maxOpacity * Math.max(0, 1 - t / p.fadeEnd)
       ;(mesh.material as MeshStandardMaterial).opacity = opacity
     })
 
@@ -58,9 +138,28 @@ function DustCloud({ x, z, onDone }: { x: number; z: number; onDone: () => void 
   return (
     <>
       {particles.map((p, i) => (
-        <mesh key={i} ref={el => { meshRefs.current[i] = el }} position={[p.cx, p.cy, p.cz]}>
-          <sphereGeometry args={[p.size, 5, 4]} />
-          <meshStandardMaterial color="#d4a855" roughness={0.9} transparent opacity={1} depthWrite={false} />
+        <mesh
+          key={i}
+          ref={el => { meshRefs.current[i] = el }}
+          position={[p.cx, p.cy, p.cz]}
+          scale={[p.sx * p.size, p.sy * p.size, p.sz * p.size]}
+          rotation={[Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2]}
+        >
+          {p.kind === 'smoke'
+            ? <sphereGeometry args={[1, 5, 4]} />
+            : p.kind === 'flame'
+              ? <tetrahedronGeometry args={[1, 0]} />
+              : <octahedronGeometry args={[1, 0]} />
+          }
+          <meshStandardMaterial
+            color={p.color}
+            roughness={0.7}
+            transparent
+            opacity={p.maxOpacity}
+            depthWrite={false}
+            emissive={p.kind === 'flame' ? p.color : '#000000'}
+            emissiveIntensity={p.kind === 'flame' ? 0.9 : 0}
+          />
         </mesh>
       ))}
     </>
@@ -78,6 +177,7 @@ const BOARD_START_Y = -20
 
 function FadingLights({ menuOpen }: { menuOpen: boolean }) {
   const introStartMs = useContext(IntroStartContext)
+  const { pieces, rules } = useGameStore()
   const ambientRef = useRef<AmbientLight>(null)
   const moonRef = useRef<DirectionalLight>(null)
   const spotRef = useRef<SpotLight>(null)
@@ -85,6 +185,8 @@ function FadingLights({ menuOpen }: { menuOpen: boolean }) {
   const bounceRef = useRef<PointLight>(null)
   const backRef = useRef<PointLight>(null)
   const menuScale = useRef(1)
+  const spotLerpX = useRef(0)
+  const spotLerpZ = useRef(0)
 
   useFrame((_, delta) => {
     const t = introStartMs ? (Date.now() - introStartMs) / 1000 : -1
@@ -102,6 +204,24 @@ function FadingLights({ menuOpen }: { menuOpen: boolean }) {
     const late = f(BOARD_DURATION, 1.2)
     if (bounceRef.current)   bounceRef.current.intensity   = 5 * late * ms
     if (backRef.current)     backRef.current.intensity     = 3 * late
+
+    // Spotlight tracks the king
+    if (spotRef.current) {
+      const king = pieces.find(p => p.type === 'king')
+      if (king) {
+        const { boardSize } = getBoardConfig(rules)
+        const offset = (boardSize - 1) / 2
+        const kx = king.col - offset
+        const kz = king.row - offset
+        spotLerpX.current += (kx - spotLerpX.current) * Math.min(delta * 4, 1)
+        spotLerpZ.current += (kz - spotLerpZ.current) * Math.min(delta * 4, 1)
+      }
+      spotRef.current.position.x = spotLerpX.current
+      spotRef.current.position.z = spotLerpZ.current + 4
+      spotRef.current.target.position.x = spotLerpX.current
+      spotRef.current.target.position.z = spotLerpZ.current
+      spotRef.current.target.updateMatrixWorld()
+    }
   })
 
   return (
@@ -285,38 +405,28 @@ interface SceneInnerProps {
 }
 
 function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
-  const { pieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules, gameKey } = useGameStore()
+  const { pieces, dyingPieces, clearDyingPieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules, gameKey } = useGameStore()
   const theme = themes[themeName]
   const [menuPhase, setMenuPhase] = useState<MenuPhase>('idle')
 
-  // Capture dust clouds
+  // Capture dust clouds — fire when dyingPieces are set, delay until mover arrives
   const [dustClouds, setDustClouds] = useState<{ key: number; x: number; z: number }[]>([])
-  const prevPiecesRef = useRef(pieces)
-  const prevGameKeyRef = useRef(gameKey)
 
   useEffect(() => {
-    // On new game reset, just sync — don't spawn dust for all removed pieces
-    if (gameKey !== prevGameKeyRef.current) {
-      prevGameKeyRef.current = gameKey
-      prevPiecesRef.current = pieces
-      setDustClouds([])
-      return
-    }
+    if (powerSaving || dyingPieces.length === 0) return
     const { boardSize } = getBoardConfig(rules)
     const boardOffset = (boardSize - 1) / 2
-    const removed = !powerSaving ? prevPiecesRef.current.filter(p => !pieces.find(pp => pp.id === p.id)) : []
-    if (removed.length > 0) {
-      setDustClouds(prev => [
-        ...prev,
-        ...removed.map(p => ({
-          key: Date.now() + Math.random() * 1000,
-          x: p.col - boardOffset,
-          z: p.row - boardOffset,
-        })),
-      ])
-    }
-    prevPiecesRef.current = pieces
-  }, [pieces, gameKey])
+    const clouds = dyingPieces.map(p => ({
+      key: Date.now() + Math.random() * 1000,
+      x: p.col - boardOffset,
+      z: p.row - boardOffset,
+    }))
+    const timer = setTimeout(() => {
+      clearDyingPieces()
+      setDustClouds(prev => [...prev, ...clouds])
+    }, CAPTURE_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [dyingPieces])
   // boardFlipOpen is delayed: pieces hide first, THEN board flips
   const [boardFlipOpen, setBoardFlipOpen] = useState(false)
   // lights cut immediately on open, restored only after board has returned

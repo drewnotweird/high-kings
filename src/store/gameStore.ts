@@ -10,6 +10,7 @@ export type Rules = 'Tablut' | 'Copenhagen' | 'Tawlbwrdd' | 'Brandub'
 
 interface GameStore {
   pieces: Piece[]
+  dyingPieces: Piece[]
   selectedId: string | null
   validMoves: [number, number][]
   winner: PlayerSide | null
@@ -28,6 +29,7 @@ interface GameStore {
   selectPiece: (id: string | null) => void
   movePiece: (toRow: number, toCol: number) => void
   machineMove: (pieceId: string, toRow: number, toCol: number) => void
+  clearDyingPieces: () => void
   resetGame: () => void
   setPlayerMode: (mode: GameMode) => void
   setSetting: <K extends 'musicEnabled' | 'cameraLocked' | 'difficulty' | 'rules' | 'powerSaving'>(
@@ -37,6 +39,7 @@ interface GameStore {
 
 export const useGameStore = create<GameStore>((set) => ({
   pieces: createInitialPieces(getBoardConfig('Copenhagen')),
+  dyingPieces: [],
   selectedId: null,
   validMoves: [],
   winner: null,
@@ -78,10 +81,13 @@ export const useGameStore = create<GameStore>((set) => ({
 
     const { boardSize, center } = getBoardConfig(s.rules)
     const result = applyMove(s.pieces, s.selectedId, toRow, toCol, boardSize, center)
-    const capturedCount = result.capturedIds.length
+    const capturedPieces = s.pieces.filter(p => result.capturedIds.includes(p.id))
+    const capturedCount = capturedPieces.length
 
     return {
-      pieces: result.pieces,
+      // Keep captured pieces in the scene until clearDyingPieces() is called
+      pieces: [...result.pieces, ...capturedPieces],
+      dyingPieces: capturedPieces,
       selectedId: null,
       validMoves: [],
       currentTurn: s.currentTurn === 'defender' ? 'attacker' : 'defender',
@@ -97,9 +103,11 @@ export const useGameStore = create<GameStore>((set) => ({
     if (s.winner) return s
     const { boardSize, center } = getBoardConfig(s.rules)
     const result = applyMove(s.pieces, pieceId, toRow, toCol, boardSize, center)
-    const capturedCount = result.capturedIds.length
+    const capturedPieces = s.pieces.filter(p => result.capturedIds.includes(p.id))
+    const capturedCount = capturedPieces.length
     return {
-      pieces: result.pieces,
+      pieces: [...result.pieces, ...capturedPieces],
+      dyingPieces: capturedPieces,
       selectedId: null,
       validMoves: [],
       currentTurn: s.currentTurn === 'defender' ? 'attacker' : 'defender',
@@ -111,10 +119,16 @@ export const useGameStore = create<GameStore>((set) => ({
     }
   }),
 
+  clearDyingPieces: () => set((s) => ({
+    pieces: s.pieces.filter(p => !s.dyingPieces.find(dp => dp.id === p.id)),
+    dyingPieces: [],
+  })),
+
   setPlayerMode: (mode) => set({ playerMode: mode }),
 
   resetGame: () => set((s) => ({
     pieces: createInitialPieces(getBoardConfig(s.rules)),
+    dyingPieces: [],
     selectedId: null,
     validMoves: [],
     winner: null,
