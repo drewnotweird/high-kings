@@ -191,127 +191,111 @@ body, button, input, select {
   color: #c8b888;
   flex-shrink: 0;
 }
-.credits-scroll-overlay {
+.credits-page {
   position: fixed;
   inset: 0;
   z-index: 100;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 10px;
-  overflow: hidden;
+  flex-direction: column;
+  background: #120a03;
+  font-family: 'MedievalSharp', cursive;
+  color: #3d2008;
+  animation: creditsPageIn 0.35s ease-out forwards;
 }
-.credits-scroll-overlay__scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: #000;
-  animation: creditsOverlayIn 0.4s ease-out forwards;
+.credits-page--closing {
+  animation: creditsPageOut 0.35s ease-in forwards;
 }
-.credits-scroll-overlay--closing .credits-scroll-overlay__scrim {
-  animation: creditsOverlayOut 0.6s ease-in forwards;
-}
-@keyframes creditsOverlayIn { from { opacity:0 } to { opacity:1 } }
-@keyframes creditsOverlayOut { from { opacity:1 } to { opacity:0 } }
-.credits-scroll {
-  position: relative;
-  z-index: 1;
-  max-width: 460px;
-  width: 100%;
-  flex-shrink: 0;
-  filter: drop-shadow(0 16px 48px rgba(0,0,0,0.85));
-  animation: creditsScrollEnter 0.9s cubic-bezier(0.15,0.85,0.25,1) forwards;
-}
-.credits-scroll--closing {
-  animation: creditsScrollExit 0.5s cubic-bezier(0.6,0,0.85,0.4) 0.9s forwards;
-}
-@keyframes creditsScrollEnter {
-  from { transform: translateY(-120px); }
-  to   { transform: translateY(0); }
-}
-@keyframes creditsScrollExit {
-  from { transform: translateY(0); }
-  to   { transform: translateY(-110vh); }
-}
-@keyframes creditsUnroll {
-  from { max-height: 0; }
-  to   { max-height: 80vh; }
-}
-@keyframes creditsRollUp {
-  from { max-height: 80vh; }
-  to   { max-height: 0; }
-}
-.credits-scroll__top-roll {
+@keyframes creditsPageIn  { from { opacity: 0 } to { opacity: 1 } }
+@keyframes creditsPageOut { from { opacity: 1 } to { opacity: 0 } }
+.credits-page__top,
+.credits-page__bottom {
   position: relative;
   z-index: 2;
-  height: 120px;
+  height: 52px;
+  width: 100%;
+  flex-shrink: 0;
+  box-shadow: 0 0 20px rgba(0,0,0,1);
 }
-.credits-scroll__parchment {
+.credits-page__top {
+  background-image: url('wood-top.jpg');
+  background-size: auto 100%;
+  background-repeat: repeat-x;
+  background-position: center bottom;
+}
+.credits-page__bottom {
+  background-image: url('wood-bottom.jpg');
+  background-size: auto 100%;
+  background-repeat: repeat-x;
+  background-position: center top;
+}
+.credits-page__middle {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  justify-content: center;
   position: relative;
   z-index: 1;
-  overflow: hidden;
-  margin-top: -25px;
-  padding: 30px 40px 20px 40px;
-  display: flex;
-  align-items: flex-end;
-  animation: creditsUnroll 3.8s cubic-bezier(0.08,0.5,0.08,1) 0.4s both;
+  min-height: 0;
 }
-.credits-scroll--closing .credits-scroll__parchment {
-  animation: creditsRollUp 1s cubic-bezier(0.7,0,0.9,0.4) forwards;
+.credits-page__paper {
+  width: 100%;
+  max-width: 800px;
+  padding: 28px 9% 48px;
+  box-sizing: border-box;
+  background-image: url('pagescroll.png');
+  background-size: 100% auto;
+  background-repeat: repeat-y;
+  background-position: center top;
+  font-size: 14px;
+  line-height: 20px;
 }
-.credits-scroll__content {
-  opacity: 1;
+@media (min-width: 600px) {
+  .credits-page__paper { font-size: 18px; line-height: 28px; }
 }
-.credits-scroll__scroll-title {
-  text-align: center;
-  font-size: 20px;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: #2e1606;
-  margin: 0 0 5px;
-  font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+@media (min-width: 1200px) {
+  .credits-page__paper { padding: 28px 109px 48px; }
 }
-.credits-scroll__era {
-  text-align: center;
-  font-size: 11px;
+.credits-page h1 {
+  font-size: clamp(22px, 5vw, 36px);
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: #6b3e12;
-  margin: 0 0 18px;
-  font-style: italic;
-}
-.credits-scroll__rule {
-  border: none;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(60,28,0,0.35) 20%, rgba(60,28,0,0.35) 80%, transparent);
-  margin: 0 0 18px;
-}
-.credits-scroll__body-text {
-  font-family: 'MedievalSharp', serif;
-  font-size: 18px;
-  line-height: 1.85;
-  color: #3d2008;
-  margin: 0 0 22px;
+  color: #2e1606;
+  margin: 0 0 6px;
   text-align: center;
 }
-.credits-scroll__names {
+.credits-page h2 {
+  font-size: clamp(16px, 3vw, 24px);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #2e1606;
+  margin: 28px 0 8px;
+}
+.credits-page p {
+  margin: 0 0 16px;
+}
+.credits-page__names {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  margin: 0 0 26px;
+  margin: 0 0 32px;
 }
-.credits-scroll__name {
-  font-family: 'MedievalSharp', serif;
-  font-size: 16px;
+.credits-page__name {
+  font-size: clamp(14px, 2.5vw, 20px);
   letter-spacing: 2px;
   text-transform: uppercase;
   color: #2e1606;
 }
-.credits-scroll__close-btn {
+.credits-page__rule {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(60,28,0,0.35) 20%, rgba(60,28,0,0.35) 80%, transparent);
+  margin: 20px 0 24px;
+}
+.credits-page__close-btn {
   display: block;
-  margin: 0 auto;
+  margin: 8px auto 0;
   background: transparent;
   border: 1px solid rgba(60,28,0,0.4);
   color: #3d2008;
@@ -319,27 +303,12 @@ body, button, input, select {
   font-size: 13px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 8px 22px;
+  padding: 10px 28px;
   border-radius: 1px;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
 }
-.credits-scroll__close-btn:hover { background: rgba(60,28,0,0.12); border-color: rgba(60,28,0,0.6); }
-@media (min-width: 768px) {
-  .credits-scroll__body-text { font-size: 3.2vh; }
-  .credits-scroll__name { font-size: 20px; }
-  .credits-scroll__close-btn { font-size: 16px; }
-  .credits-scroll__parchment { padding: 40px 50px 20px 50px; }
-}
-.credits-scroll__torn {
-  position: absolute;
-  bottom: -1px;
-  left: -1px;
-  width: calc(100% + 2px);
-  height: 40px;
-  pointer-events: none;
-  display: block;
-}
+.credits-page__close-btn:hover { background: rgba(60,28,0,0.12); border-color: rgba(60,28,0,0.6); }
 .settings-toggle {
   width: 40px;
   height: 22px;
@@ -670,27 +639,29 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
   const [closing, setClosing] = useState(false)
   const handleClose = () => {
     setClosing(true)
-    setTimeout(onClose, 1500)
+    setTimeout(onClose, 350)
   }
+  const base = import.meta.env.BASE_URL
   return (
-    <div className={`credits-scroll-overlay${closing ? ' credits-scroll-overlay--closing' : ''}`} onClick={handleClose} style={{ cursor: 'pointer' }}>
-      <div className="credits-scroll-overlay__scrim" />
-      <div className={`credits-scroll${closing ? ' credits-scroll--closing' : ''}`}>
-        <div className="credits-scroll__top-roll" style={{ backgroundImage: `url(${import.meta.env.BASE_URL}topscroll.png)`, backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'bottom' }} />
-        <div className="credits-scroll__parchment" style={{ backgroundImage: `url(${import.meta.env.BASE_URL}pagescroll.png)`, backgroundSize: 'cover', backgroundPosition: 'bottom' }}>
-          <div className="credits-scroll__content">
-            <p className="credits-scroll__body-text">
-              High Kings was originally forged around 2010 by three warriors who wanted to bring an ancient Viking strategy game to life. They had an enormous amount of fun building it together, and this site was created to appease the Gods.
-            </p>
-            <div className="credits-scroll__names">
-              <span className="credits-scroll__name">Jason Frame</span>
-              <span className="credits-scroll__name">Lewis MacKenzie</span>
-              <span className="credits-scroll__name">Andrew Nicolson</span>
-            </div>
+    <div className={`credits-page${closing ? ' credits-page--closing' : ''}`}>
+      <div className="credits-page__top" style={{ backgroundImage: `url(${base}wood-top.jpg)` }} />
+      <div className="credits-page__middle">
+        <div className="credits-page__paper" style={{ backgroundImage: `url(${base}pagescroll.png)` }}>
+          <h1>Credits</h1>
+          <hr className="credits-page__rule" />
+          <p>
+            High Kings was originally forged around 2010 by three warriors who wanted to bring an ancient Viking strategy game to life. They had an enormous amount of fun building it together, and this site was created to appease the Gods.
+          </p>
+          <div className="credits-page__names">
+            <span className="credits-page__name">Jason Frame</span>
+            <span className="credits-page__name">Lewis MacKenzie</span>
+            <span className="credits-page__name">Andrew Nicolson</span>
           </div>
-
+          <hr className="credits-page__rule" />
+          <button className="credits-page__close-btn" onClick={handleClose}>Close</button>
         </div>
       </div>
+      <div className="credits-page__bottom" style={{ backgroundImage: `url(${base}wood-bottom.jpg)` }} />
     </div>
   )
 }
