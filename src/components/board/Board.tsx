@@ -93,7 +93,7 @@ function ValidMoveMarker({ x, z, row, col, appearDelay }: {
     // Flicker emissive intensity
     if (matRef.current) {
       const flicker = 0.55 + 0.45 * Math.sin(t * 13.1 + phase * 3.7) * Math.sin(t * 8.3 + phase)
-      matRef.current.emissiveIntensity = 1.2 + flicker * 0.8
+      matRef.current.emissiveIntensity = 0.35 + flicker * 0.3
     }
   })
 
@@ -108,13 +108,13 @@ function ValidMoveMarker({ x, z, row, col, appearDelay }: {
       <coneGeometry args={[0.085, 0.22, 7]} />
       <meshStandardMaterial
         ref={matRef}
-        color="#c83000"
-        emissive="#ff6600"
-        emissiveIntensity={1.2}
+        color="#7a1800"
+        emissive="#cc3300"
+        emissiveIntensity={0.5}
         roughness={0.9}
         metalness={0}
         transparent
-        opacity={0.92}
+        opacity={0.85}
       />
     </mesh>
   )
