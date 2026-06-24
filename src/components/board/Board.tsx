@@ -63,6 +63,7 @@ function ValidMoveMarker({ x, z, row, col, appearDelay }: {
   x: number; z: number; row: number; col: number; appearDelay: number
 }) {
   const meshRef = useRef<Mesh>(null)
+  const glowRef = useRef<Mesh>(null)
   const matRef = useRef<MeshStandardMaterial>(null)
   const { movePiece, powerSaving } = useGameStore()
   const phase = getPhase(row, col)
@@ -82,7 +83,9 @@ function ValidMoveMarker({ x, z, row, col, appearDelay }: {
     const p = Math.min((elapsed - appearDelay) / 0.12, 1)
     const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p
     const overshoot = p >= 1 ? 1 : ease * 1.25 - 0.25 * ease * ease
-    meshRef.current.scale.setScalar(Math.max(0, Math.min(overshoot, 1.15 - 0.15 * p)))
+    const s = Math.max(0, Math.min(overshoot, 1.15 - 0.15 * p))
+    meshRef.current.scale.setScalar(s)
+    if (glowRef.current) glowRef.current.scale.setScalar(s)
 
     if (powerSaving) return
 
@@ -116,6 +119,20 @@ function ValidMoveMarker({ x, z, row, col, appearDelay }: {
           opacity={0.85}
         />
       </mesh>
+      {!powerSaving && (
+        <mesh ref={glowRef} scale={0}>
+          <sphereGeometry args={[0.26, 10, 8]} />
+          <meshStandardMaterial
+            color="#ff4400"
+            emissive="#ff4400"
+            emissiveIntensity={0.6}
+            transparent
+            opacity={0.12}
+            depthWrite={false}
+            side={2}
+          />
+        </mesh>
+      )}
     </group>
   )
 }
