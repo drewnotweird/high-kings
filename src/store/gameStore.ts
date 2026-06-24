@@ -70,13 +70,13 @@ export const useGameStore = create<GameStore>((set) => ({
     const correctTurn =
       (s.currentTurn === 'defender' && pieceIsDefender) ||
       (s.currentTurn === 'attacker' && piece.type === 'attacker')
-    if (!correctTurn) return { selectedId: null, validMoves: [] }
+    if (!correctTurn) return s
 
     // In vs-machine mode, block the human from moving the machine's pieces
     if (s.playerMode !== '2player') {
       const humanIsDefender = s.playerMode === 'defender'
-      if (humanIsDefender && !pieceIsDefender) return { selectedId: null, validMoves: [] }
-      if (!humanIsDefender && pieceIsDefender) return { selectedId: null, validMoves: [] }
+      if (humanIsDefender && !pieceIsDefender) return s
+      if (!humanIsDefender && pieceIsDefender) return s
     }
 
     const { boardSize, center } = getBoardConfig(s.rules)
