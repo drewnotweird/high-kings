@@ -412,6 +412,9 @@ body, button, input, select {
   animation: sceneFadeIn 0.6s ease-out forwards;
   overflow: hidden;
 }
+.winner-overlay--defeat {
+  background: radial-gradient(ellipse at 50% 85%, #3a0800 0%, #1c0300 35%, #0a0100 60%, #000 100%);
+}
 .winner-overlay__gold1 {
   position: absolute;
   inset: 0;
@@ -872,22 +875,22 @@ function WinnerOverlay({ winner, playerMode, powerSaving, onNewGame, onDismiss }
   const label = winner === 'defender' ? 'Defenders Win' : 'Attackers Win'
   const subtitle = playerMode !== '2player' ? (isPlayer ? 'You Win' : 'You Lose') : null
   return (
-    <div className="winner-overlay">
+    <div className={`winner-overlay${isDefeat ? ' winner-overlay--defeat' : ''}`}>
       {!powerSaving && isDefeat && <DefeatFire />}
       {!powerSaving && !isDefeat && <>
         <div className="winner-overlay__gold1" />
         <div className="winner-overlay__gold2" />
-        {winnerEmbers.map(e => (
-          <Ember key={e.id} variant={e.variant} style={{
-            left: e.left, bottom: e.bottom,
-            ['--dur' as string]: e.dur,
-            ['--rise' as string]: e.rise,
-            ['--dx1' as string]: e.dx1, ['--dx2' as string]: e.dx2, ['--dx3' as string]: e.dx3,
-            ['--a1' as string]: e.a1, ['--a2' as string]: e.a2, ['--a3' as string]: e.a3,
-            animationDelay: e.delay,
-          }} />
-        ))}
       </>}
+      {!powerSaving && winnerEmbers.map(e => (
+        <Ember key={e.id} variant={e.variant} style={{
+          left: e.left, bottom: e.bottom,
+          ['--dur' as string]: e.dur,
+          ['--rise' as string]: e.rise,
+          ['--dx1' as string]: e.dx1, ['--dx2' as string]: e.dx2, ['--dx3' as string]: e.dx3,
+          ['--a1' as string]: e.a1, ['--a2' as string]: e.a2, ['--a3' as string]: e.a3,
+          animationDelay: e.delay,
+        }} />
+      ))}
       <div className="winner-overlay__content">
         <p className="winner-overlay__title">{title}</p>
         {subtitle && <p className={`winner-overlay__name winner-overlay__name--${winner}`}>{subtitle}</p>}
