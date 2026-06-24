@@ -67,13 +67,14 @@ function ValidMoveMarker({ x, z, row, col }: { x: number; z: number; row: number
 
   useFrame(({ clock }) => {
     if (!meshRef.current || powerSaving) return
-    meshRef.current.position.y = TILE_TOP + 0.36 + Math.sin(clock.elapsedTime * 2.6 + phase) * 0.07
+    meshRef.current.position.y = TILE_TOP + 0.18 + Math.sin(clock.elapsedTime * 2.6 + phase) * 0.05
   })
 
   return (
     <mesh
       ref={meshRef}
-      position={[x, TILE_TOP + 0.36, z]}
+      position={[x, TILE_TOP + 0.18, z]}
+      castShadow
       onClick={(e) => { e.stopPropagation(); movePiece(row, col) }}
     >
       <sphereGeometry args={[0.13, 14, 10]} />
@@ -89,7 +90,7 @@ function ValidMoveMarker({ x, z, row, col }: { x: number; z: number; row: number
 }
 
 export function Board({ theme }: BoardProps) {
-  const { rules, validMoves, selectedId, selectPiece } = useGameStore()
+  const { rules, validMoves, selectedId, selectPiece, movePiece } = useGameStore()
   const { boardSize, center, attackerStarts, defenderStarts } = getBoardConfig(rules)
   const boardOffset = (boardSize - 1) / 2
 
@@ -186,7 +187,8 @@ export function Board({ theme }: BoardProps) {
             position={[x, 0, z]}
             onClick={(e) => {
               e.stopPropagation()
-              if (!validTarget && selectedId) selectPiece(null)
+              if (validTarget) movePiece(row, col)
+              else if (selectedId) selectPiece(null)
             }}
           >
             <mesh rotation={[-Math.PI / 2, 0, 0]} geometry={tileGeometry} receiveShadow>
