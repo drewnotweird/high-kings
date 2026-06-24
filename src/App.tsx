@@ -968,7 +968,10 @@ function App() {
 
     const { boardSize, center } = getBoardConfig(rules)
     const timer = setTimeout(() => {
-      const move = getBestMove(pieces, machineSide, boardSize, center, difficulty)
+      // Read fresh state — pieces may have changed (clearDyingPieces) since the effect ran
+      const { pieces: freshPieces, currentTurn: freshTurn, winner: freshWinner } = useGameStore.getState()
+      if (freshWinner || freshTurn !== machineSide) return
+      const move = getBestMove(freshPieces, machineSide, boardSize, center, difficulty)
       if (move) machineMove(move.pieceId, move.toRow, move.toCol)
     }, 1300)
     return () => clearTimeout(timer)
