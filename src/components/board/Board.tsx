@@ -180,8 +180,8 @@ function TileHoverGlow({ x, z, active }: { x: number; z: number; active: boolean
     >
       <meshStandardMaterial
         ref={matRef}
-        color="#ffe090"
-        emissive="#ffbb30"
+        color="#ff8030"
+        emissive="#ff5500"
         emissiveIntensity={1.4}
         transparent
         opacity={0}
