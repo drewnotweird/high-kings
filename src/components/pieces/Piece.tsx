@@ -8,6 +8,7 @@ import { useGameStore } from '../../store/gameStore'
 import type { ThemeConfig } from '../../lib/themes'
 const W = 1.35
 const REST_Y = 0.15
+const HOVER_LIFT = 0.28
 const JUMP_PEAK = 1.4
 const JUMP_DURATION = 0.36
 const CELEBRATE_DURATION = 0.7
@@ -32,7 +33,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
   const landTime = useRef(0)
   const menuOpacity = useRef(1)
 
-  const { rules, powerSaving, captorIds, undoTrigger } = useGameStore()
+  const { rules, powerSaving, captorIds, undoTrigger, currentTurn, playerMode, winner } = useGameStore()
   const boardOffset = (getBoardConfig(rules).boardSize - 1) / 2
   const x = piece.col - boardOffset
   const z = piece.row - boardOffset
@@ -53,6 +54,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
   const celebrateReadyTime = useRef(0)
   const shakeT = useRef(-1)
   const shakePhase = useRef(Math.random() * Math.PI * 2)
+  const hovered = useRef(false)
 
   useEffect(() => {
     if (undoTrigger > 0 && !powerSaving) shakeT.current = 0
@@ -85,6 +87,13 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
 
   const isKing = piece.type === 'king'
   const isDefender = piece.type === 'defender'
+  const pieceIsDefender = isDefender || isKing
+  const isHoverable = !powerSaving && !winner && (
+    playerMode === '2player'
+      ? (currentTurn === 'defender') === pieceIsDefender
+      : playerMode === 'defender' ? pieceIsDefender && currentTurn === 'defender'
+                                  : !pieceIsDefender && currentTurn === 'attacker'
+  )
 
   const prefix = isKing ? 'piece-king' : isDefender ? 'piece-light' : 'piece-dark'
   const texture = useTexture(`${import.meta.env.BASE_URL}textures/${prefix}.png`)
@@ -183,8 +192,9 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
     // Menu fade — lerp opacity based on phase
     const targetOpacity = (menuPhase === 'hiding' || menuPhase === 'hidden') ? 0 : 1
     menuOpacity.current += (targetOpacity - menuOpacity.current) * Math.min(delta * 7, 1)
+    if (menuPhase === 'hidden') menuOpacity.current = 0
     const op = menuOpacity.current
-    meshRef.current.visible = op > 0.01
+    meshRef.current.visible = op > 0.05
     meshRef.current.castShadow = op > 0.5
     if (materialRef.current) materialRef.current.opacity = op
 
@@ -206,7 +216,9 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
     meshRef.current.rotation.y = Math.PI
     const settle = (Date.now() - landTime.current) / 1000
     const knock = settle < 0.14 ? Math.sin((settle / 0.14) * Math.PI) * -0.055 : 0
-    const targetY = (isSelected ? 0.55 : REST_Y) + moveArc.current + knock
+    if (!isHoverable) hovered.current = false
+    const liftY = hovered.current && !isSelected ? HOVER_LIFT : 0
+    const targetY = (isSelected ? 0.55 : REST_Y + liftY) + moveArc.current + knock
     meshRef.current.position.y += (targetY - meshRef.current.position.y) * Math.min(delta * 8, 1)
 
     // Fire pending celebration once the piece has settled at its destination
@@ -256,6 +268,8 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
         e.stopPropagation()
         onClick()
       }}
+      onPointerEnter={isHoverable ? () => { hovered.current = true } : undefined}
+      onPointerLeave={isHoverable ? () => { hovered.current = false } : undefined}
     >
       <latheGeometry args={[points, 32]} />
       <meshPhysicalMaterial

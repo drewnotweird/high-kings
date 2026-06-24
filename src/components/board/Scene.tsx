@@ -4,6 +4,7 @@ import { OrbitControls, Environment, useProgress, Line } from '@react-three/drei
 import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group, Vector3, Mesh, MeshStandardMaterial } from 'three'
 import { Board } from './Board'
 import { Piece, type MenuPhase } from '../pieces/Piece'
+import { PiecesLayer } from '../pieces/PiecesLayer'
 import { useGameStore } from '../../store/gameStore'
 import { getBoardConfig } from '../../game/hnefatafl'
 import { themes } from '../../lib/themes'
@@ -654,7 +655,8 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
       <AnimatedBoard menuOpen={boardFlipOpen} snapFlipRef={snapFlipRef} undoTrigger={undoTrigger}>
         <Board theme={theme} />
       </AnimatedBoard>
-      {pieces.map((piece) => (
+      {/* King — individual mesh (unique geometry, spotlight tracking, single piece) */}
+      {pieces.filter(p => p.type === 'king').map((piece) => (
         <Piece
           key={`${piece.id}-${dropKey}`}
           piece={piece}
@@ -666,6 +668,14 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
           onClick={() => selectPiece(selectedId === piece.id ? null : piece.id)}
         />
       ))}
+      {/* Attackers + defenders — instanced (2 draw calls for all ~96 pieces) */}
+      <PiecesLayer
+        key={dropKey}
+        nonKingPieces={pieces.filter(p => p.type !== 'king')}
+        dropStartMs={dropStartMs}
+        delayMap={delayMap}
+        menuPhase={menuPhase}
+      />
       {bolts.map(b => (
         <LightningBolt
           key={b.key}

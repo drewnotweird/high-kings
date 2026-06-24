@@ -1185,7 +1185,7 @@ function App() {
       </div>
 
       {introStarted && <>
-        <div style={{ position: 'absolute', top: 24, left: 16, zIndex: 15, display: 'flex', gap: 4 }}>
+        <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 15, display: 'flex', gap: 4 }}>
           <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
             <HintButton onClick={() => {
               if (playerMode === '2player' || winner) return
@@ -1213,7 +1213,7 @@ function App() {
             }} />
           </div>
         </div>
-        <div className="ui-button-wrapper ui-button-wrapper--menu" style={{ position: 'absolute', top: 24, right: 16, zIndex: 15, opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
+        <div className="ui-button-wrapper ui-button-wrapper--menu" style={{ position: 'absolute', top: 16, right: 16, zIndex: 15, opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
           <MenuButton isOpen={false} onClick={() => setMenuOpen(o => !o)} />
         </div>
       </>}

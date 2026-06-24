@@ -1,7 +1,7 @@
 import { useMemo, useRef, useEffect, useLayoutEffect, useState } from 'react'
 import { useTexture } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
-import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, Mesh, MeshStandardMaterial, PlaneGeometry } from 'three'
+import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, Mesh, MeshStandardMaterial, PlaneGeometry, Texture } from 'three'
 import { getBoardConfig, isCorner, isThrone, isValidMove } from '../../game/hnefatafl'
 import { useGameStore } from '../../store/gameStore'
 import type { ThemeConfig } from '../../lib/themes'
@@ -60,10 +60,11 @@ function getPhase(row: number, col: number) {
   return phaseCache.get(key)!
 }
 
-function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, disappearDelay = 0, onHover, onUnhover }: {
+function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, disappearDelay = 0, onHover, onUnhover, tileHovered = false, dimmed = false }: {
   x: number; z: number; row: number; col: number; appearDelay: number
   disappearing?: boolean; disappearDelay?: number
   onHover?: () => void; onUnhover?: () => void
+  tileHovered?: boolean; dimmed?: boolean
 }) {
   const meshRef = useRef<Mesh>(null)
   const glowRef = useRef<Mesh>(null)
@@ -71,9 +72,12 @@ function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, di
   const { movePiece, powerSaving } = useGameStore()
   const phase = getPhase(row, col)
   const birthTime = useRef(0)
+  const sinkY = useRef(0)
+  const dimScale = useRef(1)
+  const dimOpacity = useRef(1)
   const { clock } = useThree()
   useEffect(() => { birthTime.current = clock.getElapsedTime() }, [])
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, delta) => {
     if (!meshRef.current) return
     const t = clock.getElapsedTime()
     const elapsed = t - birthTime.current
@@ -100,15 +104,27 @@ function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, di
 
     if (powerSaving) return
 
-    // Bob gently — keep glow concentric with orb
-    const bobY = TILE_TOP + 0.18 + Math.sin(t * 2.6 + phase) * 0.04
+    // Dim scale + opacity when another tile is hovered
+    const targetDimScale = dimmed ? 0.6 : 1
+    const targetDimOpacity = dimmed ? 0.35 : 1
+    dimScale.current += (targetDimScale - dimScale.current) * Math.min(delta * 10, 1)
+    dimOpacity.current += (targetDimOpacity - dimOpacity.current) * Math.min(delta * 10, 1)
+    // Apply dim on top of current pop-in scale
+    meshRef.current.scale.setScalar(meshRef.current.scale.x * dimScale.current)
+    if (glowRef.current) glowRef.current.scale.setScalar(glowRef.current.scale.x * dimScale.current)
+
+    // Bob gently — keep glow concentric with orb; sink when tile is hovered
+    const sinkTarget = tileHovered ? -0.14 : 0
+    sinkY.current += (sinkTarget - sinkY.current) * Math.min(delta * 12, 1)
+    const bobY = TILE_TOP + 0.18 + Math.sin(t * 2.6 + phase) * 0.04 + sinkY.current
     meshRef.current.position.y = bobY
     if (glowRef.current) glowRef.current.position.y = bobY
 
-    // Flicker emissive intensity
+    // Flicker emissive intensity + opacity
     if (matRef.current) {
       const flicker = 0.55 + 0.45 * Math.sin(t * 13.1 + phase * 3.7) * Math.sin(t * 8.3 + phase)
-      matRef.current.emissiveIntensity = 0.35 + flicker * 0.3
+      matRef.current.emissiveIntensity = (0.35 + flicker * 0.3) * dimOpacity.current
+      matRef.current.opacity = dimOpacity.current
     }
   })
 
@@ -125,6 +141,7 @@ function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, di
         <sphereGeometry args={[0.13, 14, 10]} />
         <meshStandardMaterial
           ref={matRef}
+          transparent
           color={powerSaving ? "#ff6600" : "#e8874a"}
           emissive={powerSaving ? "#ff4400" : "#d45a10"}
           emissiveIntensity={powerSaving ? 0.9 : 0.4}
@@ -272,9 +289,33 @@ export function Board({ theme }: BoardProps) {
     return map
   }, [boardSize])
 
+  const tileRotation = useMemo(() => {
+    const map: Record<string, number> = {}
+    for (let row = 0; row < boardSize; row++) {
+      for (let col = 0; col < boardSize; col++) {
+        const rand = mulberry32(row * 200 + col + 13)
+        map[`${row},${col}`] = Math.floor(rand() * 4)
+      }
+    }
+    return map
+  }, [boardSize])
+
   const tilePaths = Array.from({ length: TILE_COUNT }, (_, i) => `${import.meta.env.BASE_URL}textures/tile-${i + 1}.png`)
   const tileTextures = useTexture(tilePaths)
   tileTextures.forEach(t => { t.wrapS = t.wrapT = ClampToEdgeWrapping })
+
+  // 4 rotated clones per texture (0°, 90°, 180°, 270°) — clones share the GPU upload
+  const rotatedTileTextures = useMemo<Texture[][]>(() => {
+    return tileTextures.map(t =>
+      [0, 1, 2, 3].map(i => {
+        const clone = t.clone()
+        clone.rotation = i * (Math.PI / 2)
+        clone.center.set(0.5, 0.5)
+        clone.needsUpdate = true
+        return clone
+      })
+    )
+  }, [tileTextures])
 
   const cornerTileTexture = useTexture(`${import.meta.env.BASE_URL}textures/tile-11.png`)
 
@@ -302,6 +343,7 @@ export function Board({ theme }: BoardProps) {
         const x = col - boardOffset
         const z = row - boardOffset
         const variantIdx = (tileAssignment[key] ?? 1) - 1
+        const rotIdx = tileRotation[key] ?? 0
 
         let overlay: 'corner' | 'throne' | 'defender' | 'attacker' | null = null
         if (isEscapeSquare(row, col)) overlay = 'corner'
@@ -309,11 +351,11 @@ export function Board({ theme }: BoardProps) {
         else if (defenderSet.has(key)) overlay = 'defender'
         else if (attackerSet.has(key)) overlay = 'attacker'
 
-        result.push({ row, col, x, z, variantIdx, overlay, isCornerTile: isEscapeSquare(row, col) || isThrone(row, col, center) })
+        result.push({ row, col, x, z, variantIdx, rotIdx, overlay, isCornerTile: isEscapeSquare(row, col) || isThrone(row, col, center) })
       }
     }
     return result
-  }, [boardSize, boardOffset, center, attackerStarts, defenderStarts, tileAssignment, kingEscapeEdge])
+  }, [boardSize, boardOffset, center, attackerStarts, defenderStarts, tileAssignment, tileRotation, kingEscapeEdge])
 
   return (
     <group>
@@ -327,7 +369,7 @@ export function Board({ theme }: BoardProps) {
       </mesh>
 
       {(() => {
-        return squares.map(({ row, col, x, z, variantIdx, overlay, isCornerTile }) => {
+        return squares.map(({ row, col, x, z, variantIdx, rotIdx, overlay, isCornerTile }) => {
         const validTarget = isValidMove(row, col, validMoves)
         const dist = selectedPiece
           ? Math.max(Math.abs(row - selectedPiece.row), Math.abs(col - selectedPiece.col))
@@ -339,8 +381,13 @@ export function Board({ theme }: BoardProps) {
             position={[x, 0, z]}
             onClick={(e) => {
               e.stopPropagation()
-              if (validTarget) movePiece(row, col)
-              else if (selectedId) selectPiece(null)
+              if (validTarget) {
+                movePiece(row, col)
+              } else {
+                const pieceHere = pieces.find(p => p.row === row && p.col === col && p.type !== 'king')
+                if (pieceHere) selectPiece(pieceHere.id)
+                else if (selectedId) selectPiece(null)
+              }
             }}
           >
             <mesh
@@ -351,7 +398,7 @@ export function Board({ theme }: BoardProps) {
               onPointerLeave={(e) => { e.stopPropagation(); setHoveredTile(null) }}
             >
               <meshStandardMaterial
-                map={isCornerTile ? cornerTileTexture : tileTextures[variantIdx]}
+                map={isCornerTile ? cornerTileTexture : rotatedTileTextures[variantIdx][rotIdx]}
                 roughness={theme.boardRoughness}
                 metalness={theme.boardMetalness}
               />
@@ -373,7 +420,7 @@ export function Board({ theme }: BoardProps) {
               </mesh>
             )}
 
-            {validTarget && <ValidMoveMarker x={0} z={0} row={row} col={col} appearDelay={appearDelay} onHover={() => setHoveredTile({ x, z })} onUnhover={() => setHoveredTile(null)} />}
+            {validTarget && <ValidMoveMarker x={0} z={0} row={row} col={col} appearDelay={appearDelay} onHover={() => setHoveredTile({ x, z })} onUnhover={() => setHoveredTile(null)} tileHovered={hoveredTile?.x === x && hoveredTile?.z === z} dimmed={hoveredTile !== null && !(hoveredTile.x === x && hoveredTile.z === z)} />}
           </group>
         )
       })
