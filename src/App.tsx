@@ -260,7 +260,7 @@ body, button, input, select {
   text-transform: uppercase;
   color: #2e1606;
   margin: 0 0 6px;
-  text-align: center;
+  text-decoration: none;
 }
 .credits-page h2 {
   font-size: clamp(16px, 3vw, 24px);
@@ -268,6 +268,7 @@ body, button, input, select {
   text-transform: uppercase;
   color: #2e1606;
   margin: 28px 0 8px;
+  text-decoration: none;
 }
 .credits-page p {
   margin: 0 0 16px;
