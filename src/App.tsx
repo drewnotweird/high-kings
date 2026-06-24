@@ -23,6 +23,12 @@ body, button, input, select {
   75%  { opacity: 0.42; }
   100% { opacity: 0.35; }
 }
+@keyframes scoreFlash {
+  0%   { transform: scale(1);    text-shadow: none; }
+  30%  { transform: scale(1.35); text-shadow: 0 0 12px rgba(255,200,80,0.95), 0 0 28px rgba(255,140,0,0.7); }
+  60%  { transform: scale(1.15); text-shadow: 0 0 8px rgba(255,200,80,0.6); }
+  100% { transform: scale(1);    text-shadow: none; }
+}
 @keyframes victoryPulse {
   0%   { opacity: 0.55; transform: scale(1);    }
   50%  { opacity: 0.90; transform: scale(1.06); }
@@ -814,6 +820,17 @@ function PieceIcon({ side }: { side: PlayerSide }) {
 
 function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number; isActive: boolean }) {
   const isAttacker = side === 'attacker'
+  const prevScore = useRef(score)
+  const [flashing, setFlashing] = useState(false)
+
+  useEffect(() => {
+    if (score > prevScore.current) {
+      setFlashing(false)
+      requestAnimationFrame(() => setFlashing(true))
+    }
+    prevScore.current = score
+  }, [score])
+
   return (
     <div className={`score-panel score-panel--${side}${isActive ? ' score-panel--active' : ''}`} style={{
       padding: 3,
@@ -835,7 +852,15 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
         minWidth: 60,
       }}>
         <PieceIcon side={side} />
-        <span className="score-panel__score" style={{ color: '#e8d8b8', fontSize: 18, fontWeight: 600, letterSpacing: 1 }}>{score}</span>
+        <span
+          className="score-panel__score"
+          style={{ color: '#e8d8b8', fontSize: 18, fontWeight: 600, letterSpacing: 1 }}
+          onAnimationEnd={() => setFlashing(false)}
+        >
+          <span style={flashing ? { display: 'inline-block', animation: 'scoreFlash 0.55s ease-out forwards' } : undefined}>
+            {score}
+          </span>
+        </span>
       </div>
     </div>
   )
