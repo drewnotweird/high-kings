@@ -83,7 +83,6 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
   const animMap       = useRef<Map<string, PieceAnim>>(new Map())
   const attackerSlots = useRef<(string | null)[]>(Array(MAX_ATTACKERS).fill(null))
   const defenderSlots = useRef<(string | null)[]>(Array(MAX_DEFENDERS).fill(null))
-  const menuOpacity   = useRef(1)
 
   // Scratch objects — reused every frame to avoid GC pressure
   const _m4   = useRef(new Matrix4())
@@ -174,22 +173,17 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
     const now = Date.now()
     const elapsed = clock.elapsedTime
 
-    // Shared menu opacity — lerp material opacity for smooth fade
-    const menuTarget = (menuPhase === 'hiding' || menuPhase === 'hidden') ? 0 : 1
-    menuOpacity.current += (menuTarget - menuOpacity.current) * Math.min(delta * 7, 1)
-    if (menuPhase === 'hidden') menuOpacity.current = 0
-    const op = menuOpacity.current
-    if (attackerMatRef.current) attackerMatRef.current.opacity = op
-    if (defenderMatRef.current) defenderMatRef.current.opacity = op
-    attackerRef.current.visible = op > 0.01
-    defenderRef.current.visible = op > 0.01
-    attackerRef.current.castShadow = op > 0.5
-    defenderRef.current.castShadow = op > 0.5
+    // Hide pieces instantly when menu opens — no fade to avoid depth-sort ghost
+    const hiding = menuPhase === 'hiding' || menuPhase === 'hidden'
+    attackerRef.current.visible = !hiding
+    defenderRef.current.visible = !hiding
+    attackerRef.current.castShadow = !hiding
+    defenderRef.current.castShadow = !hiding
 
     // Halo overlay — follows selected non-king piece
     const selectedAnim = selectedId ? animMap.current.get(selectedId) : null
     if (haloMeshRef.current && haloMatRef.current) {
-      const visible = !!selectedAnim && !powerSaving && menuOpacity.current > 0.01
+      const visible = !!selectedAnim && !powerSaving && !hiding
       haloMeshRef.current.visible = visible
       if (visible && selectedAnim) {
         haloMeshRef.current.position.set(selectedAnim.visualX, selectedAnim.posY, selectedAnim.visualZ)
@@ -355,8 +349,6 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
           emissiveMap={attackerTex}
           emissive="#ffffff"
           emissiveIntensity={0.15}
-          transparent
-          depthWrite={false}
         />
       </instancedMesh>
       <instancedMesh
@@ -378,8 +370,6 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
           emissiveMap={defenderTex}
           emissive="#9a7a40"
           emissiveIntensity={0.15}
-          transparent
-          depthWrite={false}
         />
       </instancedMesh>
       {/* Halo ring — follows the selected non-king piece */}
