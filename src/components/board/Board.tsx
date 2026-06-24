@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useTexture } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, MeshStandardMaterial } from 'three'
+import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, Mesh } from 'three'
 import { getBoardConfig, isCorner, isThrone, isValidMove } from '../../game/hnefatafl'
 import { useGameStore } from '../../store/gameStore'
 import type { ThemeConfig } from '../../lib/themes'
@@ -52,31 +52,37 @@ interface BoardProps {
   theme: ThemeConfig
 }
 
+// Stable per-instance phase offset so each orb bobs at a different rhythm
+const phaseCache = new Map<string, number>()
+function getPhase(row: number, col: number) {
+  const key = `${row},${col}`
+  if (!phaseCache.has(key)) phaseCache.set(key, Math.random() * Math.PI * 2)
+  return phaseCache.get(key)!
+}
+
 function ValidMoveMarker({ x, z, row, col }: { x: number; z: number; row: number; col: number }) {
-  const matRef = useRef<MeshStandardMaterial>(null)
+  const meshRef = useRef<Mesh>(null)
   const { movePiece, powerSaving } = useGameStore()
+  const phase = getPhase(row, col)
+
   useFrame(({ clock }) => {
-    if (matRef.current && !powerSaving) {
-      matRef.current.opacity = 0.25 + 0.15 * Math.sin(clock.elapsedTime * 3)
-    }
+    if (!meshRef.current || powerSaving) return
+    meshRef.current.position.y = TILE_TOP + 0.36 + Math.sin(clock.elapsedTime * 2.6 + phase) * 0.07
   })
+
   return (
     <mesh
-      position={[x, TILE_TOP + 0.005, z]}
-      rotation={[-Math.PI / 2, 0, 0]}
+      ref={meshRef}
+      position={[x, TILE_TOP + 0.36, z]}
       onClick={(e) => { e.stopPropagation(); movePiece(row, col) }}
     >
-      <planeGeometry args={[SQUARE_SIZE * 0.82, SQUARE_SIZE * 0.82]} />
-      <meshStandardMaterial
-        ref={matRef}
-        color="#e8c040"
-        emissive="#e8c040"
-        emissiveIntensity={1.2}
-        transparent
-        opacity={0.3}
-        depthWrite={false}
-        polygonOffset
-        polygonOffsetFactor={-2}
+      <sphereGeometry args={[0.13, 14, 10]} />
+      <meshPhysicalMaterial
+        color="#ffd060"
+        emissive="#ff8800"
+        emissiveIntensity={0.7}
+        metalness={0.8}
+        roughness={0.1}
       />
     </mesh>
   )
