@@ -188,8 +188,8 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
         celebrating.current = false
         celebrateT.current = 0
       } else {
-        meshRef.current.position.y += Math.sin(t * Math.PI) * 0.38
-        meshRef.current.rotation.y = Math.PI + t * Math.PI * 6
+        meshRef.current.position.y += Math.sin(t * Math.PI) * 0.22
+        meshRef.current.rotation.y = Math.PI + t * Math.PI * 2
       }
     }
   })
