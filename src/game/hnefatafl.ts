@@ -206,6 +206,11 @@ export function applyMove(
     return { pieces: remaining.filter(p => p.type !== 'king'), capturedIds: [...capturedIds, king.id], winner: 'attacker' }
   }
 
+  // If all attackers are eliminated, the king cannot be captured — defenders win
+  if (!remaining.some(p => p.type === 'attacker')) {
+    return { pieces: remaining, capturedIds, winner: 'defender' }
+  }
+
   return { pieces: remaining, capturedIds, winner: null }
 }
 
