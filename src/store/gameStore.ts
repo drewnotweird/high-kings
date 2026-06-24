@@ -42,6 +42,7 @@ interface GameStore {
   gameKey: number
   history: HistoryEntry[]
   undoTrigger: number
+  lastMoveTarget: { row: number; col: number } | null
   // Settings
   musicEnabled: boolean
   cameraLocked: boolean
@@ -76,6 +77,7 @@ export const useGameStore = create<GameStore>((set) => ({
   gameKey: 0,
   history: [],
   undoTrigger: 0,
+  lastMoveTarget: null,
   musicEnabled: true,
   cameraLocked: false,
   difficulty: 'medium',
@@ -142,6 +144,7 @@ export const useGameStore = create<GameStore>((set) => ({
       },
       winner: result.winner,
       history: [...s.history.slice(-9), snapshot],
+      lastMoveTarget: { row: toRow, col: toCol },
     }
   }),
 
@@ -207,6 +210,7 @@ export const useGameStore = create<GameStore>((set) => ({
     scores: { attacker: 0, defender: 0 },
     gameKey: s.gameKey + 1,
     history: [],
+    lastMoveTarget: null,
   })),
 
   setSetting: (key, value) => set({ [key]: value }),

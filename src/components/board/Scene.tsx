@@ -1,6 +1,6 @@
 import { useRef, Suspense, useState, useEffect, useContext, useMemo } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Environment, useProgress } from '@react-three/drei'
+import { OrbitControls, Environment, useProgress, Line } from '@react-three/drei'
 import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group, Vector3, Mesh, MeshStandardMaterial } from 'three'
 import { Board } from './Board'
 import { Piece, type MenuPhase } from '../pieces/Piece'
@@ -279,6 +279,64 @@ function FadingLights({ menuOpen, powerSaving }: { menuOpen: boolean; powerSavin
   )
 }
 
+function LightningBolt({ tx, tz, onDone }: { tx: number; tz: number; onDone: () => void }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lineRef = useRef<any>(null)
+  const t = useRef(0)
+  const doneCalled = useRef(false)
+
+  const pts = useMemo<[number, number, number][]>(() => {
+    const segments = 14
+    const result: [number, number, number][] = []
+    let cx = tx, cz = tz
+    for (let i = 0; i <= segments; i++) {
+      const frac = i / segments
+      const y = 13.5 - 13.2 * frac
+      if (i === 0) {
+        result.push([tx, y, tz])
+      } else if (i === segments) {
+        result.push([tx, 0.8, tz])
+      } else {
+        // Each step deviates from previous, then tapers back toward target
+        const spread = Math.sin(frac * Math.PI) * 0.7
+        cx = cx + (Math.random() - 0.5) * spread
+        cz = cz + (Math.random() - 0.5) * spread
+        // Gentle pull back toward target so bolt converges at bottom
+        cx += (tx - cx) * 0.15
+        cz += (tz - cz) * 0.15
+        result.push([cx, y, cz])
+      }
+    }
+    return result
+  }, [tx, tz])
+
+  useFrame((_, delta) => {
+    if (!lineRef.current || doneCalled.current) return
+    t.current += delta
+    const s = t.current
+    let opacity = 0
+    if      (s < 0.05)  opacity = s / 0.05
+    else if (s < 0.09)  opacity = 1 - (s - 0.05) / 0.04
+    else if (s < 0.18)  opacity = 0
+    else if (s < 0.22)  opacity = (s - 0.18) / 0.04
+    else if (s < 0.40)  opacity = 1 - (s - 0.22) / 0.18
+    else { doneCalled.current = true; onDone(); return }
+    if (lineRef.current.material) lineRef.current.material.opacity = opacity
+  })
+
+  return (
+    <Line
+      ref={lineRef}
+      points={pts}
+      color="#c8ecff"
+      lineWidth={1.5}
+      transparent
+      opacity={0}
+      depthTest={false}
+    />
+  )
+}
+
 function LightningFlash() {
   const { undoTrigger } = useGameStore()
   const lightRef = useRef<PointLight>(null)
@@ -476,12 +534,24 @@ interface SceneInnerProps {
 }
 
 function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
-  const { pieces, dyingPieces, captureDelayMs, clearDyingPieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules, undoTrigger } = useGameStore()
+  const { pieces, dyingPieces, captureDelayMs, clearDyingPieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules, undoTrigger, lastMoveTarget } = useGameStore()
   const theme = themes[themeName]
   const [menuPhase, setMenuPhase] = useState<MenuPhase>('idle')
 
   // Capture dust clouds — fire when dyingPieces are set, delay until mover arrives
   const [dustClouds, setDustClouds] = useState<{ key: number; x: number; z: number }[]>([])
+  const [bolts, setBolts] = useState<{ key: number; tx: number; tz: number }[]>([])
+
+  useEffect(() => {
+    if (powerSaving || !lastMoveTarget) return
+    const { boardSize } = getBoardConfig(rules)
+    const offset = (boardSize - 1) / 2
+    setBolts(prev => [...prev, {
+      key: undoTrigger,
+      tx: lastMoveTarget.col - offset,
+      tz: lastMoveTarget.row - offset,
+    }])
+  }, [undoTrigger])
 
   useEffect(() => {
     if (powerSaving || dyingPieces.length === 0) return
@@ -590,6 +660,14 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
           dropStartMs={dropStartMs}
           menuPhase={menuPhase}
           onClick={() => selectPiece(selectedId === piece.id ? null : piece.id)}
+        />
+      ))}
+      {bolts.map(b => (
+        <LightningBolt
+          key={b.key}
+          tx={b.tx}
+          tz={b.tz}
+          onDone={() => setBolts(prev => prev.filter(bolt => bolt.key !== b.key))}
         />
       ))}
       {dustClouds.map(dc => (
