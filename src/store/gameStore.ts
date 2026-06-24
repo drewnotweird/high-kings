@@ -2,6 +2,20 @@ import { create } from 'zustand'
 import { createInitialPieces, getBoardConfig, getValidMoves, applyMove } from '../game/hnefatafl'
 import type { Piece } from '../game/hnefatafl'
 
+function findCaptorIds(capturedPieces: Piece[], resultPieces: Piece[], movedIsDefender: boolean): string[] {
+  const ids = new Set<string>()
+  for (const cap of capturedPieces) {
+    for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]] as [number,number][]) {
+      const nb = resultPieces.find(p => p.row === cap.row + dr && p.col === cap.col + dc)
+      if (nb) {
+        const nbIsDefender = nb.type === 'defender' || nb.type === 'king'
+        if (nbIsDefender === movedIsDefender) ids.add(nb.id)
+      }
+    }
+  }
+  return ids.size > 0 ? [...ids] : []
+}
+
 export type Theme = 'natural'
 export type PlayerSide = 'attacker' | 'defender'
 export type GameMode = 'attacker' | 'defender' | '2player'
@@ -94,22 +108,12 @@ export const useGameStore = create<GameStore>((set) => ({
 
     const movedPiece = s.pieces.find(p => p.id === s.selectedId)!
     const movedIsDefender = movedPiece.type === 'defender' || movedPiece.type === 'king'
-    const captorIdSet = new Set<string>()
-    for (const cap of capturedPieces) {
-      for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]] as [number,number][]) {
-        const nb = result.pieces.find(p => p.row === cap.row + dr && p.col === cap.col + dc)
-        if (nb) {
-          const nbIsDefender = nb.type === 'defender' || nb.type === 'king'
-          if (nbIsDefender === movedIsDefender) captorIdSet.add(nb.id)
-        }
-      }
-    }
 
     return {
       // Keep captured pieces in the scene until clearDyingPieces() is called
       pieces: [...result.pieces, ...capturedPieces],
       dyingPieces: capturedPieces,
-      captorIds: captorIdSet.size > 0 ? [...captorIdSet] : [],
+      captorIds: findCaptorIds(capturedPieces, result.pieces, movedIsDefender),
       selectedId: null,
       validMoves: [],
       currentTurn: s.currentTurn === 'defender' ? 'attacker' : 'defender',
@@ -129,21 +133,11 @@ export const useGameStore = create<GameStore>((set) => ({
 
     const movedPiece = s.pieces.find(p => p.id === pieceId)!
     const movedIsDefender = movedPiece.type === 'defender' || movedPiece.type === 'king'
-    const captorIdSet = new Set<string>()
-    for (const cap of capturedPieces) {
-      for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]] as [number,number][]) {
-        const nb = result.pieces.find(p => p.row === cap.row + dr && p.col === cap.col + dc)
-        if (nb) {
-          const nbIsDefender = nb.type === 'defender' || nb.type === 'king'
-          if (nbIsDefender === movedIsDefender) captorIdSet.add(nb.id)
-        }
-      }
-    }
 
     return {
       pieces: [...result.pieces, ...capturedPieces],
       dyingPieces: capturedPieces,
-      captorIds: captorIdSet.size > 0 ? [...captorIdSet] : [],
+      captorIds: findCaptorIds(capturedPieces, result.pieces, movedIsDefender),
       selectedId: null,
       validMoves: [],
       currentTurn: s.currentTurn === 'defender' ? 'attacker' : 'defender',

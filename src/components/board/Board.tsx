@@ -1,6 +1,6 @@
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useEffect } from 'react'
 import { useTexture } from '@react-three/drei'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, Mesh, MeshStandardMaterial } from 'three'
 import { getBoardConfig, isCorner, isThrone, isValidMove } from '../../game/hnefatafl'
 import { useGameStore } from '../../store/gameStore'
@@ -53,6 +53,7 @@ interface BoardProps {
 }
 
 const phaseCache = new Map<string, number>()
+export function clearPhaseCache() { phaseCache.clear() }
 function getPhase(row: number, col: number) {
   const key = `${row},${col}`
   if (!phaseCache.has(key)) phaseCache.set(key, Math.random() * Math.PI * 2)
@@ -67,12 +68,12 @@ function ValidMoveMarker({ x, z, row, col, appearDelay }: {
   const matRef = useRef<MeshStandardMaterial>(null)
   const { movePiece, powerSaving } = useGameStore()
   const phase = getPhase(row, col)
-  const birthTime = useRef<number | null>(null)
+  const birthTime = useRef(0)
+  const { clock } = useThree()
+  useEffect(() => { birthTime.current = clock.getElapsedTime() }, [])
   useFrame(({ clock }) => {
     if (!meshRef.current) return
     const t = clock.getElapsedTime()
-    if (birthTime.current === null) birthTime.current = t
-
     const elapsed = t - birthTime.current
     if (elapsed < appearDelay) {
       meshRef.current.scale.setScalar(0)
@@ -138,8 +139,9 @@ function ValidMoveMarker({ x, z, row, col, appearDelay }: {
 }
 
 export function Board({ theme }: BoardProps) {
-  const { rules, pieces, validMoves, selectedId, selectPiece, movePiece } = useGameStore()
+  const { rules, pieces, validMoves, selectedId, selectPiece, movePiece, gameKey } = useGameStore()
   const { boardSize, center, attackerStarts, defenderStarts } = getBoardConfig(rules)
+  useEffect(() => { clearPhaseCache() }, [gameKey])
   const boardOffset = (boardSize - 1) / 2
 
   const tileGeometry = useMemo(() => {
