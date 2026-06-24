@@ -59,14 +59,16 @@ function getPhase(row: number, col: number) {
   return phaseCache.get(key)!
 }
 
-function ValidMoveMarker({ x, z, row, col, appearDelay }: {
+function ValidMoveMarker({ x, z, row, col, appearDelay, dirRow, dirCol }: {
   x: number; z: number; row: number; col: number; appearDelay: number
+  dirRow: number; dirCol: number
 }) {
   const meshRef = useRef<Mesh>(null)
   const matRef = useRef<MeshStandardMaterial>(null)
   const { movePiece, powerSaving } = useGameStore()
   const phase = getPhase(row, col)
   const birthTime = useRef<number | null>(null)
+  const rotY = Math.atan2(dirCol, dirRow)
 
   useFrame(({ clock }) => {
     if (!meshRef.current) return
@@ -98,25 +100,28 @@ function ValidMoveMarker({ x, z, row, col, appearDelay }: {
   })
 
   return (
-    <mesh
-      ref={meshRef}
-      position={[x, TILE_TOP + 0.18, z]}
-      castShadow
-      scale={0}
-      onClick={(e) => { e.stopPropagation(); movePiece(row, col) }}
-    >
-      <coneGeometry args={[0.085, 0.22, 7]} />
-      <meshStandardMaterial
-        ref={matRef}
-        color="#7a1800"
-        emissive="#cc3300"
-        emissiveIntensity={0.5}
-        roughness={0.9}
-        metalness={0}
-        transparent
-        opacity={0.85}
-      />
-    </mesh>
+    <group position={[x, TILE_TOP + 0.18, z]}>
+      <mesh
+        ref={meshRef}
+        rotation={[Math.PI / 2, rotY, 0]}
+        castShadow
+        scale={0}
+        onClick={(e) => { e.stopPropagation(); movePiece(row, col) }}
+      >
+        <coneGeometry args={[0.085, 0.22, 7]} />
+        <meshStandardMaterial
+          ref={matRef}
+          color="#7a1800"
+          emissive="#cc3300"
+          emissiveIntensity={0.5}
+          roughness={0.9}
+          metalness={0}
+          transparent
+          opacity={0.85}
+        />
+      </mesh>
+      <pointLight color="#ff5500" intensity={0.6} distance={1.0} decay={2} />
+    </group>
   )
 }
 
@@ -252,7 +257,9 @@ export function Board({ theme }: BoardProps) {
               </mesh>
             )}
 
-            {validTarget && <ValidMoveMarker x={0} z={0} row={row} col={col} appearDelay={appearDelay} />}
+            {validTarget && <ValidMoveMarker x={0} z={0} row={row} col={col} appearDelay={appearDelay}
+              dirRow={selectedPiece ? row - selectedPiece.row : 0}
+              dirCol={selectedPiece ? col - selectedPiece.col : 0} />}
           </group>
         )
       })
