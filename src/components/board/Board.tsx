@@ -60,9 +60,10 @@ function getPhase(row: number, col: number) {
   return phaseCache.get(key)!
 }
 
-function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, disappearDelay = 0 }: {
+function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, disappearDelay = 0, onHover, onUnhover }: {
   x: number; z: number; row: number; col: number; appearDelay: number
   disappearing?: boolean; disappearDelay?: number
+  onHover?: () => void; onUnhover?: () => void
 }) {
   const meshRef = useRef<Mesh>(null)
   const glowRef = useRef<Mesh>(null)
@@ -118,6 +119,8 @@ function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, di
         castShadow
         scale={0}
         onClick={disappearing ? undefined : (e) => { e.stopPropagation(); movePiece(row, col) }}
+        onPointerEnter={disappearing ? undefined : (e) => { e.stopPropagation(); onHover?.() }}
+        onPointerLeave={disappearing ? undefined : (e) => { e.stopPropagation(); onUnhover?.() }}
       >
         <sphereGeometry args={[0.13, 14, 10]} />
         <meshStandardMaterial
@@ -370,7 +373,7 @@ export function Board({ theme }: BoardProps) {
               </mesh>
             )}
 
-            {validTarget && <ValidMoveMarker x={0} z={0} row={row} col={col} appearDelay={appearDelay} />}
+            {validTarget && <ValidMoveMarker x={0} z={0} row={row} col={col} appearDelay={appearDelay} onHover={() => setHoveredTile({ x, z })} onUnhover={() => setHoveredTile(null)} />}
           </group>
         )
       })
