@@ -842,9 +842,9 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
 }
 
 
-const winnerEmbers = Array.from({ length: 18 }, (_, i) => {
+const winnerEmbers = Array.from({ length: 32 }, (_, i) => {
   const r = (n: number) => (Math.random() - 0.5) * n
-  const riseVal = -(220 + Math.random() * 280)
+  const riseVal = -(400 + Math.random() * 500)
   const dx1Val = r(50), dx2Val = r(80), dx3Val = r(40)
   const a1 = Math.atan2(dx1Val, -riseVal * 0.3) * (180 / Math.PI)
   const a2 = Math.atan2(dx2Val - dx1Val, -riseVal * 0.35) * (180 / Math.PI)
