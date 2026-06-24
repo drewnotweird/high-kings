@@ -116,7 +116,6 @@ function ValidMoveMarker({ x, z, row, col, appearDelay }: {
           opacity={0.85}
         />
       </mesh>
-      <pointLight color="#ff5500" intensity={0.6} distance={1.0} decay={2} />
     </group>
   )
 }
