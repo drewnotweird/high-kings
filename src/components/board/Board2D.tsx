@@ -252,7 +252,7 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
             <g
               key={piece.id}
               className={`board2d__piece board2d__piece--${piece.type}${selected ? ' board2d__piece--selected' : ''}`}
-              onClick={() => selectPiece(selectedId === piece.id ? null : piece.id)}
+              onClick={(e) => { e.stopPropagation(); selectPiece(selectedId === piece.id ? null : piece.id) }}
               style={{
                 cursor: 'pointer',
                 opacity: visible ? 1 : 0,
