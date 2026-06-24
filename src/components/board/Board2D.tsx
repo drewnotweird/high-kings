@@ -226,12 +226,12 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
             <rect
               x={cx(c)} y={cy(r)}
               width={CELL} height={CELL}
-              fill="rgba(232,192,64,0.18)"
+              fill="rgba(255,102,0,0.18)"
             />
             <circle
               cx={pcx(c)} cy={pcy(r)}
               r={9}
-              fill="rgba(232,192,64,0.65)"
+              fill="rgba(255,102,0,0.75)"
             />
           </g>
         ))}
