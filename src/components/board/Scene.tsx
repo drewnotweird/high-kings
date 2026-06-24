@@ -279,6 +279,32 @@ function FadingLights({ menuOpen, powerSaving }: { menuOpen: boolean; powerSavin
   )
 }
 
+function LightningFlash() {
+  const { undoTrigger } = useGameStore()
+  const lightRef = useRef<PointLight>(null)
+  const t = useRef(-1)
+
+  useEffect(() => {
+    if (undoTrigger > 0) t.current = 0
+  }, [undoTrigger])
+
+  useFrame((_, delta) => {
+    if (!lightRef.current || t.current < 0) return
+    t.current += delta
+    const s = t.current
+    let intensity = 0
+    if      (s < 0.05)  intensity = 42 * (s / 0.05)
+    else if (s < 0.09)  intensity = 42 * (1 - (s - 0.05) / 0.04)
+    else if (s < 0.18)  intensity = 0
+    else if (s < 0.22)  intensity = 34 * ((s - 0.18) / 0.04)
+    else if (s < 0.40)  intensity = 34 * (1 - (s - 0.22) / 0.18)
+    else { intensity = 0; t.current = -1 }
+    lightRef.current.intensity = intensity
+  })
+
+  return <pointLight ref={lightRef} position={[0, 14, 0]} color="#c0dcff" intensity={0} distance={48} decay={1.1} />
+}
+
 function CaptureFlashLight() {
   const { dyingPieces } = useGameStore()
   const lightRef = useRef<PointLight>(null)
@@ -319,15 +345,22 @@ function FireLight({ menuOpen, powerSaving }: { menuOpen: boolean; powerSaving: 
   return <pointLight ref={ref} position={[0, -0.5, 3]} color="#ff6010" distance={20} decay={2} intensity={0} />
 }
 
-function AnimatedBoard({ children, menuOpen, snapFlipRef }: {
+function AnimatedBoard({ children, menuOpen, snapFlipRef, undoTrigger }: {
   children: React.ReactNode
   menuOpen: boolean
   snapFlipRef: React.MutableRefObject<boolean>
+  undoTrigger: number
 }) {
   const introStartMs = useContext(IntroStartContext)
   const groupRef = useRef<Group>(null)
   const introDone = useRef(false)
   const flipProgress = useRef(0)
+  const shakeT = useRef(-1)
+  const SHAKE_DUR = 0.65
+
+  useEffect(() => {
+    if (undoTrigger > 0) shakeT.current = 0
+  }, [undoTrigger])
 
   useFrame((_, delta) => {
     if (!groupRef.current) return
@@ -351,6 +384,24 @@ function AnimatedBoard({ children, menuOpen, snapFlipRef }: {
       flipProgress.current += (target - flipProgress.current) * Math.min(delta * 4, 1)
     }
     groupRef.current.rotation.x = flipProgress.current * -Math.PI
+
+    // Board tremble on undo
+    if (shakeT.current >= 0) {
+      shakeT.current += delta
+      if (shakeT.current >= SHAKE_DUR) {
+        shakeT.current = -1
+        groupRef.current.position.x = 0
+        groupRef.current.position.z = 0
+      } else {
+        const decay = 1 - shakeT.current / SHAKE_DUR
+        const amp = 0.22 * decay * decay
+        groupRef.current.position.x = Math.sin(shakeT.current * 44) * amp
+        groupRef.current.position.z = Math.cos(shakeT.current * 33) * amp * 0.55
+      }
+    } else {
+      groupRef.current.position.x = 0
+      groupRef.current.position.z = 0
+    }
   })
 
   return (
@@ -425,7 +476,7 @@ interface SceneInnerProps {
 }
 
 function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
-  const { pieces, dyingPieces, captureDelayMs, clearDyingPieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules } = useGameStore()
+  const { pieces, dyingPieces, captureDelayMs, clearDyingPieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules, undoTrigger } = useGameStore()
   const theme = themes[themeName]
   const [menuPhase, setMenuPhase] = useState<MenuPhase>('idle')
 
@@ -525,7 +576,8 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
       <FadingLights menuOpen={!lightsOn} powerSaving={powerSaving} />
       <FireLight menuOpen={!lightsOn} powerSaving={powerSaving} />
       {!powerSaving && <CaptureFlashLight />}
-      <AnimatedBoard menuOpen={boardFlipOpen} snapFlipRef={snapFlipRef}>
+      {!powerSaving && <LightningFlash />}
+      <AnimatedBoard menuOpen={boardFlipOpen} snapFlipRef={snapFlipRef} undoTrigger={undoTrigger}>
         <Board theme={theme} />
       </AnimatedBoard>
       {pieces.map((piece) => (
@@ -641,8 +693,13 @@ export function Scene({ onIntroStart, menuOpen, onNewGame }: {
   const [introStartMs, setIntroStartMs] = useState<number | null>(null)
   const [dropStartMs, setDropStartMs] = useState<number | null>(null)
   const [dropKey, setDropKey] = useState(0)
-  const { gameKey } = useGameStore()
+  const [screenFlashKey, setScreenFlashKey] = useState(0)
+  const { gameKey, undoTrigger } = useGameStore()
   const prevGameKey = useRef(0)
+
+  useEffect(() => {
+    if (undoTrigger > 0) setScreenFlashKey(k => k + 1)
+  }, [undoTrigger])
 
   useEffect(() => {
     if (gameKey > prevGameKey.current) {
@@ -656,6 +713,7 @@ export function Scene({ onIntroStart, menuOpen, onNewGame }: {
   return (
     <IntroStartContext.Provider value={introStartMs}>
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        <style>{`@keyframes lightningScreenFlash{0%{opacity:0}7%{opacity:1}18%{opacity:0.08}28%{opacity:0.82}100%{opacity:0}}`}</style>
         <Canvas
           shadows={{ type: 2 }}
           camera={{ position: [0, 12, 14], fov: 45 }}
@@ -665,6 +723,16 @@ export function Scene({ onIntroStart, menuOpen, onNewGame }: {
             <SceneInner menuOpen={!!menuOpen} dropStartMs={dropStartMs} dropKey={dropKey} />
           </Suspense>
         </Canvas>
+        {screenFlashKey > 0 && (
+          <div
+            key={screenFlashKey}
+            style={{
+              position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5,
+              background: 'rgba(160,210,255,0.38)',
+              animation: 'lightningScreenFlash 0.45s ease-out forwards',
+            }}
+          />
+        )}
         <LoadingOverlay onDone={() => {
           const now = Date.now()
           setIntroStartMs(now)

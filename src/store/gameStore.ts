@@ -41,6 +41,7 @@ interface GameStore {
   scores: Record<PlayerSide, number>
   gameKey: number
   history: HistoryEntry[]
+  undoTrigger: number
   // Settings
   musicEnabled: boolean
   cameraLocked: boolean
@@ -74,6 +75,7 @@ export const useGameStore = create<GameStore>((set) => ({
   scores: { attacker: 0, defender: 0 },
   gameKey: 0,
   history: [],
+  undoTrigger: 0,
   musicEnabled: true,
   cameraLocked: false,
   difficulty: 'medium',
@@ -190,6 +192,7 @@ export const useGameStore = create<GameStore>((set) => ({
       selectedId: null,
       validMoves: [],
       winner: null,
+      undoTrigger: s.undoTrigger + 1,
     }
   }),
 
