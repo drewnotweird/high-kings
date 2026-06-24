@@ -12,6 +12,7 @@ export interface BoardConfig {
   center: number
   attackerStarts: [number, number][]
   defenderStarts: [number, number][]
+  kingEscapeEdge?: boolean  // Tawlbwrdd: king wins by reaching any edge square, not just corners
 }
 
 const COPENHAGEN: BoardConfig = {
@@ -33,8 +34,8 @@ const COPENHAGEN: BoardConfig = {
   ],
 }
 
-// Tawlbwrdd uses the same 11x11 layout as Copenhagen (rules differ, not board geometry)
-const TAWLBWRDD: BoardConfig = { ...COPENHAGEN }
+// Tawlbwrdd — 11x11 Welsh variant. King escapes to any edge square (not just corners).
+const TAWLBWRDD: BoardConfig = { ...COPENHAGEN, kingEscapeEdge: true }
 
 // Tablut — Linnaeus 9x9 historical layout
 const TABLUT: BoardConfig = {
@@ -170,7 +171,8 @@ export function applyMove(
   toRow: number,
   toCol: number,
   boardSize: number,
-  center: number
+  center: number,
+  kingEscapeEdge = false
 ): MoveResult {
   // Move piece
   const moved = pieces.map(p => p.id === pieceId ? { ...p, row: toRow, col: toCol } : p)
@@ -198,7 +200,10 @@ export function applyMove(
   const king = remaining.find(p => p.type === 'king')
   if (!king) return { pieces: remaining, capturedIds, winner: 'attacker' }
 
-  if (isCorner(king.row, king.col, boardSize)) {
+  const kingEscaped = kingEscapeEdge
+    ? (king.row === 0 || king.row === boardSize - 1 || king.col === 0 || king.col === boardSize - 1)
+    : isCorner(king.row, king.col, boardSize)
+  if (kingEscaped) {
     return { pieces: remaining, capturedIds, winner: 'defender' }
   }
 

@@ -102,8 +102,8 @@ export const useGameStore = create<GameStore>((set) => ({
     if (!s.selectedId || s.winner) return s
     if (!s.validMoves.some(([r, c]) => r === toRow && c === toCol)) return s
 
-    const { boardSize, center } = getBoardConfig(s.rules)
-    const result = applyMove(s.pieces, s.selectedId, toRow, toCol, boardSize, center)
+    const { boardSize, center, kingEscapeEdge } = getBoardConfig(s.rules)
+    const result = applyMove(s.pieces, s.selectedId, toRow, toCol, boardSize, center, kingEscapeEdge)
     const capturedPieces = s.pieces.filter(p => result.capturedIds.includes(p.id))
 
     const movedPiece = s.pieces.find(p => p.id === s.selectedId)!
@@ -127,8 +127,8 @@ export const useGameStore = create<GameStore>((set) => ({
 
   machineMove: (pieceId, toRow, toCol) => set((s) => {
     if (s.winner) return s
-    const { boardSize, center } = getBoardConfig(s.rules)
-    const result = applyMove(s.pieces, pieceId, toRow, toCol, boardSize, center)
+    const { boardSize, center, kingEscapeEdge } = getBoardConfig(s.rules)
+    const result = applyMove(s.pieces, pieceId, toRow, toCol, boardSize, center, kingEscapeEdge)
     const capturedPieces = s.pieces.filter(p => result.capturedIds.includes(p.id))
 
     const movedPiece = s.pieces.find(p => p.id === pieceId)!

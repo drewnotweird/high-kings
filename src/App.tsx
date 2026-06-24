@@ -1001,12 +1001,12 @@ function App() {
     const machineSide: PlayerSide = playerMode === 'attacker' ? 'defender' : 'attacker'
     if (currentTurn !== machineSide) return
 
-    const { boardSize, center } = getBoardConfig(rules)
+    const { boardSize, center, kingEscapeEdge } = getBoardConfig(rules)
     const timer = setTimeout(() => {
       // Read fresh state — pieces may have changed (clearDyingPieces) since the effect ran
       const { pieces: freshPieces, currentTurn: freshTurn, winner: freshWinner } = useGameStore.getState()
       if (freshWinner || freshTurn !== machineSide) return
-      const move = getBestMove(freshPieces, machineSide, boardSize, center, difficulty)
+      const move = getBestMove(freshPieces, machineSide, boardSize, center, difficulty, kingEscapeEdge)
       if (move) machineMove(move.pieceId, move.toRow, move.toCol)
     }, 2200)
     return () => clearTimeout(timer)
@@ -1156,8 +1156,8 @@ function App() {
             if (playerMode === '2player' || winner) return
             const humanSide: PlayerSide = playerMode === 'defender' ? 'defender' : 'attacker'
             if (currentTurn !== humanSide) return
-            const { boardSize, center } = getBoardConfig(rules)
-            const move = getBestMove(pieces, humanSide, boardSize, center, difficulty)
+            const { boardSize, center, kingEscapeEdge } = getBoardConfig(rules)
+            const move = getBestMove(pieces, humanSide, boardSize, center, difficulty, kingEscapeEdge)
             if (!move) return
             if (selectedId === move.pieceId) {
               movePiece(move.toRow, move.toCol)
