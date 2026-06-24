@@ -59,17 +59,14 @@ function getPhase(row: number, col: number) {
   return phaseCache.get(key)!
 }
 
-function ValidMoveMarker({ x, z, row, col, appearDelay, dirRow, dirCol }: {
+function ValidMoveMarker({ x, z, row, col, appearDelay }: {
   x: number; z: number; row: number; col: number; appearDelay: number
-  dirRow: number; dirCol: number
 }) {
   const meshRef = useRef<Mesh>(null)
   const matRef = useRef<MeshStandardMaterial>(null)
   const { movePiece, powerSaving } = useGameStore()
   const phase = getPhase(row, col)
   const birthTime = useRef<number | null>(null)
-  const rotY = Math.atan2(dirCol, dirRow)
-
   useFrame(({ clock }) => {
     if (!meshRef.current) return
     const t = clock.getElapsedTime()
@@ -103,12 +100,11 @@ function ValidMoveMarker({ x, z, row, col, appearDelay, dirRow, dirCol }: {
     <group position={[x, TILE_TOP + 0.18, z]}>
       <mesh
         ref={meshRef}
-        rotation={[Math.PI / 2, rotY, 0]}
         castShadow
         scale={0}
         onClick={(e) => { e.stopPropagation(); movePiece(row, col) }}
       >
-        <coneGeometry args={[0.085, 0.22, 7]} />
+        <sphereGeometry args={[0.13, 14, 10]} />
         <meshStandardMaterial
           ref={matRef}
           color="#7a1800"
@@ -257,9 +253,7 @@ export function Board({ theme }: BoardProps) {
               </mesh>
             )}
 
-            {validTarget && <ValidMoveMarker x={0} z={0} row={row} col={col} appearDelay={appearDelay}
-              dirRow={selectedPiece ? row - selectedPiece.row : 0}
-              dirCol={selectedPiece ? col - selectedPiece.col : 0} />}
+            {validTarget && <ValidMoveMarker x={0} z={0} row={row} col={col} appearDelay={appearDelay} />}
           </group>
         )
       })
