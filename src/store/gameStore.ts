@@ -11,7 +11,7 @@ export type Rules = 'Tablut' | 'Copenhagen' | 'Tawlbwrdd' | 'Brandub'
 interface GameStore {
   pieces: Piece[]
   dyingPieces: Piece[]
-  captorId: string | null
+  captorIds: string[]
   selectedId: string | null
   validMoves: [number, number][]
   winner: PlayerSide | null
@@ -41,7 +41,7 @@ interface GameStore {
 export const useGameStore = create<GameStore>((set) => ({
   pieces: createInitialPieces(getBoardConfig('Copenhagen')),
   dyingPieces: [],
-  captorId: null,
+  captorIds: [],
   selectedId: null,
   validMoves: [],
   winner: null,
@@ -91,19 +91,31 @@ export const useGameStore = create<GameStore>((set) => ({
     const { boardSize, center } = getBoardConfig(s.rules)
     const result = applyMove(s.pieces, s.selectedId, toRow, toCol, boardSize, center)
     const capturedPieces = s.pieces.filter(p => result.capturedIds.includes(p.id))
-    const capturedCount = capturedPieces.length
+
+    const movedPiece = s.pieces.find(p => p.id === s.selectedId)!
+    const movedIsDefender = movedPiece.type === 'defender' || movedPiece.type === 'king'
+    const captorIdSet = new Set<string>()
+    for (const cap of capturedPieces) {
+      for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]] as [number,number][]) {
+        const nb = result.pieces.find(p => p.row === cap.row + dr && p.col === cap.col + dc)
+        if (nb) {
+          const nbIsDefender = nb.type === 'defender' || nb.type === 'king'
+          if (nbIsDefender === movedIsDefender) captorIdSet.add(nb.id)
+        }
+      }
+    }
 
     return {
       // Keep captured pieces in the scene until clearDyingPieces() is called
       pieces: [...result.pieces, ...capturedPieces],
       dyingPieces: capturedPieces,
-      captorId: capturedCount > 0 ? s.selectedId : null,
+      captorIds: captorIdSet.size > 0 ? [...captorIdSet] : [],
       selectedId: null,
       validMoves: [],
       currentTurn: s.currentTurn === 'defender' ? 'attacker' : 'defender',
       scores: {
-        attacker: s.scores.attacker + (s.currentTurn === 'attacker' ? capturedCount : 0),
-        defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedCount : 0),
+        attacker: s.scores.attacker + (s.currentTurn === 'attacker' ? capturedPieces.length : 0),
+        defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
       },
       winner: result.winner,
     }
@@ -114,17 +126,30 @@ export const useGameStore = create<GameStore>((set) => ({
     const { boardSize, center } = getBoardConfig(s.rules)
     const result = applyMove(s.pieces, pieceId, toRow, toCol, boardSize, center)
     const capturedPieces = s.pieces.filter(p => result.capturedIds.includes(p.id))
-    const capturedCount = capturedPieces.length
+
+    const movedPiece = s.pieces.find(p => p.id === pieceId)!
+    const movedIsDefender = movedPiece.type === 'defender' || movedPiece.type === 'king'
+    const captorIdSet = new Set<string>()
+    for (const cap of capturedPieces) {
+      for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]] as [number,number][]) {
+        const nb = result.pieces.find(p => p.row === cap.row + dr && p.col === cap.col + dc)
+        if (nb) {
+          const nbIsDefender = nb.type === 'defender' || nb.type === 'king'
+          if (nbIsDefender === movedIsDefender) captorIdSet.add(nb.id)
+        }
+      }
+    }
+
     return {
       pieces: [...result.pieces, ...capturedPieces],
       dyingPieces: capturedPieces,
-      captorId: capturedCount > 0 ? pieceId : null,
+      captorIds: captorIdSet.size > 0 ? [...captorIdSet] : [],
       selectedId: null,
       validMoves: [],
       currentTurn: s.currentTurn === 'defender' ? 'attacker' : 'defender',
       scores: {
-        attacker: s.scores.attacker + (s.currentTurn === 'attacker' ? capturedCount : 0),
-        defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedCount : 0),
+        attacker: s.scores.attacker + (s.currentTurn === 'attacker' ? capturedPieces.length : 0),
+        defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
       },
       winner: result.winner,
     }
@@ -133,7 +158,7 @@ export const useGameStore = create<GameStore>((set) => ({
   clearDyingPieces: () => set((s) => ({
     pieces: s.pieces.filter(p => !s.dyingPieces.find(dp => dp.id === p.id)),
     dyingPieces: [],
-    captorId: null,
+    captorIds: [],
   })),
 
   setPlayerMode: (mode) => set({ playerMode: mode }),
@@ -141,7 +166,7 @@ export const useGameStore = create<GameStore>((set) => ({
   resetGame: () => set((s) => ({
     pieces: createInitialPieces(getBoardConfig(s.rules)),
     dyingPieces: [],
-    captorId: null,
+    captorIds: [],
     selectedId: null,
     validMoves: [],
     winner: null,
