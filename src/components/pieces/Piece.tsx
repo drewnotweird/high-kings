@@ -50,11 +50,15 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
   const celebrateT = useRef(0)
   const celebrating = useRef(false)
   const pendingCelebrate = useRef(false)
+  const celebrateReadyTime = useRef(0)
 
   // Queue celebration when this piece is named a captor; useFrame fires it once arrived
   useEffect(() => {
     if (captorIds.includes(piece.id) && !powerSaving) {
       pendingCelebrate.current = true
+      // Stationary anvil pieces already have dx≈0, so guard with a minimum wait
+      // equal to the shortest possible move duration (0.5s) minus a small margin
+      celebrateReadyTime.current = Date.now() + 450
     }
   }, [captorIds])
 
@@ -202,7 +206,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
     // Fire pending celebration once the piece has settled at its destination
     const dx = Math.abs(visualX.current - targetX.current)
     const dz = Math.abs(visualZ.current - targetZ.current)
-    if (pendingCelebrate.current && dx < 0.08 && dz < 0.08) {
+    if (pendingCelebrate.current && dx < 0.08 && dz < 0.08 && Date.now() >= celebrateReadyTime.current) {
       pendingCelebrate.current = false
       celebrateT.current = 0
       celebrating.current = true

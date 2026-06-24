@@ -282,6 +282,27 @@ function FadingLights({ menuOpen, powerSaving }: { menuOpen: boolean; powerSavin
   )
 }
 
+function CaptureFlashLight() {
+  const { dyingPieces } = useGameStore()
+  const lightRef = useRef<PointLight>(null)
+  const flashT = useRef(-1)
+  const FLASH_DURATION = 0.75
+
+  useEffect(() => {
+    if (dyingPieces.length > 0) flashT.current = 0
+  }, [dyingPieces])
+
+  useFrame((_, delta) => {
+    if (!lightRef.current || flashT.current < 0) return
+    flashT.current += delta
+    const t = flashT.current / FLASH_DURATION
+    if (t >= 1) { lightRef.current.intensity = 0; flashT.current = -1; return }
+    lightRef.current.intensity = Math.sin(t * Math.PI) * 22
+  })
+
+  return <pointLight ref={lightRef} position={[0, 10, 0]} color="#ff1010" intensity={0} distance={32} decay={1.5} />
+}
+
 function FireLight({ menuOpen, powerSaving }: { menuOpen: boolean; powerSaving: boolean }) {
   const introStartMs = useContext(IntroStartContext)
   const ref = useRef<PointLight>(null)
@@ -506,6 +527,7 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
       <Environment preset="night" environmentIntensity={0.0} />
       <FadingLights menuOpen={!lightsOn} powerSaving={powerSaving} />
       <FireLight menuOpen={!lightsOn} powerSaving={powerSaving} />
+      {!powerSaving && <CaptureFlashLight />}
       <AnimatedBoard menuOpen={boardFlipOpen} snapFlipRef={snapFlipRef}>
         <Board theme={theme} />
       </AnimatedBoard>

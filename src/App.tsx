@@ -220,7 +220,7 @@ body, button, input, select {
   width: 100%;
   flex-shrink: 0;
   filter: drop-shadow(0 16px 48px rgba(0,0,0,0.85));
-  animation: creditsScrollEnter 0.55s cubic-bezier(0.2,0.8,0.3,1) forwards;
+  animation: creditsScrollEnter 0.9s cubic-bezier(0.15,0.85,0.25,1) forwards;
 }
 .credits-scroll--closing {
   animation: creditsScrollExit 0.5s cubic-bezier(0.6,0,0.85,0.4) 0.9s forwards;
@@ -235,10 +235,10 @@ body, button, input, select {
 }
 @keyframes creditsUnroll {
   from { max-height: 0; }
-  to   { max-height: 100vh; }
+  to   { max-height: 80vh; }
 }
 @keyframes creditsRollUp {
-  from { max-height: 100vh; }
+  from { max-height: 80vh; }
   to   { max-height: 0; }
 }
 .credits-scroll__top-roll {
@@ -254,7 +254,7 @@ body, button, input, select {
   padding: 30px 40px 20px 40px;
   display: flex;
   align-items: flex-end;
-  animation: creditsUnroll 2.5s cubic-bezier(0.15,0.6,0.1,0.97) 0.25s both;
+  animation: creditsUnroll 3.8s cubic-bezier(0.08,0.5,0.08,1) 0.4s both;
 }
 .credits-scroll--closing .credits-scroll__parchment {
   animation: creditsRollUp 1s cubic-bezier(0.7,0,0.9,0.4) forwards;
@@ -326,7 +326,7 @@ body, button, input, select {
 }
 .credits-scroll__close-btn:hover { background: rgba(60,28,0,0.12); border-color: rgba(60,28,0,0.6); }
 @media (min-width: 768px) {
-  .credits-scroll__body-text { font-size: 22px; }
+  .credits-scroll__body-text { font-size: 3.2vh; }
   .credits-scroll__name { font-size: 20px; }
   .credits-scroll__close-btn { font-size: 16px; }
   .credits-scroll__parchment { padding: 40px 50px 20px 50px; }
