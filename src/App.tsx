@@ -981,6 +981,10 @@ function App() {
   const [displayWinner, setDisplayWinner] = useState<string | null>(null)
   const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, selectedId, selectPiece, movePiece } = useGameStore()
 
+  // Stable hint move — computed once per hint session, cleared on turn change or new game
+  const hintMove = useRef<{ pieceId: string; toRow: number; toCol: number } | null>(null)
+  useEffect(() => { hintMove.current = null }, [currentTurn, winner])
+
   useEffect(() => {
     if (!winner) { setDisplayWinner(null); return }
     const t = setTimeout(() => setDisplayWinner(winner), 1000)
@@ -1156,10 +1160,15 @@ function App() {
             if (playerMode === '2player' || winner) return
             const humanSide: PlayerSide = playerMode === 'defender' ? 'defender' : 'attacker'
             if (currentTurn !== humanSide) return
-            const { boardSize, center, kingEscapeEdge } = getBoardConfig(rules)
-            const move = getBestMove(pieces, humanSide, boardSize, center, difficulty, kingEscapeEdge)
+            // Compute the hint move once and cache it for this turn
+            if (!hintMove.current) {
+              const { boardSize, center, kingEscapeEdge } = getBoardConfig(rules)
+              hintMove.current = getBestMove(pieces, humanSide, boardSize, center, difficulty, kingEscapeEdge)
+            }
+            const move = hintMove.current
             if (!move) return
             if (selectedId === move.pieceId) {
+              hintMove.current = null
               movePiece(move.toRow, move.toCol)
             } else {
               selectPiece(move.pieceId)
