@@ -11,6 +11,7 @@ export type Rules = 'Tablut' | 'Copenhagen' | 'Tawlbwrdd' | 'Brandub'
 interface GameStore {
   pieces: Piece[]
   dyingPieces: Piece[]
+  captorId: string | null
   selectedId: string | null
   validMoves: [number, number][]
   winner: PlayerSide | null
@@ -40,6 +41,7 @@ interface GameStore {
 export const useGameStore = create<GameStore>((set) => ({
   pieces: createInitialPieces(getBoardConfig('Copenhagen')),
   dyingPieces: [],
+  captorId: null,
   selectedId: null,
   validMoves: [],
   winner: null,
@@ -95,6 +97,7 @@ export const useGameStore = create<GameStore>((set) => ({
       // Keep captured pieces in the scene until clearDyingPieces() is called
       pieces: [...result.pieces, ...capturedPieces],
       dyingPieces: capturedPieces,
+      captorId: capturedCount > 0 ? s.selectedId : null,
       selectedId: null,
       validMoves: [],
       currentTurn: s.currentTurn === 'defender' ? 'attacker' : 'defender',
@@ -115,6 +118,7 @@ export const useGameStore = create<GameStore>((set) => ({
     return {
       pieces: [...result.pieces, ...capturedPieces],
       dyingPieces: capturedPieces,
+      captorId: capturedCount > 0 ? pieceId : null,
       selectedId: null,
       validMoves: [],
       currentTurn: s.currentTurn === 'defender' ? 'attacker' : 'defender',
@@ -129,6 +133,7 @@ export const useGameStore = create<GameStore>((set) => ({
   clearDyingPieces: () => set((s) => ({
     pieces: s.pieces.filter(p => !s.dyingPieces.find(dp => dp.id === p.id)),
     dyingPieces: [],
+    captorId: null,
   })),
 
   setPlayerMode: (mode) => set({ playerMode: mode }),
@@ -136,6 +141,7 @@ export const useGameStore = create<GameStore>((set) => ({
   resetGame: () => set((s) => ({
     pieces: createInitialPieces(getBoardConfig(s.rules)),
     dyingPieces: [],
+    captorId: null,
     selectedId: null,
     validMoves: [],
     winner: null,

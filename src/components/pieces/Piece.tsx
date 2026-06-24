@@ -10,6 +10,7 @@ const W = 1.35
 const REST_Y = 0.15
 const JUMP_PEAK = 1.4
 const JUMP_DURATION = 0.36
+const CELEBRATE_DURATION = 0.7
 
 export type MenuPhase = 'idle' | 'hiding' | 'hidden' | 'appearing'
 
@@ -30,7 +31,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
   const landTime = useRef(0)
   const menuOpacity = useRef(1)
 
-  const { rules, powerSaving } = useGameStore()
+  const { rules, powerSaving, captorId } = useGameStore()
   const boardOffset = (getBoardConfig(rules).boardSize - 1) / 2
   const x = piece.col - boardOffset
   const z = piece.row - boardOffset
@@ -41,6 +42,16 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
   const targetX = useRef(x)
   const targetZ = useRef(z)
   const moveArc = useRef(0) // extra Y lift that decays during travel
+  const celebrateT = useRef(0)   // elapsed seconds of current celebration
+  const celebrating = useRef(false)
+
+  // Trigger jump+spin when this piece becomes the captor
+  useEffect(() => {
+    if (captorId === piece.id && !powerSaving) {
+      celebrateT.current = 0
+      celebrating.current = true
+    }
+  }, [captorId])
 
   useEffect(() => {
     const dx = x - visualX.current
@@ -159,6 +170,19 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
     const knock = settle < 0.14 ? Math.sin((settle / 0.14) * Math.PI) * -0.055 : 0
     const targetY = (isSelected ? 0.55 : REST_Y) + moveArc.current + knock
     meshRef.current.position.y += (targetY - meshRef.current.position.y) * Math.min(delta * 8, 1)
+
+    // Capture celebration — jump and spin overlaid on top of idle position
+    if (celebrating.current) {
+      celebrateT.current += delta
+      const t = celebrateT.current / CELEBRATE_DURATION
+      if (t >= 1) {
+        celebrating.current = false
+        celebrateT.current = 0
+      } else {
+        meshRef.current.position.y += Math.sin(t * Math.PI) * 0.9
+        meshRef.current.rotation.y = Math.PI + t * Math.PI * 6 // 3 full spins
+      }
+    }
   })
 
   return (
