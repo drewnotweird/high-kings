@@ -200,12 +200,11 @@ body, button, input, select {
   background: #120a03;
   font-family: 'MedievalSharp', cursive;
   color: #3d2008;
-  animation: creditsPageIn 0.35s ease-out forwards;
+  overflow: hidden;
 }
 .credits-page--closing {
   animation: creditsPageOut 0.35s ease-in forwards;
 }
-@keyframes creditsPageIn  { from { opacity: 0 } to { opacity: 1 } }
 @keyframes creditsPageOut { from { opacity: 1 } to { opacity: 0 } }
 .credits-page__top,
 .credits-page__bottom {
@@ -221,12 +220,22 @@ body, button, input, select {
   background-size: auto 100%;
   background-repeat: repeat-x;
   background-position: center bottom;
+  animation: creditsTopIn 0.8s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
 }
 .credits-page__bottom {
   background-image: url('wood-bottom.jpg');
   background-size: auto 100%;
   background-repeat: repeat-x;
   background-position: center top;
+  animation: creditsBottomIn 0.8s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+@keyframes creditsTopIn {
+  from { transform: translateY(-52px); }
+  to   { transform: translateY(0); }
+}
+@keyframes creditsBottomIn {
+  from { transform: translateY(calc(-100vh + 104px)); }
+  to   { transform: translateY(0); }
 }
 .credits-page__middle {
   flex: 1;
