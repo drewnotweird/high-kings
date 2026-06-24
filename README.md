@@ -22,6 +22,8 @@ Hnefatafl is an asymmetric strategy game. The defender escorts the King to a cor
 - AI opponent with easy / medium / hard difficulty
 - Play as defender, attacker, or 2-player local
 - Hint button — three-stage assist: first press selects the AI's suggested piece (deselecting any current selection if it differs); second press on the already-selected hint piece executes the move
+- Undo button — fades in after the first move; one undo per move; in 3D mode triggers a lightning bolt striking the last-moved square, a screen flash, board tremble, and all pieces shake
+- Tile hover glow — valid move targets glow orange when the cursor passes over the tile or its orb
 - Smooth 3D piece movement with arc lift and custodial capture explosions
 - Spotlight follows the King across the board
 - Power-saving mode — switches to a lightweight 2D SVG board (no WebGL)
