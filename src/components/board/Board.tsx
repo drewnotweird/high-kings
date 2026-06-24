@@ -218,7 +218,7 @@ export function Board({ theme }: BoardProps) {
         const dist = selectedPiece
           ? Math.max(Math.abs(row - selectedPiece.row), Math.abs(col - selectedPiece.col))
           : 0
-        const appearDelay = dist * 0.055
+        const appearDelay = dist * 0.028
         return (
           <group
             key={`${row}-${col}`}
