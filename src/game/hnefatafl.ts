@@ -13,11 +13,13 @@ export interface BoardConfig {
   attackerStarts: [number, number][]
   defenderStarts: [number, number][]
   kingEscapeEdge?: boolean  // Tawlbwrdd: king wins by reaching any edge square, not just corners
+  shieldwall?: boolean      // Copenhagen/Tawlbwrdd: contiguous edge line captured when both ends flanked
 }
 
 const COPENHAGEN: BoardConfig = {
   boardSize: 11,
   center: 5,
+  shieldwall: true,
   attackerStarts: [
     [0,3],[0,4],[0,5],[0,6],[0,7],
     [1,5],
@@ -165,6 +167,73 @@ export interface MoveResult {
   winner: 'attacker' | 'defender' | null
 }
 
+// Shieldwall: a contiguous line of 2+ enemy pieces along an edge is captured when
+// both ends are flanked by a corner or a piece of the moving side. The king cannot
+// be captured this way — he must still be surrounded on all four sides.
+function checkShieldwallCaptures(
+  mover: Piece,
+  pieces: Piece[],
+  boardSize: number
+): string[] {
+  const last = boardSize - 1
+  const moverIsAttacker = mover.type === 'attacker'
+  const captured = new Set<string>()
+
+  const edgeDefs = [
+    { fixed: 'row' as const, fixedVal: 0,    along: 'col' as const },
+    { fixed: 'row' as const, fixedVal: last,  along: 'col' as const },
+    { fixed: 'col' as const, fixedVal: 0,    along: 'row' as const },
+    { fixed: 'col' as const, fixedVal: last,  along: 'row' as const },
+  ]
+
+  for (const { fixed, fixedVal, along } of edgeDefs) {
+    // Collect enemy non-king pieces on this edge, sorted along the edge
+    const enemies = pieces
+      .filter(p => {
+        if (p.type === 'king') return false
+        const isEnemy = moverIsAttacker ? p.type !== 'attacker' : p.type === 'attacker'
+        return isEnemy && (fixed === 'row' ? p.row : p.col) === fixedVal
+      })
+      .sort((a, b) => (along === 'col' ? a.col - b.col : a.row - b.row))
+
+    if (enemies.length < 2) continue
+
+    // Walk contiguous runs of length ≥ 2
+    let i = 0
+    while (i < enemies.length) {
+      let j = i + 1
+      while (j < enemies.length) {
+        const cur  = along === 'col' ? enemies[j].col   : enemies[j].row
+        const prev = along === 'col' ? enemies[j-1].col : enemies[j-1].row
+        if (cur - prev > 1) break
+        j++
+      }
+
+      if (j - i >= 2) {
+        const firstAlong = along === 'col' ? enemies[i].col     : enemies[i].row
+        const lastAlong  = along === 'col' ? enemies[j-1].col   : enemies[j-1].row
+
+        // A flanking square is hostile if it is a corner or occupied by the mover's side
+        const isFlanked = (alongCoord: number) => {
+          const r = fixed === 'row' ? fixedVal : alongCoord
+          const c = fixed === 'col' ? fixedVal : alongCoord
+          if (r < 0 || r > last || c < 0 || c > last) return false
+          if (isCorner(r, c, boardSize)) return true
+          const p = pieces.find(q => q.row === r && q.col === c)
+          return !!p && (moverIsAttacker ? p.type === 'attacker' : p.type !== 'attacker')
+        }
+
+        if (isFlanked(firstAlong - 1) && isFlanked(lastAlong + 1)) {
+          for (let k = i; k < j; k++) captured.add(enemies[k].id)
+        }
+      }
+      i = j
+    }
+  }
+
+  return [...captured]
+}
+
 export function applyMove(
   pieces: Piece[],
   pieceId: string,
@@ -172,7 +241,8 @@ export function applyMove(
   toCol: number,
   boardSize: number,
   center: number,
-  kingEscapeEdge = false
+  kingEscapeEdge = false,
+  shieldwall = false
 ): MoveResult {
   // Move piece
   const moved = pieces.map(p => p.id === pieceId ? { ...p, row: toRow, col: toCol } : p)
@@ -191,6 +261,13 @@ export function applyMove(
     const beyond = moved.find(p => p.row === br && p.col === bc)
     if ((beyond && isFriendly(mover, beyond)) || isHostile(br, bc, boardSize, center, moved)) {
       capturedIds.push(neighbor.id)
+    }
+  }
+
+  // Shieldwall captures (Copenhagen / Tawlbwrdd)
+  if (shieldwall) {
+    for (const id of checkShieldwallCaptures(mover, moved, boardSize)) {
+      if (!capturedIds.includes(id)) capturedIds.push(id)
     }
   }
 
