@@ -240,7 +240,7 @@ body, button, input, select {
   width: 100%;
   max-width: 800px;
   height: fit-content;
-  padding: 28px 9% 48px;
+  padding: 56px 9% 48px;
   box-sizing: border-box;
   background-image: url('pagescroll.png');
   background-size: 100% auto;
