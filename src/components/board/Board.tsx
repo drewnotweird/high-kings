@@ -1,7 +1,7 @@
 import { useMemo, useRef, useEffect, useLayoutEffect, useState } from 'react'
 import { useTexture } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
-import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, Mesh, MeshStandardMaterial } from 'three'
+import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, Mesh, MeshStandardMaterial, PlaneGeometry } from 'three'
 import { getBoardConfig, isCorner, isThrone, isValidMove } from '../../game/hnefatafl'
 import { useGameStore } from '../../store/gameStore'
 import type { ThemeConfig } from '../../lib/themes'
@@ -149,10 +149,55 @@ function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, di
   )
 }
 
+const hoverPlaneGeo = new PlaneGeometry(SQUARE_SIZE * 0.94, SQUARE_SIZE * 0.94)
+
+function TileHoverGlow({ x, z, active }: { x: number; z: number; active: boolean }) {
+  const meshRef = useRef<Mesh>(null)
+  const matRef = useRef<MeshStandardMaterial>(null)
+  const opRef = useRef(0)
+  const posX = useRef(x)
+  const posZ = useRef(z)
+
+  useEffect(() => { posX.current = x; posZ.current = z }, [x, z])
+
+  useFrame((_, delta) => {
+    if (!meshRef.current || !matRef.current) return
+    meshRef.current.position.x = posX.current
+    meshRef.current.position.z = posZ.current
+    const target = active ? 0.45 : 0
+    opRef.current += (target - opRef.current) * Math.min(delta * 16, 1)
+    matRef.current.opacity = opRef.current
+    meshRef.current.visible = opRef.current > 0.005
+  })
+
+  return (
+    <mesh
+      ref={meshRef}
+      position={[x, TILE_TOP + 0.003, z]}
+      rotation={[-Math.PI / 2, 0, 0]}
+      geometry={hoverPlaneGeo}
+      visible={false}
+    >
+      <meshStandardMaterial
+        ref={matRef}
+        color="#ffe090"
+        emissive="#ffbb30"
+        emissiveIntensity={1.4}
+        transparent
+        opacity={0}
+        depthWrite={false}
+        polygonOffset
+        polygonOffsetFactor={-2}
+      />
+    </mesh>
+  )
+}
+
 export function Board({ theme }: BoardProps) {
-  const { rules, pieces, validMoves, selectedId, selectPiece, movePiece, gameKey } = useGameStore()
+  const { rules, pieces, validMoves, selectedId, selectPiece, movePiece, gameKey, powerSaving } = useGameStore()
   const { boardSize, center, attackerStarts, defenderStarts, kingEscapeEdge } = getBoardConfig(rules)
   useEffect(() => { clearPhaseCache() }, [gameKey])
+  const [hoveredTile, setHoveredTile] = useState<{ x: number; z: number } | null>(null)
   const boardOffset = (boardSize - 1) / 2
   const selectedPiece = pieces.find(p => p.id === selectedId)
 
@@ -295,7 +340,13 @@ export function Board({ theme }: BoardProps) {
               else if (selectedId) selectPiece(null)
             }}
           >
-            <mesh rotation={[-Math.PI / 2, 0, 0]} geometry={tileGeometry} receiveShadow>
+            <mesh
+              rotation={[-Math.PI / 2, 0, 0]}
+              geometry={tileGeometry}
+              receiveShadow
+              onPointerEnter={(e) => { e.stopPropagation(); if (!powerSaving) setHoveredTile({ x, z }) }}
+              onPointerLeave={(e) => { e.stopPropagation(); setHoveredTile(null) }}
+            >
               <meshStandardMaterial
                 map={isCornerTile ? cornerTileTexture : tileTextures[variantIdx]}
                 roughness={theme.boardRoughness}
@@ -324,6 +375,14 @@ export function Board({ theme }: BoardProps) {
         )
       })
       })()}
+
+      {!powerSaving && (
+        <TileHoverGlow
+          x={hoveredTile?.x ?? 0}
+          z={hoveredTile?.z ?? 0}
+          active={hoveredTile !== null}
+        />
+      )}
 
       {/* Departing orbs — animate out in reverse order */}
       {leavingMarkers.map(m => (
