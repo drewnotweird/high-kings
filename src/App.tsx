@@ -794,7 +794,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
                 <div className="settings-row">
                   <span className="settings-row__label">Rules</span>
                   <Cycler<Rules>
-                    options={['Copenhagen', 'Tawlbwrdd', 'Linnaeus Tablut', 'Saami Tablut', 'Brandub', 'Ard Rí']}
+                    options={['Copenhagen', 'Tawlbwrdd', 'Linnaeus Tablut', 'Saami Tablut', 'Brandub', 'Ard Rí', 'Alea Evangelii']}
                     value={draft.rules}
                     onChange={v => setDraft(d => ({ ...d, rules: v }))}
                   />

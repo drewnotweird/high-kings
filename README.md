@@ -17,7 +17,7 @@ Hnefatafl is an asymmetric strategy game. The defender escorts the King to a cor
 
 ## Features
 
-- Six rule variants: Copenhagen (11×11), Tawlbwrdd (11×11 Welsh, edge escape), Linnaeus Tablut (9×9, weak king), Saami Tablut (9×9, wider defender diamond), Brandub (7×7 Irish, weak king, 4 defenders), Ard Rí (7×7 Irish High King, strong king, 8 defenders, 12 attackers)
+- Seven rule variants: Copenhagen (11×11), Tawlbwrdd (11×11 Welsh, edge escape), Linnaeus Tablut (9×9, weak king), Saami Tablut (9×9, wider defender diamond), Brandub (7×7 Irish, weak king), Ard Rí (7×7 Irish High King, strong king), Alea Evangelii (19×19, 72 attackers, 24 defenders, strong king)
 - Shieldwall captures (Copenhagen & Tawlbwrdd): a contiguous line of 2+ enemy pieces along an edge is captured in one move when both ends are flanked by a corner or a friendly piece; the king cannot be taken this way
 - AI opponent with easy / medium / hard difficulty
 - Play as defender, attacker, or 2-player local
@@ -25,7 +25,7 @@ Hnefatafl is an asymmetric strategy game. The defender escorts the King to a cor
 - Undo button — fades in after the first move; one undo per move; in 3D mode triggers a lightning bolt striking the last-moved square, a screen flash, board tremble, and all pieces shake
 - Tile hover glow — valid move targets glow orange when the cursor passes over the tile or its orb
 - Smooth 3D piece movement with arc lift and custodial capture explosions
-- Spotlight follows the King across the board
+- Spotlight follows the King across the board; beam width scales with board size
 - Power-saving mode — switches to a lightweight 2D SVG board (no WebGL)
 - Settings: difficulty, rules variant, camera lock, power saving
 

@@ -109,6 +109,47 @@ const ARD_RI: BoardConfig = {
   ],
 }
 
+// Alea Evangelii — 19×19 "Game of the Gospels". Described in an 11th-century
+// Anglo-Saxon manuscript (Christ Church, Canterbury, c.1110). Largest known
+// Hnefatafl variant: 72 attackers in cruciform groups near each edge, 24
+// defenders in an extended cross around the king. Strong king, corner escape.
+// Piece positions follow the commonly cited reconstruction by Damian Walker.
+const ALEA_EVANGELII: BoardConfig = {
+  boardSize: 19,
+  center: 9,
+  attackerStarts: [
+    // Top group (18)
+    [0,3],[0,5],[0,7],[0,9],[0,11],[0,13],[0,15],
+    [1,4],[1,6],[1,9],[1,12],[1,14],
+    [2,5],[2,7],[2,9],[2,11],[2,13],
+    [3,9],
+    // Bottom group (18)
+    [18,3],[18,5],[18,7],[18,9],[18,11],[18,13],[18,15],
+    [17,4],[17,6],[17,9],[17,12],[17,14],
+    [16,5],[16,7],[16,9],[16,11],[16,13],
+    [15,9],
+    // Left group (18)
+    [3,0],[5,0],[7,0],[9,0],[11,0],[13,0],[15,0],
+    [4,1],[6,1],[9,1],[12,1],[14,1],
+    [5,2],[7,2],[9,2],[11,2],[13,2],
+    [9,3],
+    // Right group (18)
+    [3,18],[5,18],[7,18],[9,18],[11,18],[13,18],[15,18],
+    [4,17],[6,17],[9,17],[12,17],[14,17],
+    [5,16],[7,16],[9,16],[11,16],[13,16],
+    [9,15],
+  ],
+  defenderStarts: [
+    [6,9],
+    [7,8],[7,9],[7,10],
+    [8,7],[8,8],[8,9],[8,10],[8,11],
+    [9,6],[9,7],[9,8],[9,10],[9,11],[9,12],
+    [10,7],[10,8],[10,9],[10,10],[10,11],
+    [11,8],[11,9],[11,10],
+    [12,9],
+  ],
+}
+
 const CONFIGS: Record<string, BoardConfig> = {
   Copenhagen: COPENHAGEN,
   Tawlbwrdd: TAWLBWRDD,
@@ -116,6 +157,7 @@ const CONFIGS: Record<string, BoardConfig> = {
   'Saami Tablut': SAAMI_TABLUT,
   Brandub: BRANDUB,
   'Ard Rí': ARD_RI,
+  'Alea Evangelii': ALEA_EVANGELII,
 }
 
 export function getBoardConfig(rules: string): BoardConfig {

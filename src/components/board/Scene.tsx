@@ -175,6 +175,7 @@ const BOARD_START_Y = -20
 function FadingLights({ menuOpen, powerSaving }: { menuOpen: boolean; powerSaving: boolean }) {
   const introStartMs = useContext(IntroStartContext)
   const { pieces, rules } = useGameStore()
+  const boardSize = getBoardConfig(rules).boardSize
   const ambientRef = useRef<AmbientLight>(null)
   const moonRef = useRef<DirectionalLight>(null)
   const spotRef = useRef<SpotLight>(null)
@@ -249,7 +250,7 @@ function FadingLights({ menuOpen, powerSaving }: { menuOpen: boolean; powerSavin
         color="#e8f0ff"
         intensity={0}
         distance={50}
-        angle={0.32}
+        angle={0.32 * (boardSize / 11)}
         penumbra={1.0}
         decay={0.7}
         castShadow={!powerSaving}
