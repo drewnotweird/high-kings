@@ -64,7 +64,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
     if (!powerSaving && dist > 0.05 && landed.current) {
       moveStartX.current = visualX.current
       moveStartZ.current = visualZ.current
-      moveDuration.current = Math.max(0.35, dist * 0.18)
+      moveDuration.current = Math.max(0.5, dist * 0.28)
       moveT.current = 0
       moveArc.current = Math.min(dist * 0.22, 0.55)
     }
