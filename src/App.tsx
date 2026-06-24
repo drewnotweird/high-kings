@@ -978,7 +978,14 @@ function App() {
   const [showCredits, setShowCredits] = useState(false)
   const [roleSelectOpen, setRoleSelectOpen] = useState(false)
   const [winnerDismissed, setWinnerDismissed] = useState(false)
+  const [displayWinner, setDisplayWinner] = useState<string | null>(null)
   const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, selectedId, selectPiece, movePiece } = useGameStore()
+
+  useEffect(() => {
+    if (!winner) { setDisplayWinner(null); return }
+    const t = setTimeout(() => setDisplayWinner(winner), 1000)
+    return () => clearTimeout(t)
+  }, [winner])
   const setupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ?ps=true in the URL activates power-saving mode on load
@@ -1166,9 +1173,9 @@ function App() {
 
       <ThemeSwitcher />
       {showCredits && <CreditsScroll onClose={() => setShowCredits(false)} />}
-      {winner && !winnerDismissed && (
+      {displayWinner && !winnerDismissed && (
         <WinnerOverlay
-          winner={winner}
+          winner={displayWinner as 'attacker' | 'defender'}
           playerMode={playerMode}
           powerSaving={powerSaving}
           onNewGame={() => setRoleSelectOpen(true)}
