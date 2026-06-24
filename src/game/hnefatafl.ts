@@ -92,19 +92,20 @@ const BRANDUB: BoardConfig = {
   ],
 }
 
-// Ard Rí — 7×7 Irish "High King" variant. Same layout as Brandub but strong king
-// (always requires 4-sided capture regardless of position), corner escape.
+// Ard Rí — 7×7 Irish "High King" variant. More pieces than Brandub: 8 defenders
+// in an extended cross, 12 attackers along the edges. Strong king (4-sided capture
+// always required), corner escape.
 const ARD_RI: BoardConfig = {
   boardSize: 7,
   center: 3,
   attackerStarts: [
-    [0,3],[1,3],
-    [3,0],[3,1],
-    [3,5],[3,6],
-    [5,3],[6,3],
+    [0,2],[0,3],[0,4],
+    [2,0],[3,0],[4,0],
+    [2,6],[3,6],[4,6],
+    [6,2],[6,3],[6,4],
   ],
   defenderStarts: [
-    [2,3],[3,2],[3,4],[4,3],
+    [1,3],[2,3],[3,1],[3,2],[3,4],[3,5],[4,3],[5,3],
   ],
 }
 
