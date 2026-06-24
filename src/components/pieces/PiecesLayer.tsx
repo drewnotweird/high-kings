@@ -181,8 +181,8 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
     const op = menuOpacity.current
     if (attackerMatRef.current) attackerMatRef.current.opacity = op
     if (defenderMatRef.current) defenderMatRef.current.opacity = op
-    attackerRef.current.visible = op > 0.05
-    defenderRef.current.visible = op > 0.05
+    attackerRef.current.visible = op > 0.01
+    defenderRef.current.visible = op > 0.01
     attackerRef.current.castShadow = op > 0.5
     defenderRef.current.castShadow = op > 0.5
 
@@ -356,6 +356,7 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
           emissive="#ffffff"
           emissiveIntensity={0.15}
           transparent
+          depthWrite={false}
         />
       </instancedMesh>
       <instancedMesh
@@ -378,6 +379,7 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
           emissive="#9a7a40"
           emissiveIntensity={0.15}
           transparent
+          depthWrite={false}
         />
       </instancedMesh>
       {/* Halo ring — follows the selected non-king piece */}
