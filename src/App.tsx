@@ -204,7 +204,7 @@ body, button, input, select {
   animation: creditsEnter 0.9s ease-out forwards;
 }
 .credits-page--closing {
-  animation: creditsExit 0.5s ease-in forwards;
+  animation: creditsExit 0.5s ease-in-out forwards;
 }
 @keyframes creditsEnter {
   from { transform: translateY(-104px); height: 104px; }
