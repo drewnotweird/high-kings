@@ -344,7 +344,7 @@ export function Board({ theme }: BoardProps) {
               rotation={[-Math.PI / 2, 0, 0]}
               geometry={tileGeometry}
               receiveShadow
-              onPointerEnter={(e) => { e.stopPropagation(); if (!powerSaving) setHoveredTile({ x, z }) }}
+              onPointerEnter={(e) => { e.stopPropagation(); if (!powerSaving && isValidMove(row, col, validMoves)) setHoveredTile({ x, z }) }}
               onPointerLeave={(e) => { e.stopPropagation(); setHoveredTile(null) }}
             >
               <meshStandardMaterial
