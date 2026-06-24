@@ -286,28 +286,31 @@ function LightningBolt({ tx, tz, onDone }: { tx: number; tz: number; onDone: () 
   const doneCalled = useRef(false)
 
   const pts = useMemo<[number, number, number][]>(() => {
-    const segments = 14
-    const result: [number, number, number][] = []
-    let cx = tx, cz = tz
-    for (let i = 0; i <= segments; i++) {
-      const frac = i / segments
-      const y = 13.5 - 13.2 * frac
-      if (i === 0) {
-        result.push([tx, y, tz])
-      } else if (i === segments) {
-        result.push([tx, 0.8, tz])
-      } else {
-        // Each step deviates from previous, then tapers back toward target
-        const spread = Math.sin(frac * Math.PI) * 0.7
-        cx = cx + (Math.random() - 0.5) * spread
-        cz = cz + (Math.random() - 0.5) * spread
-        // Gentle pull back toward target so bolt converges at bottom
-        cx += (tx - cx) * 0.15
-        cz += (tz - cz) * 0.15
-        result.push([cx, y, cz])
+    // Fractal midpoint displacement — each pass bisects every segment and
+    // displaces the midpoint laterally. Roughness halves each pass so the
+    // coarse passes give wide zigzags and fine passes add sharp detail.
+    let points: [number, number, number][] = [
+      [tx, 13.5, tz],
+      [tx, 0.8,  tz],
+    ]
+    let roughness = 1.4
+    for (let level = 0; level < 5; level++) {
+      const next: [number, number, number][] = []
+      for (let i = 0; i < points.length - 1; i++) {
+        const a = points[i]
+        const b = points[i + 1]
+        next.push(a)
+        next.push([
+          (a[0] + b[0]) / 2 + (Math.random() - 0.5) * roughness,
+          (a[1] + b[1]) / 2,
+          (a[2] + b[2]) / 2 + (Math.random() - 0.5) * roughness,
+        ])
       }
+      next.push(points[points.length - 1])
+      points = next
+      roughness *= 0.48
     }
-    return result
+    return points
   }, [tx, tz])
 
   useFrame((_, delta) => {
