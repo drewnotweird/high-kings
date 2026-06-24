@@ -625,10 +625,7 @@ function HintButton({ onClick }: { onClick: () => void }) {
 function UndoButton({ onClick }: { onClick: () => void }) {
   return (
     <button className="ui-button ui-button--undo" onClick={onClick}>
-      <svg className="ui-button__icon" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 8.5h9a5 5 0 0 1 0 10H8" />
-        <polyline points="4 5 4 8.5 7.5 8.5" />
-      </svg>
+      <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/undo.svg`} alt="" />
       <span className="ui-button__label">Undo</span>
     </button>
   )
