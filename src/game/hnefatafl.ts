@@ -39,10 +39,11 @@ const COPENHAGEN: BoardConfig = {
 // Tawlbwrdd — 11x11 Welsh variant. King escapes to any edge square (not just corners).
 const TAWLBWRDD: BoardConfig = { ...COPENHAGEN, kingEscapeEdge: true }
 
-// Tablut — Linnaeus 9x9 historical layout
+// Tablut — Linnaeus 9x9 historical layout. King escapes to any edge square.
 const TABLUT: BoardConfig = {
   boardSize: 9,
   center: 4,
+  kingEscapeEdge: true,
   attackerStarts: [
     [0,3],[0,4],[0,5],[1,4],
     [3,0],[4,0],[5,0],[4,1],
