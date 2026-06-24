@@ -32,7 +32,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
   const landTime = useRef(0)
   const menuOpacity = useRef(1)
 
-  const { rules, powerSaving, captorIds } = useGameStore()
+  const { rules, powerSaving, captorIds, undoTrigger } = useGameStore()
   const boardOffset = (getBoardConfig(rules).boardSize - 1) / 2
   const x = piece.col - boardOffset
   const z = piece.row - boardOffset
@@ -51,6 +51,12 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
   const celebrating = useRef(false)
   const pendingCelebrate = useRef(false)
   const celebrateReadyTime = useRef(0)
+  const shakeT = useRef(-1)
+  const shakePhase = useRef(Math.random() * Math.PI * 2)
+
+  useEffect(() => {
+    if (undoTrigger > 0 && !powerSaving) shakeT.current = 0
+  }, [undoTrigger])
 
   // Queue celebration when this piece is named a captor; useFrame fires it once arrived
   useEffect(() => {
@@ -222,6 +228,19 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
       } else {
         meshRef.current.position.y += Math.sin(t * Math.PI) * 0.13
         meshRef.current.rotation.y = Math.PI + t * Math.PI * 2
+      }
+    }
+
+    // Undo shake — offset added on top of final position
+    if (shakeT.current >= 0) {
+      shakeT.current += delta
+      if (shakeT.current >= 0.65) {
+        shakeT.current = -1
+      } else {
+        const decay = 1 - shakeT.current / 0.65
+        const amp = 0.14 * decay * decay
+        meshRef.current.position.x += Math.sin(shakeT.current * 38 + shakePhase.current) * amp
+        meshRef.current.position.z += Math.cos(shakeT.current * 29 + shakePhase.current) * amp * 0.6
       }
     }
   })
