@@ -976,7 +976,7 @@ function App() {
       if (freshWinner || freshTurn !== machineSide) return
       const move = getBestMove(freshPieces, machineSide, boardSize, center, difficulty)
       if (move) machineMove(move.pieceId, move.toRow, move.toCol)
-    }, 1300)
+    }, 2200)
     return () => clearTimeout(timer)
   }, [currentTurn, playerMode, winner, roleSelectOpen, setupAnimating])
 

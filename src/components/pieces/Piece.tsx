@@ -41,7 +41,11 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
   const visualZ = useRef(z)
   const targetX = useRef(x)
   const targetZ = useRef(z)
-  const moveArc = useRef(0) // extra Y lift that decays during travel
+  const moveStartX = useRef(x)
+  const moveStartZ = useRef(z)
+  const moveT = useRef(1)       // 0→1 normalised progress; 1 = arrived
+  const moveDuration = useRef(1)
+  const moveArc = useRef(0)
   const celebrateT = useRef(0)
   const celebrating = useRef(false)
   const pendingCelebrate = useRef(false)
@@ -58,6 +62,10 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
     const dz = z - visualZ.current
     const dist = Math.sqrt(dx * dx + dz * dz)
     if (!powerSaving && dist > 0.05 && landed.current) {
+      moveStartX.current = visualX.current
+      moveStartZ.current = visualZ.current
+      moveDuration.current = Math.max(0.35, dist * 0.18)
+      moveT.current = 0
       moveArc.current = Math.min(dist * 0.22, 0.55)
     }
     targetX.current = x
@@ -145,10 +153,17 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
       visualX.current = targetX.current
       visualZ.current = targetZ.current
     } else {
-      const moveSpeed = 6
-      const lerpT = 1 - Math.exp(-moveSpeed * delta)
-      visualX.current += (targetX.current - visualX.current) * lerpT
-      visualZ.current += (targetZ.current - visualZ.current) * lerpT
+      if (moveT.current < 1) {
+        moveT.current = Math.min(moveT.current + delta / moveDuration.current, 1)
+        // cubic ease-in-out
+        const t = moveT.current
+        const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+        visualX.current = moveStartX.current + (targetX.current - moveStartX.current) * ease
+        visualZ.current = moveStartZ.current + (targetZ.current - moveStartZ.current) * ease
+      } else {
+        visualX.current = targetX.current
+        visualZ.current = targetZ.current
+      }
       moveArc.current *= Math.exp(-5.5 * delta)
     }
     meshRef.current.position.x = visualX.current
@@ -188,7 +203,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
         celebrating.current = false
         celebrateT.current = 0
       } else {
-        meshRef.current.position.y += Math.sin(t * Math.PI) * 0.22
+        meshRef.current.position.y += Math.sin(t * Math.PI) * 0.13
         meshRef.current.rotation.y = Math.PI + t * Math.PI * 2
       }
     }
