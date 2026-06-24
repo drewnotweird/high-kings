@@ -239,6 +239,7 @@ body, button, input, select {
 .credits-page__paper {
   width: 100%;
   max-width: 800px;
+  height: fit-content;
   padding: 28px 9% 48px;
   box-sizing: border-box;
   background-image: url('pagescroll.png');
