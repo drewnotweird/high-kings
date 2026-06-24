@@ -622,6 +622,18 @@ function HintButton({ onClick }: { onClick: () => void }) {
   )
 }
 
+function UndoButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button className="ui-button ui-button--undo" onClick={onClick}>
+      <svg className="ui-button__icon" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 8.5h9a5 5 0 0 1 0 10H8" />
+        <polyline points="4 5 4 8.5 7.5 8.5" />
+      </svg>
+      <span className="ui-button__label">Undo</span>
+    </button>
+  )
+}
+
 function MenuButton({ onClick, isOpen }: { onClick: () => void; isOpen: boolean }) {
   return (
     <button className="ui-button ui-button--menu" onClick={onClick}>
@@ -979,11 +991,28 @@ function App() {
   const [roleSelectOpen, setRoleSelectOpen] = useState(false)
   const [winnerDismissed, setWinnerDismissed] = useState(false)
   const [displayWinner, setDisplayWinner] = useState<string | null>(null)
-  const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, selectedId, selectPiece, movePiece } = useGameStore()
+  const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, selectedId, selectPiece, movePiece, history, undoMove, gameKey } = useGameStore()
 
   // Stable hint move — computed once per hint session, cleared on turn change or new game
   const hintMove = useRef<{ pieceId: string; toRow: number; toCol: number } | null>(null)
   useEffect(() => { hintMove.current = null }, [currentTurn, winner])
+
+  // Track whether any move has been made this game (for undo button fade-in)
+  const [hasMoved, setHasMoved] = useState(false)
+  const prevTurnRef = useRef(currentTurn)
+  const prevGameKeyRef = useRef(gameKey)
+  useEffect(() => {
+    if (gameKey !== prevGameKeyRef.current) {
+      setHasMoved(false)
+      prevTurnRef.current = currentTurn
+      prevGameKeyRef.current = gameKey
+      return
+    }
+    if (currentTurn !== prevTurnRef.current) {
+      setHasMoved(true)
+      prevTurnRef.current = currentTurn
+    }
+  }, [currentTurn, gameKey])
 
   useEffect(() => {
     if (!winner) { setDisplayWinner(null); return }
@@ -1159,25 +1188,33 @@ function App() {
       </div>
 
       {introStarted && <>
-        <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ position: 'absolute', top: 24, left: 16, zIndex: 15, opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
-          <HintButton onClick={() => {
-            if (playerMode === '2player' || winner) return
-            const humanSide: PlayerSide = playerMode === 'defender' ? 'defender' : 'attacker'
-            if (currentTurn !== humanSide) return
-            // Compute the hint move once and cache it for this turn
-            if (!hintMove.current) {
-              const { boardSize, center, kingEscapeEdge, shieldwall, weakKing } = getBoardConfig(rules)
-              hintMove.current = getBestMove(pieces, humanSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing)
-            }
-            const move = hintMove.current
-            if (!move) return
-            if (selectedId === move.pieceId) {
-              hintMove.current = null
-              movePiece(move.toRow, move.toCol)
-            } else {
-              selectPiece(move.pieceId)
-            }
-          }} />
+        <div style={{ position: 'absolute', top: 24, left: 16, zIndex: 15, display: 'flex', gap: 4 }}>
+          <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
+            <HintButton onClick={() => {
+              if (playerMode === '2player' || winner) return
+              const humanSide: PlayerSide = playerMode === 'defender' ? 'defender' : 'attacker'
+              if (currentTurn !== humanSide) return
+              // Compute the hint move once and cache it for this turn
+              if (!hintMove.current) {
+                const { boardSize, center, kingEscapeEdge, shieldwall, weakKing } = getBoardConfig(rules)
+                hintMove.current = getBestMove(pieces, humanSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing)
+              }
+              const move = hintMove.current
+              if (!move) return
+              if (selectedId === move.pieceId) {
+                hintMove.current = null
+                movePiece(move.toRow, move.toCol)
+              } else {
+                selectPiece(move.pieceId)
+              }
+            }} />
+          </div>
+          <div className="ui-button-wrapper ui-button-wrapper--undo" style={{ opacity: !uiVisible || menuOpen ? 0 : hasMoved && history.length > 0 ? (setupAnimating ? 0.2 : 1) : 0, transition: 'opacity 0.6s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating || !hasMoved || history.length === 0) ? 'none' : undefined }}>
+            <UndoButton onClick={() => {
+              if (history.length === 0 || setupAnimating) return
+              undoMove()
+            }} />
+          </div>
         </div>
         <div className="ui-button-wrapper ui-button-wrapper--menu" style={{ position: 'absolute', top: 24, right: 16, zIndex: 15, opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
           <MenuButton isOpen={false} onClick={() => setMenuOpen(o => !o)} />

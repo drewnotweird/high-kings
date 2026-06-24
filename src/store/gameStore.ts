@@ -22,6 +22,12 @@ export type GameMode = 'attacker' | 'defender' | '2player'
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type Rules = 'Copenhagen' | 'Tawlbwrdd' | 'Linnaeus Tablut' | 'Saami Tablut' | 'Brandub' | 'Ard Rí'
 
+interface HistoryEntry {
+  pieces: Piece[]
+  currentTurn: PlayerSide
+  scores: Record<PlayerSide, number>
+}
+
 interface GameStore {
   pieces: Piece[]
   dyingPieces: Piece[]
@@ -34,6 +40,7 @@ interface GameStore {
   currentTurn: PlayerSide
   scores: Record<PlayerSide, number>
   gameKey: number
+  history: HistoryEntry[]
   // Settings
   musicEnabled: boolean
   cameraLocked: boolean
@@ -47,6 +54,7 @@ interface GameStore {
   machineMove: (pieceId: string, toRow: number, toCol: number) => void
   clearDyingPieces: () => void
   resetGame: () => void
+  undoMove: () => void
   setPlayerMode: (mode: GameMode) => void
   setSetting: <K extends 'musicEnabled' | 'cameraLocked' | 'difficulty' | 'rules' | 'powerSaving'>(
     key: K, value: GameStore[K]
@@ -65,6 +73,7 @@ export const useGameStore = create<GameStore>((set) => ({
   currentTurn: 'defender',
   scores: { attacker: 0, defender: 0 },
   gameKey: 0,
+  history: [],
   musicEnabled: true,
   cameraLocked: false,
   difficulty: 'medium',
@@ -115,6 +124,8 @@ export const useGameStore = create<GameStore>((set) => ({
     const moveDist = Math.abs(toRow - movedPiece.row) + Math.abs(toCol - movedPiece.col)
     const captureDelayMs = Math.round(Math.max(500, moveDist * 280) + 80)
 
+    const snapshot: HistoryEntry = { pieces: activePieces, currentTurn: s.currentTurn, scores: s.scores }
+
     return {
       pieces: [...result.pieces, ...capturedPieces],
       dyingPieces: capturedPieces,
@@ -128,6 +139,7 @@ export const useGameStore = create<GameStore>((set) => ({
         defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
       },
       winner: result.winner,
+      history: [...s.history.slice(-9), snapshot],
     }
   }),
 
@@ -167,6 +179,20 @@ export const useGameStore = create<GameStore>((set) => ({
 
   setPlayerMode: (mode) => set({ playerMode: mode }),
 
+  undoMove: () => set((s) => {
+    if (s.history.length === 0) return s
+    const prev = s.history[s.history.length - 1]
+    return {
+      ...prev,
+      history: s.history.slice(0, -1),
+      dyingPieces: [],
+      captorIds: [],
+      selectedId: null,
+      validMoves: [],
+      winner: null,
+    }
+  }),
+
   resetGame: () => set((s) => ({
     pieces: createInitialPieces(getBoardConfig(s.rules)),
     dyingPieces: [],
@@ -177,6 +203,7 @@ export const useGameStore = create<GameStore>((set) => ({
     currentTurn: 'defender',
     scores: { attacker: 0, defender: 0 },
     gameKey: s.gameKey + 1,
+    history: [],
   })),
 
   setSetting: (key, value) => set({ [key]: value }),
