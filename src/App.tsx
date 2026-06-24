@@ -193,7 +193,7 @@ body, button, input, select {
 }
 .credits-page {
   position: fixed;
-  inset: 0;
+  top: 0; left: 0; right: 0;
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -201,11 +201,19 @@ body, button, input, select {
   font-family: 'MedievalSharp', cursive;
   color: #3d2008;
   overflow: hidden;
+  animation: creditsEnter 0.9s ease-out forwards;
 }
 .credits-page--closing {
-  animation: creditsPageOut 0.35s ease-in forwards;
+  animation: creditsExit 0.5s ease-in forwards;
 }
-@keyframes creditsPageOut { from { opacity: 1 } to { opacity: 0 } }
+@keyframes creditsEnter {
+  from { transform: translateY(-104px); height: 104px; }
+  to   { transform: translateY(0);      height: 100vh; }
+}
+@keyframes creditsExit {
+  from { transform: translateY(0);      height: 100vh; }
+  to   { transform: translateY(-104px); height: 104px; }
+}
 .credits-page__top,
 .credits-page__bottom {
   position: relative;
@@ -216,21 +224,8 @@ body, button, input, select {
   background-size: auto 100%;
   background-repeat: repeat-x;
 }
-.credits-page__top {
-  background-position: center bottom;
-}
-.credits-page__bottom {
-  background-position: center top;
-  /* Starts visually at y=0 (stacked on the top bar) and slides to its natural position.
-     Layout y starts at 52px (middle is collapsed). Transform -52px brings it to visual y=0.
-     As middle grows, layout y increases. Transform lerps 0→0 simultaneously.
-     Combined visual position sweeps from 0 → 100vh-52px. */
-  animation: creditsBottomIn 1s cubic-bezier(0.15, 0.85, 0.2, 1) forwards;
-}
-@keyframes creditsBottomIn {
-  from { transform: translateY(-52px); }
-  to   { transform: translateY(0); }
-}
+.credits-page__top  { background-position: center bottom; }
+.credits-page__bottom { background-position: center top; }
 .credits-page__middle {
   position: relative;
   z-index: 1;
@@ -240,13 +235,6 @@ body, button, input, select {
   justify-content: center;
   overflow-y: auto;
   overflow-x: hidden;
-  /* Grows from 0 to full height — this is what pushes the bottom bar to the bottom.
-     Same easing as creditsBottomIn so the bar's visual movement is perfectly smooth. */
-  animation: creditsMidReveal 1s cubic-bezier(0.15, 0.85, 0.2, 1) forwards;
-}
-@keyframes creditsMidReveal {
-  from { max-height: 0; overflow: hidden; }
-  to   { max-height: calc(100vh - 104px); }
 }
 .credits-page__paper {
   width: 100%;
