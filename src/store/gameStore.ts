@@ -143,7 +143,7 @@ export const useGameStore = create<GameStore>((set) => ({
         defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
       },
       winner: result.winner,
-      history: [...s.history.slice(-9), snapshot],
+      history: [snapshot],
       lastMoveTarget: { row: toRow, col: toCol },
     }
   }),
