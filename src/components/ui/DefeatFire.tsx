@@ -43,22 +43,22 @@ float fbm(vec2 p) {
 
 void main() {
   vec2 uv = vUv;
-  float t = uTime * 1.3;
+  float t = uTime * 2.2;
 
   // Single domain warp (was double — halves FBM call count)
   vec2 q = vec2(
     fbm(uv * 2.5 + vec2(0.0,  -t * 1.2)),
     fbm(uv * 2.5 + vec2(5.2,  1.3 - t))
   );
-  float f = fbm(uv * 2.5 + 2.5 * q - t * 0.1);
+  float f = fbm(uv * 2.5 + 4.0 * q - t * 0.1);
 
   f = f * 0.5 + 0.5;
 
   // Shape: full at bottom of canvas, fades to zero at top
-  float vMask = pow(clamp(1.0 - uv.y, 0.0, 1.0), 0.55);
-  float hMask = 1.0 - pow(clamp(abs(uv.x - 0.5) * 2.0, 0.0, 1.0), 1.4);
+  float vMask = pow(clamp(1.0 - uv.y, 0.0, 1.0), 0.3);
+  float hMask = 1.0 - pow(clamp(abs(uv.x - 0.5) * 2.0, 0.0, 1.0), 0.8);
 
-  float fire = clamp(f * vMask * hMask * 2.3, 0.0, 1.0);
+  float fire = clamp(f * vMask * hMask * 3.2, 0.0, 1.0);
 
   // Toon posterization — CSS blur will soften the hard edges
   const float N = 5.0;
@@ -106,8 +106,8 @@ export function DefeatFire() {
     <div style={{
       position: 'absolute',
       bottom: 0, left: 0, right: 0,
-      height: '50%',
-      filter: 'blur(12px)',
+      height: '65%',
+      filter: 'blur(16px)',
       pointerEvents: 'none',
     }}>
       <Canvas
