@@ -10,9 +10,6 @@ import { themes } from '../../lib/themes'
 import { IntroStartContext } from '../../contexts/intro'
 
 const DUST_DURATION = 1.5
-// Delay between move completing in the store and dust cloud appearing — gives the
-// mover time to visually arrive at the captured piece's position before it explodes.
-const CAPTURE_DELAY_MS = 450
 
 type ParticleKind = 'debris' | 'flame' | 'smoke'
 interface Particle {
@@ -428,7 +425,7 @@ interface SceneInnerProps {
 }
 
 function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
-  const { pieces, dyingPieces, clearDyingPieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules } = useGameStore()
+  const { pieces, dyingPieces, captureDelayMs, clearDyingPieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules } = useGameStore()
   const theme = themes[themeName]
   const [menuPhase, setMenuPhase] = useState<MenuPhase>('idle')
 
@@ -447,7 +444,7 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
     const timer = setTimeout(() => {
       clearDyingPieces()
       setDustClouds(prev => [...prev, ...clouds])
-    }, CAPTURE_DELAY_MS)
+    }, captureDelayMs)
     return () => clearTimeout(timer)
   }, [dyingPieces])
   // boardFlipOpen is delayed: pieces hide first, THEN board flips

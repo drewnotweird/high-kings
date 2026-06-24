@@ -1008,11 +1008,12 @@ function App() {
     const { boardSize, center, kingEscapeEdge } = getBoardConfig(rules)
     const fire = () => {
       // Read fresh state — pieces may have changed (clearDyingPieces) since the effect ran
-      const { pieces: freshPieces, currentTurn: freshTurn, winner: freshWinner, selectedId: freshSelected } = useGameStore.getState()
+      const { pieces: freshPieces, dyingPieces: freshDying, currentTurn: freshTurn, winner: freshWinner, selectedId: freshSelected } = useGameStore.getState()
       if (freshWinner || freshTurn !== machineSide) return
       // If the player still has a piece selected, wait for them to deselect first
       if (freshSelected) { setTimeout(fire, 600); return }
-      const move = getBestMove(freshPieces, machineSide, boardSize, center, difficulty, kingEscapeEdge)
+      const alivePieces = freshPieces.filter(p => !freshDying.some(d => d.id === p.id))
+      const move = getBestMove(alivePieces, machineSide, boardSize, center, difficulty, kingEscapeEdge)
       if (move) machineMove(move.pieceId, move.toRow, move.toCol)
     }
     const timer = setTimeout(fire, 2200)

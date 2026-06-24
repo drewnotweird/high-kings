@@ -26,6 +26,7 @@ interface GameStore {
   pieces: Piece[]
   dyingPieces: Piece[]
   captorIds: string[]
+  captureDelayMs: number
   selectedId: string | null
   validMoves: [number, number][]
   winner: PlayerSide | null
@@ -56,6 +57,7 @@ export const useGameStore = create<GameStore>((set) => ({
   pieces: createInitialPieces(getBoardConfig('Copenhagen')),
   dyingPieces: [],
   captorIds: [],
+  captureDelayMs: 450,
   selectedId: null,
   validMoves: [],
   winner: null,
@@ -103,16 +105,20 @@ export const useGameStore = create<GameStore>((set) => ({
     if (!s.validMoves.some(([r, c]) => r === toRow && c === toCol)) return s
 
     const { boardSize, center, kingEscapeEdge } = getBoardConfig(s.rules)
-    const result = applyMove(s.pieces, s.selectedId, toRow, toCol, boardSize, center, kingEscapeEdge)
-    const capturedPieces = s.pieces.filter(p => result.capturedIds.includes(p.id))
+    // Exclude any still-dying pieces from move logic — they're logically already gone
+    const activePieces = s.pieces.filter(p => !s.dyingPieces.some(d => d.id === p.id))
+    const result = applyMove(activePieces, s.selectedId, toRow, toCol, boardSize, center, kingEscapeEdge)
+    const capturedPieces = activePieces.filter(p => result.capturedIds.includes(p.id))
 
-    const movedPiece = s.pieces.find(p => p.id === s.selectedId)!
+    const movedPiece = activePieces.find(p => p.id === s.selectedId)!
     const movedIsDefender = movedPiece.type === 'defender' || movedPiece.type === 'king'
+    const moveDist = Math.abs(toRow - movedPiece.row) + Math.abs(toCol - movedPiece.col)
+    const captureDelayMs = Math.round(Math.max(500, moveDist * 280) + 80)
 
     return {
-      // Keep captured pieces in the scene until clearDyingPieces() is called
       pieces: [...result.pieces, ...capturedPieces],
       dyingPieces: capturedPieces,
+      captureDelayMs,
       captorIds: findCaptorIds(capturedPieces, result.pieces, movedIsDefender),
       selectedId: null,
       validMoves: [],
@@ -128,15 +134,19 @@ export const useGameStore = create<GameStore>((set) => ({
   machineMove: (pieceId, toRow, toCol) => set((s) => {
     if (s.winner) return s
     const { boardSize, center, kingEscapeEdge } = getBoardConfig(s.rules)
-    const result = applyMove(s.pieces, pieceId, toRow, toCol, boardSize, center, kingEscapeEdge)
-    const capturedPieces = s.pieces.filter(p => result.capturedIds.includes(p.id))
+    const activePieces = s.pieces.filter(p => !s.dyingPieces.some(d => d.id === p.id))
+    const result = applyMove(activePieces, pieceId, toRow, toCol, boardSize, center, kingEscapeEdge)
+    const capturedPieces = activePieces.filter(p => result.capturedIds.includes(p.id))
 
-    const movedPiece = s.pieces.find(p => p.id === pieceId)!
+    const movedPiece = activePieces.find(p => p.id === pieceId)!
     const movedIsDefender = movedPiece.type === 'defender' || movedPiece.type === 'king'
+    const moveDist = Math.abs(toRow - movedPiece.row) + Math.abs(toCol - movedPiece.col)
+    const captureDelayMs = Math.round(Math.max(500, moveDist * 280) + 80)
 
     return {
       pieces: [...result.pieces, ...capturedPieces],
       dyingPieces: capturedPieces,
+      captureDelayMs,
       captorIds: findCaptorIds(capturedPieces, result.pieces, movedIsDefender),
       selectedId: null,
       validMoves: [],
