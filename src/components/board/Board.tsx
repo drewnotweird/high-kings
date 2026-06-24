@@ -113,9 +113,9 @@ function ValidMoveMarker({ x, z, row, col, appearDelay }: {
         <sphereGeometry args={[0.13, 14, 10]} />
         <meshStandardMaterial
           ref={matRef}
-          color={powerSaving ? "#ff6600" : "#7a1800"}
-          emissive={powerSaving ? "#ff4400" : "#cc3300"}
-          emissiveIntensity={powerSaving ? 0.9 : 0.5}
+          color={powerSaving ? "#ff6600" : "#e8874a"}
+          emissive={powerSaving ? "#ff4400" : "#d45a10"}
+          emissiveIntensity={powerSaving ? 0.9 : 0.4}
           roughness={0.9}
           metalness={0}
           transparent
