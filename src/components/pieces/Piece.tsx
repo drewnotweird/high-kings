@@ -1,7 +1,7 @@
 import { useRef, useMemo, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
-import { Mesh, Vector2, MeshPhysicalMaterial } from 'three'
+import { Mesh, Vector2, MeshPhysicalMaterial, MeshStandardMaterial } from 'three'
 import { getBoardConfig } from '../../game/hnefatafl'
 import type { Piece as PieceData } from '../../game/hnefatafl'
 import { useGameStore } from '../../store/gameStore'
@@ -27,6 +27,7 @@ interface PieceProps {
 export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs, menuPhase, onClick }: PieceProps) {
   const meshRef = useRef<Mesh>(null)
   const materialRef = useRef<MeshPhysicalMaterial>(null)
+  const haloRef = useRef<MeshStandardMaterial>(null)
   const landed = useRef(false)
   const landTime = useRef(0)
   const menuOpacity = useRef(1)
@@ -107,7 +108,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
     ]
   }, [isKing])
 
-  useFrame((_, delta) => {
+  useFrame(({ clock }, delta) => {
     if (!meshRef.current) return
 
     // useFrame owns position.x and position.z entirely — never set via JSX prop
@@ -179,6 +180,18 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
 
     if (menuPhase === 'hiding' || menuPhase === 'hidden') return
 
+    // Selected glow — pulse emissive and halo
+    if (materialRef.current) {
+      const targetIntensity = isSelected && !powerSaving
+        ? 0.55 + Math.sin(clock.elapsedTime * 3.2) * 0.25
+        : 0.15
+      materialRef.current.emissiveIntensity += (targetIntensity - materialRef.current.emissiveIntensity) * Math.min(delta * 6, 1)
+    }
+    if (haloRef.current) {
+      const targetOpacity = isSelected && !powerSaving ? 0.13 + Math.sin(clock.elapsedTime * 3.2) * 0.05 : 0
+      haloRef.current.opacity += (targetOpacity - haloRef.current.opacity) * Math.min(delta * 6, 1)
+    }
+
     // idle / appearing — normal gameplay position + travel arc
     meshRef.current.rotation.y = Math.PI
     const settle = (Date.now() - landTime.current) / 1000
@@ -209,6 +222,8 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
     }
   })
 
+  const glowColor = isKing ? '#ffaa00' : isDefender ? '#d4b870' : '#aaccff'
+
   return (
     <mesh
       ref={meshRef}
@@ -231,8 +246,22 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
         clearcoat={0.0}
         emissiveMap={texture}
         emissive={isKing ? '#c8880a' : isDefender ? '#9a7a40' : '#ffffff'}
-        emissiveIntensity={isSelected ? 0.4 : 0.15}
+        emissiveIntensity={0.15}
       />
+      {/* Outer glow halo — opacity driven by useFrame */}
+      <mesh scale={1.18}>
+        <latheGeometry args={[points, 20]} />
+        <meshStandardMaterial
+          ref={haloRef}
+          color={glowColor}
+          emissive={glowColor}
+          emissiveIntensity={1}
+          transparent
+          opacity={0}
+          depthWrite={false}
+          side={2}
+        />
+      </mesh>
     </mesh>
   )
 }
