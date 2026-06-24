@@ -307,6 +307,41 @@ body, button, input, select {
   transition: background 0.2s, border-color 0.2s;
 }
 .credits-page__close-btn:hover { background: rgba(60,28,0,0.12); border-color: rgba(60,28,0,0.6); }
+.htp-illustration {
+  width: 100%;
+  background: rgba(60,28,0,0.06);
+  border: 1px solid rgba(60,28,0,0.15);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(60,28,0,0.35);
+  margin: 16px 0 24px;
+  padding: 32px 0;
+}
+.htp-variants {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.htp-variant h3 {
+  font-size: clamp(14px, 2.5vw, 20px);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #2e1606;
+  margin: 0 0 4px;
+}
+.htp-variant .htp-variant__tag {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(60,28,0,0.5);
+  margin: 0 0 10px;
+  font-style: italic;
+}
 .settings-toggle {
   width: 40px;
   height: 22px;
@@ -664,12 +699,135 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
   )
 }
 
-function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
+function Illustration({ label }: { label: string }) {
+  return <div className="htp-illustration">{label}</div>
+}
+
+function HowToPlayScroll({ onClose }: { onClose: () => void }) {
+  const [closing, setClosing] = useState(false)
+  const handleClose = () => { setClosing(true); setTimeout(onClose, 500) }
+  const base = import.meta.env.BASE_URL
+  return (
+    <div className={`credits-page${closing ? ' credits-page--closing' : ''}`}>
+      <div className="credits-page__top" style={{ backgroundImage: `url(${base}wood-top.jpg)` }} />
+      <div className="credits-page__middle">
+        <div className="credits-page__paper" style={{ backgroundImage: `url(${base}pagescroll.png)` }}>
+
+          <h1>How to Play</h1>
+          <hr className="credits-page__rule" />
+          <p>Before chess, before checkers, there was Hnefatafl.</p>
+          <p>The Vikings played this game. So did the Celts, the Anglo-Saxons, and the peoples of the far north. Boards have been found in Viking graves, in Irish monasteries, scratched into stone in Orkney. For nearly a thousand years — roughly 400 AD to 1400 AD — it was the strategy game of northern Europe.</p>
+          <p>Then chess arrived from the south, and Hnefatafl was forgotten. Almost.</p>
+          <p>The rules survived in fragments: a mention in a Norse saga here, a manuscript illustration there, a living tradition among the Saami people of Scandinavia that never quite died out. Scholars pieced them back together. And now you're playing it.</p>
+          <Illustration label="intro-map" />
+
+          <hr className="credits-page__rule" />
+          <h2>Part One: The Core Game</h2>
+          <p>These rules apply to every variant.</p>
+
+          <h2>1. The Board</h2>
+          <p>Hnefatafl is played on a square grid. The centre square is the <strong>Throne</strong> — where the King begins. The four corner squares are <strong>escape squares</strong> — ancient sanctuaries the King must reach to win.</p>
+          <Illustration label="board-overview" />
+
+          <h2>2. Two Sides, One Goal Each</h2>
+          <p>This is an asymmetric game — the two sides play nothing alike.</p>
+          <p>The <strong>Defenders</strong> protect a King. Their goal is to escort him to a corner escape square. They are outnumbered.</p>
+          <p>The <strong>Attackers</strong> surround the board. Their goal is to capture the King before he reaches safety. They have the numbers.</p>
+          <Illustration label="two-sides" />
+
+          <h2>3. How Pieces Move</h2>
+          <p>Every piece — attacker, defender, and King alike — moves the same way: any number of squares in a straight line, horizontally or vertically. No diagonals. No jumping over other pieces.</p>
+          <p>The corners and the Throne are off-limits to all pieces except the King.</p>
+          <Illustration label="movement" />
+
+          <h2>4. Capturing</h2>
+          <p>Capture an enemy piece by sandwiching it between two of your own on a straight line — one on each side. The trapped piece is removed immediately.</p>
+          <p>You have to move to complete the trap. A piece sitting between two enemies is perfectly safe until you close the other side.</p>
+          <Illustration label="capture" />
+
+          <h2>5. The Throne & Corners Assist Captures</h2>
+          <p>Empty special squares — the Throne and all four corners — count as phantom captors. You only need one friendly piece to complete a capture if an empty special square covers the other side.</p>
+          <Illustration label="hostile-squares" />
+
+          <h2>6. Capturing the King</h2>
+          <p>The King cannot be captured like a normal piece. He must be surrounded on <strong>all four sides</strong> simultaneously — by attackers or by empty special squares. As long as even one side is open, he is safe.</p>
+          <Illustration label="king-capture" />
+
+          <h2>7. The King Escapes</h2>
+          <p>Move the King to any corner square and the Defenders win. The Attackers must keep every path to every corner blocked — all game long.</p>
+          <Illustration label="king-escape" />
+
+          <hr className="credits-page__rule" />
+          <h2>Part Two: The Variants</h2>
+          <p>Each variant shares the core rules above. Below is only what's different.</p>
+
+          <div className="htp-variants">
+            <div className="htp-variant">
+              <h3>Copenhagen</h3>
+              <p className="htp-variant__tag">11×11 · The standard game</p>
+              <p><strong>Shieldwall captures:</strong> A line of two or more enemy pieces pressed against the board edge can be wiped out in a single move — if you flank both ends simultaneously (a corner counts as one flank). The King cannot be taken this way.</p>
+              <Illustration label="shieldwall" />
+            </div>
+
+            <div className="htp-variant">
+              <h3>Tawlbwrdd</h3>
+              <p className="htp-variant__tag">11×11 · Same board as Copenhagen, stronger King</p>
+              <p><strong>Edge escape:</strong> The King wins by reaching <strong>any square on the board edge</strong> — not just the four corners. Much harder to contain him. Also includes shieldwall captures.</p>
+              <Illustration label="edge-escape" />
+            </div>
+
+            <div className="htp-variant">
+              <h3>Linnaeus Tablut</h3>
+              <p className="htp-variant__tag">9×9 · Recorded by Carl Linnaeus in 1732</p>
+              <p><strong>Weak King + edge escape:</strong> Once the King steps off the Throne, he can be sandwiched like any other piece — just two attackers is enough. He still escapes to any edge square. Play is more urgent and aggressive.</p>
+              <Illustration label="weak-king" />
+            </div>
+
+            <div className="htp-variant">
+              <h3>Saami Tablut</h3>
+              <p className="htp-variant__tag">9×9 · The living tradition</p>
+              <p>Same rules as Linnaeus Tablut (weak King, edge escape), but the defenders begin in a broader diamond pattern. A slightly more open and tactical opening.</p>
+              <Illustration label="saami-start" />
+            </div>
+
+            <div className="htp-variant">
+              <h3>Brandub</h3>
+              <p className="htp-variant__tag">7×7 · The Irish variant</p>
+              <p><strong>Weak King, fewer pieces:</strong> Only four defenders and eight attackers. The King escapes to a corner. His weakness means every move matters — there's nowhere to hide on this board.</p>
+              <Illustration label="brandub-board" />
+            </div>
+
+            <div className="htp-variant">
+              <h3>Ard Rí</h3>
+              <p className="htp-variant__tag">7×7 · The Irish High King</p>
+              <p><strong>Strong King, more pieces:</strong> Eight defenders and twelve attackers — a denser 7×7 board. The King reverts to the strong rule: he needs all four sides sealed. Corner escape. A harder fight in a tight space.</p>
+              <Illustration label="ard-ri-board" />
+            </div>
+
+            <div className="htp-variant">
+              <h3>Alea Evangelii</h3>
+              <p className="htp-variant__tag">19×19 · The epic</p>
+              <p>72 attackers. 24 defenders. A 19×19 board. The same core rules apply — strong King, corner escape — but the scale transforms the game entirely. Opening theory is deeper, endgames are longer, and the King's journey to a corner is a true odyssey.</p>
+              <Illustration label="alea-board" />
+            </div>
+          </div>
+
+          <hr className="credits-page__rule" />
+          <button className="credits-page__close-btn" onClick={handleClose}>Close</button>
+        </div>
+      </div>
+      <div className="credits-page__bottom" style={{ backgroundImage: `url(${base}wood-bottom.jpg)` }} />
+    </div>
+  )
+}
+
+function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowToPlay }: {
   isOpen: boolean
   isVisible: boolean
   onResume: () => void
   onNewGame: () => void
   onCredits: () => void
+  onHowToPlay: () => void
 }) {
   const [screen, setScreen] = useState<'main' | 'settings'>('main')
   const [screensOpacity, setScreensOpacity] = useState(1)
@@ -717,7 +875,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
             <button className="menu-overlay__item" onClick={onResume}>Resume Game</button>
             <button className="menu-overlay__item" onClick={() => switchScreen('settings')}>Settings</button>
             <button className="menu-overlay__item" onClick={onNewGame}>New Game</button>
-            <button className="menu-overlay__item">How to Play</button>
+            <button className="menu-overlay__item" onClick={onHowToPlay}>How to Play</button>
             <button className="menu-overlay__item" onClick={onCredits}>Credits</button>
             <button className="ui-button ui-button--menu" onClick={onResume} style={{ marginTop: 16 }}>
               <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/close.svg`} alt="" />
@@ -954,6 +1112,7 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuVisible, setMenuVisible] = useState(false)
   const [showCredits, setShowCredits] = useState(false)
+  const [showHowToPlay, setShowHowToPlay] = useState(false)
   const [roleSelectOpen, setRoleSelectOpen] = useState(false)
   const [winnerDismissed, setWinnerDismissed] = useState(false)
   const [displayWinner, setDisplayWinner] = useState<string | null>(null)
@@ -1136,6 +1295,7 @@ function App() {
             setRoleSelectOpen(true)
           }}
           onCredits={() => setShowCredits(true)}
+          onHowToPlay={() => setShowHowToPlay(true)}
         />
       </div>
 
@@ -1188,6 +1348,7 @@ function App() {
       </>}
 
       <ThemeSwitcher />
+      {showHowToPlay && <HowToPlayScroll onClose={() => setShowHowToPlay(false)} />}
       {showCredits && <CreditsScroll onClose={() => setShowCredits(false)} />}
       {displayWinner && !winnerDismissed && (
         <WinnerOverlay
