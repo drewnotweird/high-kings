@@ -90,8 +90,10 @@ function ValidMoveMarker({ x, z, row, col, appearDelay }: {
 
     if (powerSaving) return
 
-    // Bob gently
-    meshRef.current.position.y = TILE_TOP + 0.18 + Math.sin(t * 2.6 + phase) * 0.04
+    // Bob gently — keep glow concentric with orb
+    const bobY = TILE_TOP + 0.18 + Math.sin(t * 2.6 + phase) * 0.04
+    meshRef.current.position.y = bobY
+    if (glowRef.current) glowRef.current.position.y = bobY
 
     // Flicker emissive intensity
     if (matRef.current) {
