@@ -211,41 +211,42 @@ body, button, input, select {
   position: relative;
   z-index: 2;
   height: 52px;
-  width: 100%;
   flex-shrink: 0;
   box-shadow: 0 0 20px rgba(0,0,0,1);
+  background-size: auto 100%;
+  background-repeat: repeat-x;
 }
 .credits-page__top {
-  background-image: url('wood-top.jpg');
-  background-size: auto 100%;
-  background-repeat: repeat-x;
   background-position: center bottom;
-  animation: creditsTopIn 0.8s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
 }
 .credits-page__bottom {
-  background-image: url('wood-bottom.jpg');
-  background-size: auto 100%;
-  background-repeat: repeat-x;
   background-position: center top;
-  animation: creditsBottomIn 0.8s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+  /* Starts visually at y=0 (stacked on the top bar) and slides to its natural position.
+     Layout y starts at 52px (middle is collapsed). Transform -52px brings it to visual y=0.
+     As middle grows, layout y increases. Transform lerps 0→0 simultaneously.
+     Combined visual position sweeps from 0 → 100vh-52px. */
+  animation: creditsBottomIn 1s cubic-bezier(0.15, 0.85, 0.2, 1) forwards;
 }
-@keyframes creditsTopIn {
+@keyframes creditsBottomIn {
   from { transform: translateY(-52px); }
   to   { transform: translateY(0); }
 }
-@keyframes creditsBottomIn {
-  from { transform: translateY(calc(-100vh + 104px)); }
-  to   { transform: translateY(0); }
-}
 .credits-page__middle {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: flex;
-  justify-content: center;
   position: relative;
   z-index: 1;
+  flex: 1;
   min-height: 0;
+  display: flex;
+  justify-content: center;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Grows from 0 to full height — this is what pushes the bottom bar to the bottom.
+     Same easing as creditsBottomIn so the bar's visual movement is perfectly smooth. */
+  animation: creditsMidReveal 1s cubic-bezier(0.15, 0.85, 0.2, 1) forwards;
+}
+@keyframes creditsMidReveal {
+  from { max-height: 0; overflow: hidden; }
+  to   { max-height: calc(100vh - 104px); }
 }
 .credits-page__paper {
   width: 100%;
