@@ -50,6 +50,7 @@ const uvGenerator = {
 
 interface BoardProps {
   theme: ThemeConfig
+  menuPhase?: 'idle' | 'hiding' | 'hidden' | 'appearing'
 }
 
 const phaseCache = new Map<string, number>()
@@ -213,7 +214,7 @@ function TileHoverGlow({ x, z, active }: { x: number; z: number; active: boolean
   )
 }
 
-export function Board({ theme }: BoardProps) {
+export function Board({ theme, menuPhase }: BoardProps) {
   const { rules, pieces, validMoves, selectedId, selectPiece, movePiece, gameKey, powerSaving } = useGameStore()
   const { boardSize, center, attackerStarts, defenderStarts, kingEscapeEdge } = getBoardConfig(rules)
   useEffect(() => { clearPhaseCache() }, [gameKey])
@@ -420,7 +421,7 @@ export function Board({ theme }: BoardProps) {
               </mesh>
             )}
 
-            {validTarget && <ValidMoveMarker x={0} z={0} row={row} col={col} appearDelay={appearDelay} onHover={() => setHoveredTile({ x, z })} onUnhover={() => setHoveredTile(null)} tileHovered={hoveredTile?.x === x && hoveredTile?.z === z} dimmed={hoveredTile !== null && !(hoveredTile.x === x && hoveredTile.z === z)} />}
+            {validTarget && !menuPhase?.match(/hiding|hidden/) && <ValidMoveMarker x={0} z={0} row={row} col={col} appearDelay={appearDelay} onHover={() => setHoveredTile({ x, z })} onUnhover={() => setHoveredTile(null)} tileHovered={hoveredTile?.x === x && hoveredTile?.z === z} dimmed={hoveredTile !== null && !(hoveredTile.x === x && hoveredTile.z === z)} />}
           </group>
         )
       })
@@ -435,7 +436,7 @@ export function Board({ theme }: BoardProps) {
       )}
 
       {/* Departing orbs — animate out in reverse order */}
-      {leavingMarkers.map(m => (
+      {!menuPhase?.match(/hiding|hidden/) && leavingMarkers.map(m => (
         <ValidMoveMarker
           key={`leaving-${m.row}-${m.col}`}
           x={m.x} z={m.z} row={m.row} col={m.col}

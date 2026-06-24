@@ -653,7 +653,7 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
       {!powerSaving && <CaptureFlashLight />}
       {!powerSaving && <LightningFlash />}
       <AnimatedBoard menuOpen={boardFlipOpen} snapFlipRef={snapFlipRef} undoTrigger={undoTrigger}>
-        <Board theme={theme} />
+        <Board theme={theme} menuPhase={menuPhase} />
       </AnimatedBoard>
       {/* King — individual mesh (unique geometry, spotlight tracking, single piece) */}
       {pieces.filter(p => p.type === 'king').map((piece) => (
