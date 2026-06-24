@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect, useState } from 'react'
+import { useMemo, useRef, useEffect, useLayoutEffect, useState } from 'react'
 import { useTexture } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, Mesh, MeshStandardMaterial } from 'three'
@@ -163,7 +163,7 @@ export function Board({ theme }: BoardProps) {
   const prevSelectedPiece = useRef<typeof pieces[0] | undefined>(undefined)
   const leavingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const prev = prevValidMoves.current
     const prevPiece = prevSelectedPiece.current
     if (prev.length > 0) {
@@ -173,7 +173,6 @@ export function Board({ theme }: BoardProps) {
         dist: prevPiece ? Math.max(Math.abs(r - prevPiece.row), Math.abs(c - prevPiece.col)) : 0,
       }))
       const maxDist = Math.max(...withDist.map(m => m.dist), 0)
-      // Furthest tiles disappear first (delay = 0), closest disappear last
       const leaving = withDist.map(m => ({
         row: m.row, col: m.col, x: m.x, z: m.z,
         disappearDelay: (maxDist - m.dist) * 0.028,
