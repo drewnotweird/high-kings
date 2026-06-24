@@ -151,7 +151,7 @@ function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, di
 
 export function Board({ theme }: BoardProps) {
   const { rules, pieces, validMoves, selectedId, selectPiece, movePiece, gameKey } = useGameStore()
-  const { boardSize, center, attackerStarts, defenderStarts } = getBoardConfig(rules)
+  const { boardSize, center, attackerStarts, defenderStarts, kingEscapeEdge } = getBoardConfig(rules)
   useEffect(() => { clearPhaseCache() }, [gameKey])
   const boardOffset = (boardSize - 1) / 2
   const selectedPiece = pieces.find(p => p.id === selectedId)
@@ -242,6 +242,11 @@ export function Board({ theme }: BoardProps) {
   const squares = useMemo(() => {
     const attackerSet = new Set(attackerStarts.map(([r, c]) => `${r},${c}`))
     const defenderSet = new Set(defenderStarts.map(([r, c]) => `${r},${c}`))
+    const last = boardSize - 1
+    const isEscapeSquare = (row: number, col: number) =>
+      kingEscapeEdge
+        ? (row === 0 || row === last || col === 0 || col === last)
+        : isCorner(row, col, boardSize)
     const result = []
     for (let row = 0; row < boardSize; row++) {
       for (let col = 0; col < boardSize; col++) {
@@ -251,16 +256,16 @@ export function Board({ theme }: BoardProps) {
         const variantIdx = (tileAssignment[key] ?? 1) - 1
 
         let overlay: 'corner' | 'throne' | 'defender' | 'attacker' | null = null
-        if (isCorner(row, col, boardSize)) overlay = 'corner'
+        if (isEscapeSquare(row, col)) overlay = 'corner'
         else if (isThrone(row, col, center)) overlay = 'throne'
         else if (defenderSet.has(key)) overlay = 'defender'
         else if (attackerSet.has(key)) overlay = 'attacker'
 
-        result.push({ row, col, x, z, variantIdx, overlay, isCornerTile: isCorner(row, col, boardSize) || isThrone(row, col, center) })
+        result.push({ row, col, x, z, variantIdx, overlay, isCornerTile: isEscapeSquare(row, col) || isThrone(row, col, center) })
       }
     }
     return result
-  }, [boardSize, boardOffset, center, attackerStarts, defenderStarts, tileAssignment])
+  }, [boardSize, boardOffset, center, attackerStarts, defenderStarts, tileAssignment, kingEscapeEdge])
 
   return (
     <group>
