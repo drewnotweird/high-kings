@@ -785,7 +785,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits }: {
                 <div className="settings-row">
                   <span className="settings-row__label">Rules</span>
                   <Cycler<Rules>
-                    options={['Tablut', 'Copenhagen', 'Tawlbwrdd', 'Brandub']}
+                    options={['Copenhagen', 'Tawlbwrdd', 'Linnaeus Tablut', 'Saami Tablut', 'Brandub', 'Ard Rí']}
                     value={draft.rules}
                     onChange={v => setDraft(d => ({ ...d, rules: v }))}
                   />
@@ -1005,7 +1005,7 @@ function App() {
     const machineSide: PlayerSide = playerMode === 'attacker' ? 'defender' : 'attacker'
     if (currentTurn !== machineSide) return
 
-    const { boardSize, center, kingEscapeEdge, shieldwall } = getBoardConfig(rules)
+    const { boardSize, center, kingEscapeEdge, shieldwall, weakKing } = getBoardConfig(rules)
     const fire = () => {
       // Read fresh state — pieces may have changed (clearDyingPieces) since the effect ran
       const { pieces: freshPieces, dyingPieces: freshDying, currentTurn: freshTurn, winner: freshWinner, selectedId: freshSelected } = useGameStore.getState()
@@ -1013,7 +1013,7 @@ function App() {
       // If the player still has a piece selected, wait for them to deselect first
       if (freshSelected) { setTimeout(fire, 600); return }
       const alivePieces = freshPieces.filter(p => !freshDying.some(d => d.id === p.id))
-      const move = getBestMove(alivePieces, machineSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall)
+      const move = getBestMove(alivePieces, machineSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing)
       if (move) machineMove(move.pieceId, move.toRow, move.toCol)
     }
     const timer = setTimeout(fire, 2200)
@@ -1166,8 +1166,8 @@ function App() {
             if (currentTurn !== humanSide) return
             // Compute the hint move once and cache it for this turn
             if (!hintMove.current) {
-              const { boardSize, center, kingEscapeEdge, shieldwall } = getBoardConfig(rules)
-              hintMove.current = getBestMove(pieces, humanSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall)
+              const { boardSize, center, kingEscapeEdge, shieldwall, weakKing } = getBoardConfig(rules)
+              hintMove.current = getBestMove(pieces, humanSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing)
             }
             const move = hintMove.current
             if (!move) return

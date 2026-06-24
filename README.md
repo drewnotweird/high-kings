@@ -17,7 +17,7 @@ Hnefatafl is an asymmetric strategy game. The defender escorts the King to a cor
 
 ## Features
 
-- Four rule variants: Copenhagen (11×11), Tawlbwrdd (11×11), Tablut (9×9), Brandub (7×7)
+- Six rule variants: Copenhagen (11×11), Tawlbwrdd (11×11 Welsh, edge escape), Linnaeus Tablut (9×9, weak king), Saami Tablut (9×9, wider defender diamond), Brandub (7×7 Irish, weak king), Ard Rí (7×7 Irish High King, strong king)
 - Shieldwall captures (Copenhagen & Tawlbwrdd): a contiguous line of 2+ enemy pieces along an edge is captured in one move when both ends are flanked by a corner or a friendly piece; the king cannot be taken this way
 - AI opponent with easy / medium / hard difficulty
 - Play as defender, attacker, or 2-player local

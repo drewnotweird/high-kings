@@ -20,7 +20,7 @@ export type Theme = 'natural'
 export type PlayerSide = 'attacker' | 'defender'
 export type GameMode = 'attacker' | 'defender' | '2player'
 export type Difficulty = 'easy' | 'medium' | 'hard'
-export type Rules = 'Tablut' | 'Copenhagen' | 'Tawlbwrdd' | 'Brandub'
+export type Rules = 'Copenhagen' | 'Tawlbwrdd' | 'Linnaeus Tablut' | 'Saami Tablut' | 'Brandub' | 'Ard Rí'
 
 interface GameStore {
   pieces: Piece[]
@@ -68,7 +68,7 @@ export const useGameStore = create<GameStore>((set) => ({
   musicEnabled: true,
   cameraLocked: false,
   difficulty: 'medium',
-  rules: 'Copenhagen' as Rules,
+  rules: 'Copenhagen',
   powerSaving: false,
   playerMode: 'defender' as GameMode,
 
@@ -104,10 +104,10 @@ export const useGameStore = create<GameStore>((set) => ({
     if (!s.selectedId || s.winner) return s
     if (!s.validMoves.some(([r, c]) => r === toRow && c === toCol)) return s
 
-    const { boardSize, center, kingEscapeEdge, shieldwall } = getBoardConfig(s.rules)
+    const { boardSize, center, kingEscapeEdge, shieldwall, weakKing } = getBoardConfig(s.rules)
     // Exclude any still-dying pieces from move logic — they're logically already gone
     const activePieces = s.pieces.filter(p => !s.dyingPieces.some(d => d.id === p.id))
-    const result = applyMove(activePieces, s.selectedId, toRow, toCol, boardSize, center, kingEscapeEdge, shieldwall)
+    const result = applyMove(activePieces, s.selectedId, toRow, toCol, boardSize, center, kingEscapeEdge, shieldwall, weakKing)
     const capturedPieces = activePieces.filter(p => result.capturedIds.includes(p.id))
 
     const movedPiece = activePieces.find(p => p.id === s.selectedId)!
@@ -133,9 +133,9 @@ export const useGameStore = create<GameStore>((set) => ({
 
   machineMove: (pieceId, toRow, toCol) => set((s) => {
     if (s.winner) return s
-    const { boardSize, center, kingEscapeEdge, shieldwall } = getBoardConfig(s.rules)
+    const { boardSize, center, kingEscapeEdge, shieldwall, weakKing } = getBoardConfig(s.rules)
     const activePieces = s.pieces.filter(p => !s.dyingPieces.some(d => d.id === p.id))
-    const result = applyMove(activePieces, pieceId, toRow, toCol, boardSize, center, kingEscapeEdge, shieldwall)
+    const result = applyMove(activePieces, pieceId, toRow, toCol, boardSize, center, kingEscapeEdge, shieldwall, weakKing)
     const capturedPieces = activePieces.filter(p => result.capturedIds.includes(p.id))
 
     const movedPiece = activePieces.find(p => p.id === pieceId)!

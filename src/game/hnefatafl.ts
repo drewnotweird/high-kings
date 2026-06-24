@@ -12,8 +12,9 @@ export interface BoardConfig {
   center: number
   attackerStarts: [number, number][]
   defenderStarts: [number, number][]
-  kingEscapeEdge?: boolean  // Tawlbwrdd: king wins by reaching any edge square, not just corners
+  kingEscapeEdge?: boolean  // king wins by reaching any edge square (not just corners)
   shieldwall?: boolean      // Copenhagen/Tawlbwrdd: contiguous edge line captured when both ends flanked
+  weakKing?: boolean        // king off the throne can be sandwiched like a normal piece
 }
 
 const COPENHAGEN: BoardConfig = {
@@ -39,11 +40,12 @@ const COPENHAGEN: BoardConfig = {
 // Tawlbwrdd — 11x11 Welsh variant. King escapes to any edge square (not just corners).
 const TAWLBWRDD: BoardConfig = { ...COPENHAGEN, kingEscapeEdge: true }
 
-// Tablut — Linnaeus 9x9 historical layout. King escapes to any edge square.
-const TABLUT: BoardConfig = {
+// Linnaeus Tablut — 9×9 as documented by Carl Linnaeus in 1732. Weak king, edge escape.
+const LINNAEUS_TABLUT: BoardConfig = {
   boardSize: 9,
   center: 4,
   kingEscapeEdge: true,
+  weakKing: true,
   attackerStarts: [
     [0,3],[0,4],[0,5],[1,4],
     [3,0],[4,0],[5,0],[4,1],
@@ -55,8 +57,44 @@ const TABLUT: BoardConfig = {
   ],
 }
 
-// Brandub — 7x7 Irish variant
+// Saami Tablut — 9×9 living Saami tradition. Defenders start in a wider diamond.
+// Weak king, edge escape.
+const SAAMI_TABLUT: BoardConfig = {
+  boardSize: 9,
+  center: 4,
+  kingEscapeEdge: true,
+  weakKing: true,
+  attackerStarts: [
+    [0,3],[0,4],[0,5],[1,4],
+    [3,0],[4,0],[5,0],[4,1],
+    [3,8],[4,8],[5,8],[4,7],
+    [8,3],[8,4],[8,5],[7,4],
+  ],
+  defenderStarts: [
+    [2,4],[4,2],[4,6],[6,4],
+    [3,3],[3,5],[5,3],[5,5],
+  ],
+}
+
+// Brandub — 7×7 Irish variant. Weak king, corner escape.
 const BRANDUB: BoardConfig = {
+  boardSize: 7,
+  center: 3,
+  weakKing: true,
+  attackerStarts: [
+    [0,3],[1,3],
+    [3,0],[3,1],
+    [3,5],[3,6],
+    [5,3],[6,3],
+  ],
+  defenderStarts: [
+    [2,3],[3,2],[3,4],[4,3],
+  ],
+}
+
+// Ard Rí — 7×7 Irish "High King" variant. Same layout as Brandub but strong king
+// (always requires 4-sided capture regardless of position), corner escape.
+const ARD_RI: BoardConfig = {
   boardSize: 7,
   center: 3,
   attackerStarts: [
@@ -73,8 +111,10 @@ const BRANDUB: BoardConfig = {
 const CONFIGS: Record<string, BoardConfig> = {
   Copenhagen: COPENHAGEN,
   Tawlbwrdd: TAWLBWRDD,
-  Tablut: TABLUT,
+  'Linnaeus Tablut': LINNAEUS_TABLUT,
+  'Saami Tablut': SAAMI_TABLUT,
   Brandub: BRANDUB,
+  'Ard Rí': ARD_RI,
 }
 
 export function getBoardConfig(rules: string): BoardConfig {
@@ -148,16 +188,28 @@ export function getValidMoves(
   return moves
 }
 
-function checkKingCaptured(king: Piece, pieces: Piece[], boardSize: number, center: number): boolean {
+function checkKingCaptured(king: Piece, pieces: Piece[], boardSize: number, center: number, weakKing: boolean): boolean {
+  // Weak king off the throne: sandwiched on any axis like a normal piece
+  if (weakKing && !isThrone(king.row, king.col, center)) {
+    for (const [dr, dc] of DIRS) {
+      const r1 = king.row + dr, c1 = king.col + dc
+      const r2 = king.row - dr, c2 = king.col - dc
+      const h1 = pieces.find(p => p.row === r1 && p.col === c1)?.type === 'attacker'
+             || isHostile(r1, c1, boardSize, center, pieces)
+      const h2 = pieces.find(p => p.row === r2 && p.col === c2)?.type === 'attacker'
+             || isHostile(r2, c2, boardSize, center, pieces)
+      if (h1 && h2) return true
+    }
+    return false
+  }
+  // Strong king (or weak king on throne): needs all 4 sides hostile
   let surrounded = 0
   for (const [dr, dc] of DIRS) {
     const r = king.row + dr
     const c = king.col + dc
     if (r < 0 || r >= boardSize || c < 0 || c >= boardSize) continue
     const neighbor = pieces.find(p => p.row === r && p.col === c)
-    if (neighbor?.type === 'attacker' || isHostile(r, c, boardSize, center, pieces)) {
-      surrounded++
-    }
+    if (neighbor?.type === 'attacker' || isHostile(r, c, boardSize, center, pieces)) surrounded++
   }
   return surrounded === 4
 }
@@ -243,7 +295,8 @@ export function applyMove(
   boardSize: number,
   center: number,
   kingEscapeEdge = false,
-  shieldwall = false
+  shieldwall = false,
+  weakKing = false
 ): MoveResult {
   // Move piece
   const moved = pieces.map(p => p.id === pieceId ? { ...p, row: toRow, col: toCol } : p)
@@ -285,7 +338,7 @@ export function applyMove(
     return { pieces: remaining, capturedIds, winner: 'defender' }
   }
 
-  if (checkKingCaptured(king, remaining, boardSize, center)) {
+  if (checkKingCaptured(king, remaining, boardSize, center, weakKing)) {
     return { pieces: remaining.filter(p => p.type !== 'king'), capturedIds: [...capturedIds, king.id], winner: 'attacker' }
   }
 

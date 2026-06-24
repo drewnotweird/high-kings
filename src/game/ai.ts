@@ -150,7 +150,8 @@ export function getBestMove(
   center: number,
   difficulty: 'easy' | 'medium' | 'hard',
   kingEscapeEdge = false,
-  _shieldwall = false
+  _shieldwall = false,
+  _weakKing = false
 ): AiMove | null {
   const allMoves = getAllMoves(pieces, side, boardSize, center)
   if (allMoves.length === 0) return null
