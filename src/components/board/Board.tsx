@@ -148,7 +148,6 @@ function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, di
           emissiveIntensity={powerSaving ? 0.9 : 0.4}
           roughness={0.9}
           metalness={0}
-          transparent
           opacity={0.85}
         />
       </mesh>
