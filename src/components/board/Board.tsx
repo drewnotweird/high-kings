@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect } from 'react'
+import { useMemo, useRef, useEffect, useState } from 'react'
 import { useTexture } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, Mesh, MeshStandardMaterial } from 'three'
@@ -60,8 +60,9 @@ function getPhase(row: number, col: number) {
   return phaseCache.get(key)!
 }
 
-function ValidMoveMarker({ x, z, row, col, appearDelay }: {
+function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, disappearDelay = 0 }: {
   x: number; z: number; row: number; col: number; appearDelay: number
+  disappearing?: boolean; disappearDelay?: number
 }) {
   const meshRef = useRef<Mesh>(null)
   const glowRef = useRef<Mesh>(null)
@@ -75,18 +76,26 @@ function ValidMoveMarker({ x, z, row, col, appearDelay }: {
     if (!meshRef.current) return
     const t = clock.getElapsedTime()
     const elapsed = t - birthTime.current
-    if (elapsed < appearDelay) {
-      meshRef.current.scale.setScalar(0)
-      return
-    }
 
-    // Quick elastic pop-in over 120ms
-    const p = Math.min((elapsed - appearDelay) / 0.12, 1)
-    const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p
-    const overshoot = p >= 1 ? 1 : ease * 1.25 - 0.25 * ease * ease
-    const s = Math.max(0, Math.min(overshoot, 1.15 - 0.15 * p))
-    meshRef.current.scale.setScalar(s)
-    if (glowRef.current) glowRef.current.scale.setScalar(s)
+    if (disappearing) {
+      // Hold at full scale until disappearDelay, then shrink over 120ms
+      const s = elapsed < disappearDelay ? 1 : Math.max(0, 1 - Math.min((elapsed - disappearDelay) / 0.12, 1))
+      meshRef.current.scale.setScalar(s)
+      if (glowRef.current) glowRef.current.scale.setScalar(s)
+    } else {
+      if (elapsed < appearDelay) {
+        meshRef.current.scale.setScalar(0)
+        if (glowRef.current) glowRef.current.scale.setScalar(0)
+        return
+      }
+      // Quick elastic pop-in over 120ms
+      const p = Math.min((elapsed - appearDelay) / 0.12, 1)
+      const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p
+      const overshoot = p >= 1 ? 1 : ease * 1.25 - 0.25 * ease * ease
+      const s = Math.max(0, Math.min(overshoot, 1.15 - 0.15 * p))
+      meshRef.current.scale.setScalar(s)
+      if (glowRef.current) glowRef.current.scale.setScalar(s)
+    }
 
     if (powerSaving) return
 
@@ -108,7 +117,7 @@ function ValidMoveMarker({ x, z, row, col, appearDelay }: {
         ref={meshRef}
         castShadow
         scale={0}
-        onClick={(e) => { e.stopPropagation(); movePiece(row, col) }}
+        onClick={disappearing ? undefined : (e) => { e.stopPropagation(); movePiece(row, col) }}
       >
         <sphereGeometry args={[0.13, 14, 10]} />
         <meshStandardMaterial
@@ -145,6 +154,40 @@ export function Board({ theme }: BoardProps) {
   const { boardSize, center, attackerStarts, defenderStarts } = getBoardConfig(rules)
   useEffect(() => { clearPhaseCache() }, [gameKey])
   const boardOffset = (boardSize - 1) / 2
+  const selectedPiece = pieces.find(p => p.id === selectedId)
+
+  // Track departing orbs so they can animate out in reverse order
+  type LeavingMarker = { row: number; col: number; x: number; z: number; disappearDelay: number }
+  const [leavingMarkers, setLeavingMarkers] = useState<LeavingMarker[]>([])
+  const prevValidMoves = useRef<[number,number][]>([])
+  const prevSelectedPiece = useRef<typeof pieces[0] | undefined>(undefined)
+  const leavingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    const prev = prevValidMoves.current
+    const prevPiece = prevSelectedPiece.current
+    if (prev.length > 0) {
+      const withDist = prev.map(([r, c]) => ({
+        row: r, col: c,
+        x: c - boardOffset, z: r - boardOffset,
+        dist: prevPiece ? Math.max(Math.abs(r - prevPiece.row), Math.abs(c - prevPiece.col)) : 0,
+      }))
+      const maxDist = Math.max(...withDist.map(m => m.dist), 0)
+      // Furthest tiles disappear first (delay = 0), closest disappear last
+      const leaving = withDist.map(m => ({
+        row: m.row, col: m.col, x: m.x, z: m.z,
+        disappearDelay: (maxDist - m.dist) * 0.028,
+      }))
+      setLeavingMarkers(leaving)
+      if (leavingTimer.current) clearTimeout(leavingTimer.current)
+      leavingTimer.current = setTimeout(
+        () => setLeavingMarkers([]),
+        (maxDist * 0.028 + 0.2) * 1000
+      )
+    }
+    prevValidMoves.current = validMoves
+    prevSelectedPiece.current = selectedPiece
+  }, [validMoves])
 
   const tileGeometry = useMemo(() => {
     const r = CORNER_RADIUS
@@ -232,7 +275,6 @@ export function Board({ theme }: BoardProps) {
       </mesh>
 
       {(() => {
-        const selectedPiece = pieces.find(p => p.id === selectedId)
         return squares.map(({ row, col, x, z, variantIdx, overlay, isCornerTile }) => {
         const validTarget = isValidMove(row, col, validMoves)
         const dist = selectedPiece
@@ -278,6 +320,17 @@ export function Board({ theme }: BoardProps) {
         )
       })
       })()}
+
+      {/* Departing orbs — animate out in reverse order */}
+      {leavingMarkers.map(m => (
+        <ValidMoveMarker
+          key={`leaving-${m.row}-${m.col}`}
+          x={m.x} z={m.z} row={m.row} col={m.col}
+          appearDelay={0}
+          disappearing
+          disappearDelay={m.disappearDelay}
+        />
+      ))}
     </group>
   )
 }
