@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useTexture } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, Mesh } from 'three'
+import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, Mesh, MeshStandardMaterial } from 'three'
 import { getBoardConfig, isCorner, isThrone, isValidMove } from '../../game/hnefatafl'
 import { useGameStore } from '../../store/gameStore'
 import type { ThemeConfig } from '../../lib/themes'
@@ -52,7 +52,6 @@ interface BoardProps {
   theme: ThemeConfig
 }
 
-// Stable per-instance phase offset so each orb bobs at a different rhythm
 const phaseCache = new Map<string, number>()
 function getPhase(row: number, col: number) {
   const key = `${row},${col}`
@@ -60,14 +59,42 @@ function getPhase(row: number, col: number) {
   return phaseCache.get(key)!
 }
 
-function ValidMoveMarker({ x, z, row, col }: { x: number; z: number; row: number; col: number }) {
+function ValidMoveMarker({ x, z, row, col, appearDelay }: {
+  x: number; z: number; row: number; col: number; appearDelay: number
+}) {
   const meshRef = useRef<Mesh>(null)
+  const matRef = useRef<MeshStandardMaterial>(null)
   const { movePiece, powerSaving } = useGameStore()
   const phase = getPhase(row, col)
+  const birthTime = useRef<number | null>(null)
 
   useFrame(({ clock }) => {
-    if (!meshRef.current || powerSaving) return
-    meshRef.current.position.y = TILE_TOP + 0.18 + Math.sin(clock.elapsedTime * 2.6 + phase) * 0.05
+    if (!meshRef.current) return
+    const t = clock.getElapsedTime()
+    if (birthTime.current === null) birthTime.current = t
+
+    const elapsed = t - birthTime.current
+    if (elapsed < appearDelay) {
+      meshRef.current.scale.setScalar(0)
+      return
+    }
+
+    // Quick elastic pop-in over 120ms
+    const p = Math.min((elapsed - appearDelay) / 0.12, 1)
+    const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p
+    const overshoot = p >= 1 ? 1 : ease * 1.25 - 0.25 * ease * ease
+    meshRef.current.scale.setScalar(Math.max(0, Math.min(overshoot, 1.15 - 0.15 * p)))
+
+    if (powerSaving) return
+
+    // Bob gently
+    meshRef.current.position.y = TILE_TOP + 0.18 + Math.sin(t * 2.6 + phase) * 0.04
+
+    // Flicker emissive intensity
+    if (matRef.current) {
+      const flicker = 0.55 + 0.45 * Math.sin(t * 13.1 + phase * 3.7) * Math.sin(t * 8.3 + phase)
+      matRef.current.emissiveIntensity = 1.2 + flicker * 0.8
+    }
   })
 
   return (
@@ -75,22 +102,26 @@ function ValidMoveMarker({ x, z, row, col }: { x: number; z: number; row: number
       ref={meshRef}
       position={[x, TILE_TOP + 0.18, z]}
       castShadow
+      scale={0}
       onClick={(e) => { e.stopPropagation(); movePiece(row, col) }}
     >
-      <sphereGeometry args={[0.13, 14, 10]} />
-      <meshPhysicalMaterial
-        color="#ffd060"
-        emissive="#ff8800"
-        emissiveIntensity={0.7}
-        metalness={0.8}
-        roughness={0.1}
+      <coneGeometry args={[0.085, 0.22, 7]} />
+      <meshStandardMaterial
+        ref={matRef}
+        color="#c83000"
+        emissive="#ff6600"
+        emissiveIntensity={1.2}
+        roughness={0.9}
+        metalness={0}
+        transparent
+        opacity={0.92}
       />
     </mesh>
   )
 }
 
 export function Board({ theme }: BoardProps) {
-  const { rules, validMoves, selectedId, selectPiece, movePiece } = useGameStore()
+  const { rules, pieces, validMoves, selectedId, selectPiece, movePiece } = useGameStore()
   const { boardSize, center, attackerStarts, defenderStarts } = getBoardConfig(rules)
   const boardOffset = (boardSize - 1) / 2
 
@@ -179,8 +210,14 @@ export function Board({ theme }: BoardProps) {
         />
       </mesh>
 
-      {squares.map(({ row, col, x, z, variantIdx, overlay, isCornerTile }) => {
+      {(() => {
+        const selectedPiece = pieces.find(p => p.id === selectedId)
+        return squares.map(({ row, col, x, z, variantIdx, overlay, isCornerTile }) => {
         const validTarget = isValidMove(row, col, validMoves)
+        const dist = selectedPiece
+          ? Math.max(Math.abs(row - selectedPiece.row), Math.abs(col - selectedPiece.col))
+          : 0
+        const appearDelay = dist * 0.055
         return (
           <group
             key={`${row}-${col}`}
@@ -215,10 +252,11 @@ export function Board({ theme }: BoardProps) {
               </mesh>
             )}
 
-            {validTarget && <ValidMoveMarker x={0} z={0} row={row} col={col} />}
+            {validTarget && <ValidMoveMarker x={0} z={0} row={row} col={col} appearDelay={appearDelay} />}
           </group>
         )
-      })}
+      })
+      })()}
     </group>
   )
 }
