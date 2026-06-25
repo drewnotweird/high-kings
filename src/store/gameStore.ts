@@ -211,6 +211,7 @@ export const useGameStore = create<GameStore>((set) => ({
     gameKey: s.gameKey + 1,
     history: [],
     lastMoveTarget: null,
+    undoTrigger: 0,
   })),
 
   setSetting: (key, value) => set({ [key]: value }),
