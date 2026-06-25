@@ -591,7 +591,10 @@ function Ember({ style, variant }: { style: React.CSSProperties; variant: number
         borderRadius: 0,
         background: 'linear-gradient(to top, rgba(255,136,0,0.6), rgba(255,221,128,0.4))',
         boxShadow: '0 0 1px 0.5px rgba(255,120,0,0.3)',
-        animation: `ember${variant} var(--dur) ease-in-out infinite`,
+        animationName: `ember${variant}`,
+        animationTimingFunction: 'ease-in-out',
+        animationIterationCount: 'infinite',
+        animationFillMode: 'both',
         ...style,
       }}
     />
@@ -820,7 +823,7 @@ function Illustration({ label }: { label: string }) {
         <Piece cx={20+3*30+14} cy={20+3*30+14} r={7} type="king"/>
         <text x="35" y="14" textAnchor="middle" fill={KING_C} fontSize="8.5" fontFamily="MedievalSharp,cursive">escape</text>
         <line x1="35" y1="16" x2="35" y2="21" stroke={KING_C} strokeWidth="1" opacity="0.5"/>
-        <text x="130" y="240" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Throne in centre · Corners are escape squares</text>
+        <text x="130" y="240" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Throne · Corners are escape squares</text>
       </svg>
     ),
     'two-sides': (
@@ -906,7 +909,7 @@ function Illustration({ label }: { label: string }) {
           ))}
           <circle cx="150" cy="87" r="11" fill="rgba(200,169,110,0.35)" stroke={KING_C} strokeWidth="1.5"/>
         </g>
-        <text x="150" y="148" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Sandwich between two of your own · Piece removed</text>
+        <text x="150" y="148" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Sandwich between two of your own</text>
       </svg>
     ),
     'hostile-squares': (
@@ -935,7 +938,7 @@ function Illustration({ label }: { label: string }) {
         <text x="255" y="88" textAnchor="middle" fill={KING_C} fontSize="9" fontFamily="MedievalSharp,cursive">Throne</text>
         {/* Ring burst */}
         <circle className="hs-ring" cx="115" cy="89" fill="none" stroke={KING_C} strokeWidth="1.5"/>
-        <text x="150" y="168" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Empty corner or Throne acts as second captor</text>
+        <text x="150" y="168" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Empty corner or Throne counts as captor</text>
       </svg>
     ),
     'king-capture': (
@@ -958,7 +961,7 @@ function Illustration({ label }: { label: string }) {
         <g className="kc-s"><Piece cx={120} cy={200} r={11} type="atk"/></g>
         <g className="kc-e"><Piece cx={200} cy={120} r={11} type="atk"/></g>
         <g className="kc-w"><Piece cx={40} cy={120} r={11} type="atk"/></g>
-        <text x="120" y="242" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">All four sides must be sealed simultaneously</text>
+        <text x="120" y="242" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">All four sides sealed simultaneously</text>
       </svg>
     ),
     'king-escape': (
@@ -981,7 +984,7 @@ function Illustration({ label }: { label: string }) {
         <g className="ke-king" style={{transformOrigin:'120px 120px'}}>
           <Piece cx={120} cy={120} r={13} type="king"/>
         </g>
-        <text x="120" y="242" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Move the King to a corner · Defenders win</text>
+        <text x="120" y="242" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">King at a corner · Defenders win</text>
       </svg>
     ),
     'shieldwall': (
@@ -1010,7 +1013,7 @@ function Illustration({ label }: { label: string }) {
         <polyline points="78,57 84,62 78,67" fill="none" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
         <line x1="256" y1="62" x2="238" y2="62" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
         <polyline points="242,57 236,62 242,67" fill="none" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <text x="160" y="160" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Flank both ends simultaneously · Whole line wiped</text>
+        <text x="160" y="160" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Flank both ends · Whole line wiped</text>
       </svg>
     ),
     'edge-escape': (
@@ -1032,7 +1035,7 @@ function Illustration({ label }: { label: string }) {
         <g className="ee-king" style={{transformOrigin:'120px 120px'}}>
           <Piece cx={120} cy={120} r={13} type="king"/>
         </g>
-        <text x="120" y="242" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Tawlbwrdd variant · Reach any edge to win</text>
+        <text x="120" y="242" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Tawlbwrdd · Reach any edge to win</text>
       </svg>
     ),
     'weak-king': (
@@ -1062,12 +1065,15 @@ function Illustration({ label }: { label: string }) {
       const defs: [number,number][] = [[3,4],[5,4],[4,3],[4,5],[2,4],[6,4],[4,2],[4,6]]
       const atks: [number,number][] = [[0,3],[0,4],[0,5],[3,0],[4,0],[5,0],[8,3],[8,4],[8,5],[3,8],[4,8],[5,8]]
       return (
-        <svg viewBox="0 0 202 215" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 202 220" xmlns="http://www.w3.org/2000/svg">
           <Grid cols={9} rows={9} size={S} ox={OX} oy={OY} throne/>
           {defs.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={7} type="def"/>)}
           {atks.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={6} type="atk"/>)}
           <Piece cx={OX+4*S+S/2} cy={OY+4*S+S/2} r={8} type="king"/>
-          <text x="101" y="211" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Saami Tablut · 9×9 · 9 defenders · 16 attackers</text>
+          <text textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">
+            <tspan x="101" y="205">Saami Tablut · 9×9</tspan>
+            <tspan x="101" dy="13">9 defenders · 16 attackers</tspan>
+          </text>
         </svg>
       )
     })(),
@@ -1076,12 +1082,15 @@ function Illustration({ label }: { label: string }) {
       const defs: [number,number][] = [[2,3],[4,3],[3,2],[3,4]]
       const atks: [number,number][] = [[0,3],[3,0],[6,3],[3,6],[1,3],[3,1],[5,3],[3,5]]
       return (
-        <svg viewBox="0 0 196 200" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 196 210" xmlns="http://www.w3.org/2000/svg">
           <Grid cols={7} rows={7} size={S} ox={OX} oy={OY} throne/>
           {defs.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={8} type="def"/>)}
           {atks.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={7} type="atk"/>)}
           <Piece cx={OX+3*S+S/2} cy={OY+3*S+S/2} r={9} type="king"/>
-          <text x="98" y="196" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Brandub · 7×7 · Celtic · 4 defenders · 8 attackers</text>
+          <text textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">
+            <tspan x="98" y="194">Brandub · 7×7 · Celtic</tspan>
+            <tspan x="98" dy="13">4 defenders · 8 attackers</tspan>
+          </text>
         </svg>
       )
     })(),
@@ -1090,12 +1099,15 @@ function Illustration({ label }: { label: string }) {
       const defs: [number,number][] = [[2,3],[4,3],[3,2],[3,4],[1,3],[5,3],[3,1],[3,5]]
       const atks: [number,number][] = [[0,2],[0,3],[0,4],[2,0],[3,0],[4,0],[6,2],[6,3],[6,4],[2,6],[3,6],[4,6]]
       return (
-        <svg viewBox="0 0 196 200" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 196 210" xmlns="http://www.w3.org/2000/svg">
           <Grid cols={7} rows={7} size={S} ox={OX} oy={OY} throne/>
           {defs.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={7} type="def"/>)}
           {atks.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={6} type="atk"/>)}
           <Piece cx={OX+3*S+S/2} cy={OY+3*S+S/2} r={9} type="king"/>
-          <text x="98" y="196" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Ard Rí · 7×7 · Irish · 8 defenders · 12 attackers</text>
+          <text textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">
+            <tspan x="98" y="194">Ard Rí · 7×7 · Irish</tspan>
+            <tspan x="98" dy="13">8 defenders · 12 attackers</tspan>
+          </text>
         </svg>
       )
     })(),
@@ -1477,10 +1489,10 @@ function WinnerOverlay({ winner, playerMode, powerSaving, onNewGame, onDismiss }
       {!powerSaving && winnerEmbers.map(e => (
         <Ember key={e.id} variant={e.variant} style={{
           left: e.left, bottom: e.bottom,
-          ['--dur' as string]: e.dur,
           ['--rise' as string]: e.rise,
           ['--dx1' as string]: e.dx1, ['--dx2' as string]: e.dx2, ['--dx3' as string]: e.dx3,
           ['--a1' as string]: e.a1, ['--a2' as string]: e.a2, ['--a3' as string]: e.a3,
+          animationDuration: e.dur,
           animationDelay: e.delay,
         }} />
       ))}
@@ -1693,7 +1705,6 @@ function App() {
             style={{
               left: e.left,
               bottom: e.bottom,
-              ['--dur' as string]: e.dur,
               ['--rise' as string]: e.rise,
               ['--dx1' as string]: e.dx1,
               ['--dx2' as string]: e.dx2,
@@ -1701,6 +1712,7 @@ function App() {
               ['--a1' as string]: e.a1,
               ['--a2' as string]: e.a2,
               ['--a3' as string]: e.a3,
+              animationDuration: e.dur,
               animationDelay: e.delay,
             }}
           />
