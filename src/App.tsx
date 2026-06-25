@@ -1736,6 +1736,7 @@ function App() {
           onResume={() => setMenuOpen(false)}
           onNewGame={() => {
             setMenuOpen(false)
+            resetGame()
             setRoleSelectOpen(true)
           }}
           onCredits={() => setShowCredits(true)}
@@ -1799,7 +1800,7 @@ function App() {
           winner={displayWinner as 'attacker' | 'defender'}
           playerMode={playerMode}
           powerSaving={powerSaving}
-          onNewGame={() => setRoleSelectOpen(true)}
+          onNewGame={() => { resetGame(); setRoleSelectOpen(true) }}
           onDismiss={() => setWinnerDismissed(true)}
         />
       )}
