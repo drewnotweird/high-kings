@@ -325,6 +325,16 @@ body, button, input, select {
   margin: 16px 0 24px;
   padding: 32px 0;
 }
+.htp-illustration--svg {
+  background: transparent;
+  border: none;
+  padding: 8px 0;
+}
+.htp-illustration--svg svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
 .htp-variants {
   display: flex;
   flex-direction: column;
@@ -702,8 +712,427 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
   )
 }
 
+// Reusable piece shapes -------------------------------------------------------
+const ATK = '#3d1e0a'    // dark brown attacker fill
+const DEF = '#7a5228'    // darker tan defender (contrasts parchment)
+const KING_FILL = '#8c6518' // deep gold king fill
+const KING_C = '#c8a96e'  // gold accent colour
+const GRID = 'rgba(60,28,0,0.22)'
+const SPECIAL = 'rgba(200,169,110,0.35)'
+
+function Piece({ cx, cy, r = 10, type = 'atk' }: { cx: number; cy: number; r?: number; type?: 'atk' | 'def' | 'king' }) {
+  const fill = type === 'atk' ? ATK : type === 'king' ? KING_FILL : DEF
+  const strokeC = type === 'atk' ? '#1a0a02' : type === 'king' ? '#4a3008' : '#3a2010'
+  const kr = type === 'king' ? r * 1.2 : r
+  return (
+    <g>
+      <ellipse cx={cx} cy={cy + kr * 0.18} rx={kr * 0.88} ry={kr * 0.26} fill="rgba(0,0,0,0.22)" />
+      <ellipse cx={cx} cy={cy} rx={kr} ry={kr * 1.18} fill={fill} stroke={strokeC} strokeWidth={1.5} />
+      <ellipse cx={cx - kr * 0.28} cy={cy - kr * 0.32} rx={kr * 0.22} ry={kr * 0.16} fill="rgba(255,255,255,0.28)" />
+      {type === 'king' && <>
+        <line x1={cx} y1={cy - kr * 0.85} x2={cx} y2={cy - kr * 0.5} stroke={KING_C} strokeWidth={2} strokeLinecap="round"/>
+        <circle cx={cx} cy={cy - kr * 0.85} r={kr * 0.15} fill={KING_C}/>
+      </>}
+    </g>
+  )
+}
+
+function Grid({ cols, rows, size, ox = 0, oy = 0, specials = [] as [number,number][], throne = false }: {
+  cols: number; rows: number; size: number; ox?: number; oy?: number; specials?: [number,number][]; throne?: boolean
+}) {
+  const corners: [number,number][] = [[0,0],[0,cols-1],[rows-1,0],[rows-1,cols-1]]
+  return (
+    <g>
+      {Array.from({length:rows},(_,r)=>Array.from({length:cols},(_,c)=>{
+        const isCorner = corners.some(([cr,cc])=>cr===r&&cc===c)
+        const isThrone = throne && r === Math.floor(rows/2) && c === Math.floor(cols/2)
+        const isSpecial = specials.some(([sr,sc])=>sr===r&&sc===c)
+        const fill = (isCorner||isThrone||isSpecial) ? SPECIAL : 'rgba(60,28,0,0.04)'
+        const stroke = (isCorner||isThrone||isSpecial) ? KING_C : GRID
+        const sw = (isCorner||isThrone||isSpecial) ? 1.5 : 0.7
+        return <rect key={`${r}-${c}`} x={ox+c*size} y={oy+r*size} width={size-1} height={size-1} fill={fill} stroke={stroke} strokeWidth={sw} rx={(isCorner||isThrone)?2:0}/>
+      }))}
+    </g>
+  )
+}
+
 function Illustration({ label }: { label: string }) {
-  return <div className="htp-illustration">{label}</div>
+  const svgs: Record<string, React.ReactNode> = {
+    'intro-map': (
+      <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+        <style>{`
+          @keyframes im-route { 0%{stroke-dashoffset:320;opacity:0} 15%{opacity:1} 80%{stroke-dashoffset:0;opacity:1} 100%{stroke-dashoffset:0;opacity:0} }
+          @keyframes im-ship  { 0%{transform:translate(0,0)} 80%{transform:translate(68px,-30px)} 100%{transform:translate(68px,-30px)} }
+          @keyframes im-dot   { 0%,100%{opacity:0.35} 50%{opacity:1} }
+          @keyframes im-ring  { 0%{r:6;opacity:0.7} 100%{r:18;opacity:0} }
+          .im-r1{stroke-dasharray:320;animation:im-route 5s ease-in-out infinite;}
+          .im-r2{stroke-dasharray:260;animation:im-route 5s ease-in-out infinite;animation-delay:1.8s;}
+          .im-r3{stroke-dasharray:180;animation:im-route 5s ease-in-out infinite;animation-delay:3.2s;}
+          .im-ship{animation:im-ship 5s ease-in-out infinite;}
+          .im-dot{animation:im-dot 3s ease-in-out infinite;}
+          .im-ring{animation:im-ring 2s ease-out infinite;fill:none;stroke:#c8a96e;stroke-width:1.2;}
+        `}</style>
+        {/* Scandinavia */}
+        <path d="M190 40 Q205 28 225 38 Q245 28 258 50 Q270 75 255 100 Q268 122 252 145 Q235 168 215 158 Q198 174 182 158 Q162 142 167 118 Q148 100 162 78 Q145 55 190 40Z" fill="none" stroke={KING_C} strokeWidth="1.5" opacity="0.22"/>
+        {/* Britain */}
+        <path d="M70 95 Q88 75 106 88 Q118 108 112 132 Q100 150 84 144 Q65 132 70 95Z" fill="none" stroke={KING_C} strokeWidth="1.5" opacity="0.22"/>
+        {/* Ireland */}
+        <path d="M45 115 Q58 100 68 118 Q64 138 48 138 Q35 130 45 115Z" fill="none" stroke={KING_C} strokeWidth="1.5" opacity="0.22"/>
+        {/* Sea routes */}
+        <path className="im-r1" d="M88 115 C130 80 165 85 180 105" fill="none" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
+        <path className="im-r2" d="M180 105 C225 90 255 100 270 120" fill="none" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
+        <path className="im-r3" d="M88 115 C100 148 132 165 162 162" fill="none" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
+        {/* Moving longship */}
+        <g className="im-ship" style={{transformOrigin:'88px 115px'}}>
+          <ellipse cx="88" cy="115" rx="8" ry="4" fill={ATK} opacity="0.9"/>
+          <line x1="88" y1="111" x2="88" y2="102" stroke={KING_C} strokeWidth="1.5"/>
+          <path d="M88 102 L97 107 L88 110Z" fill={KING_C} opacity="0.9"/>
+        </g>
+        {/* Location dots with ring pulse */}
+        {([
+          [88,115,0],[182,105,0.9],[162,162,1.8],[270,120,2.7],[50,115,3.6]
+        ] as [number,number,number][]).map(([x,y,d],i)=>(
+          <g key={i}>
+            <circle cx={x} cy={y} r="5" fill={KING_C} className="im-dot" style={{animationDelay:`${d}s`}}/>
+            <circle cx={x} cy={y} r="5" fill="none" stroke={KING_C} strokeWidth="1.5" className="im-ring" style={{animationDelay:`${d}s`}}/>
+          </g>
+        ))}
+        <text x="370" y="192" fill={KING_C} fontSize="10" fontFamily="MedievalSharp,cursive" opacity="0.6" textAnchor="end">Northern Europe  ·  400–1400 AD</text>
+      </svg>
+    ),
+    'board-overview': (
+      <svg viewBox="0 0 260 250" xmlns="http://www.w3.org/2000/svg">
+        <style>{`
+          @keyframes bo-c{0%,100%{opacity:0.45}50%{opacity:1}}
+          .bo-c1{animation:bo-c 3s ease-in-out infinite;}
+          .bo-c2{animation:bo-c 3s ease-in-out .75s infinite;}
+          .bo-c3{animation:bo-c 3s ease-in-out 1.5s infinite;}
+          .bo-c4{animation:bo-c 3s ease-in-out 2.25s infinite;}
+          @keyframes bo-t{0%,100%{opacity:0.5}50%{opacity:1}}
+          .bo-throne{animation:bo-t 2s ease-in-out infinite;}
+        `}</style>
+        <Grid cols={7} rows={7} size={30} ox={20} oy={20} throne/>
+        <rect className="bo-c1" x={21} y={21} width={28} height={28} fill={SPECIAL} stroke={KING_C} strokeWidth={2} rx={3}/>
+        <rect className="bo-c2" x={21+6*30} y={21} width={28} height={28} fill={SPECIAL} stroke={KING_C} strokeWidth={2} rx={3}/>
+        <rect className="bo-c3" x={21} y={21+6*30} width={28} height={28} fill={SPECIAL} stroke={KING_C} strokeWidth={2} rx={3}/>
+        <rect className="bo-c4" x={21+6*30} y={21+6*30} width={28} height={28} fill={SPECIAL} stroke={KING_C} strokeWidth={2} rx={3}/>
+        <rect className="bo-throne" x={21+3*30} y={21+3*30} width={28} height={28} fill="rgba(200,169,110,0.18)" stroke={KING_C} strokeWidth={1.5} rx={3}/>
+        <Piece cx={20+3*30+14} cy={20+3*30+14} r={7} type="king"/>
+        <text x="35" y="14" textAnchor="middle" fill={KING_C} fontSize="8.5" fontFamily="MedievalSharp,cursive">escape</text>
+        <line x1="35" y1="16" x2="35" y2="21" stroke={KING_C} strokeWidth="1" opacity="0.5"/>
+        <text x="130" y="240" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Throne in centre · Corners are escape squares</text>
+      </svg>
+    ),
+    'two-sides': (
+      <svg viewBox="0 0 380 200" xmlns="http://www.w3.org/2000/svg">
+        <style>{`
+          @keyframes ts-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+          .ts-a{animation:ts-bob 2.8s ease-in-out infinite;}
+          .ts-d{animation:ts-bob 2.8s ease-in-out 1.4s infinite;}
+        `}</style>
+        <g className="ts-a">
+          <text x="80" y="20" textAnchor="middle" fill={KING_C} fontSize="12" fontFamily="MedievalSharp,cursive" letterSpacing="2">ATTACKERS</text>
+          <Piece cx={26} cy={75} r={11} type="atk"/>
+          <Piece cx={52} cy={75} r={11} type="atk"/>
+          <Piece cx={78} cy={75} r={11} type="atk"/>
+          <Piece cx={104} cy={75} r={11} type="atk"/>
+          <Piece cx={130} cy={75} r={11} type="atk"/>
+          <Piece cx={39} cy={105} r={11} type="atk"/>
+          <Piece cx={65} cy={105} r={11} type="atk"/>
+          <Piece cx={91} cy={105} r={11} type="atk"/>
+          <text x="80" y="142" textAnchor="middle" fill="rgba(60,28,0,0.55)" fontSize="10" fontFamily="MedievalSharp,cursive">More pieces · Surround</text>
+        </g>
+        <text x="190" y="95" textAnchor="middle" fill={KING_C} fontSize="22" fontFamily="MedievalSharp,cursive">vs</text>
+        <g className="ts-d">
+          <text x="300" y="20" textAnchor="middle" fill={KING_C} fontSize="12" fontFamily="MedievalSharp,cursive" letterSpacing="2">DEFENDERS</text>
+          <Piece cx={248} cy={75} r={11} type="def"/>
+          <Piece cx={274} cy={75} r={11} type="def"/>
+          <Piece cx={300} cy={75} r={11} type="def"/>
+          <Piece cx={326} cy={75} r={11} type="def"/>
+          <Piece cx={274} cy={105} r={11} type="def"/>
+          <Piece cx={300} cy={105} r={13} type="king"/>
+          <Piece cx={326} cy={105} r={11} type="def"/>
+          <text x="300" y="142" textAnchor="middle" fill="rgba(60,28,0,0.55)" fontSize="10" fontFamily="MedievalSharp,cursive">Fewer · Escort the King</text>
+        </g>
+      </svg>
+    ),
+    'movement': (
+      <svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg">
+        <style>{`
+          @keyframes mv-slide{0%,15%{transform:translateX(0)}70%,100%{transform:translateX(168px)}}
+          @keyframes mv-trail{0%,10%{stroke-dashoffset:200;opacity:0}30%{opacity:0.7}70%{stroke-dashoffset:0;opacity:0.7}85%,100%{opacity:0}}
+          @keyframes mv-dest{0%,65%{opacity:0}80%,100%{opacity:1}}
+          .mv-piece{animation:mv-slide 3.5s ease-in-out infinite;transform-box:fill-box;}
+          .mv-trail{stroke-dasharray:200;animation:mv-trail 3.5s ease-in-out infinite;}
+          .mv-dest{animation:mv-dest 3.5s ease-in-out infinite;}
+        `}</style>
+        {[0,1,2,3,4,5].map(c=>(
+          <rect key={c} x={10+c*46} y={50} width={45} height={45}
+            fill={c===4?'rgba(200,169,110,0.18)':'rgba(60,28,0,0.04)'}
+            stroke={c===4?KING_C:GRID} strokeWidth={c===4?1.5:0.8} rx={c===4?2:0}/>
+        ))}
+        <line className="mv-trail" x1="32" y1="72" x2="200" y2="72" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
+        <g className="mv-dest">
+          <ellipse cx={224} cy={72} rx={10} ry={13} fill="rgba(200,169,110,0.2)" stroke={KING_C} strokeWidth="1.5" strokeDasharray="3 2"/>
+        </g>
+        <g className="mv-piece">
+          <Piece cx={32} cy={72} r={11} type="atk"/>
+        </g>
+        <text x="150" y="130" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Any distance · Straight lines · No jumping</text>
+      </svg>
+    ),
+    'capture': (
+      <svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg">
+        <style>{`
+          @keyframes cap-move{0%,10%{transform:translateX(0)}60%,100%{transform:translateX(80px)}}
+          @keyframes cap-fade{0%,55%{opacity:1}80%,100%{opacity:0}}
+          @keyframes cap-flash{0%,58%{opacity:0;transform:scale(0.5)}72%{opacity:1;transform:scale(1)}90%,100%{opacity:0;transform:scale(1.4)}}
+          .cap-mover{animation:cap-move 4s ease-in-out infinite;transform-box:fill-box;}
+          .cap-victim{animation:cap-fade 4s ease-in-out infinite;}
+          .cap-burst{animation:cap-flash 4s ease-in-out infinite;transform-box:fill-box;}
+        `}</style>
+        {[0,1,2,3,4].map(c=>(
+          <rect key={c} x={10+c*56} y={60} width={55} height={55} fill="rgba(60,28,0,0.04)" stroke={GRID} strokeWidth="0.8"/>
+        ))}
+        <g className="cap-mover"><Piece cx={37} cy={87} r={13} type="atk"/></g>
+        <g className="cap-victim"><Piece cx={150} cy={87} r={13} type="def"/></g>
+        <Piece cx={206} cy={87} r={13} type="atk"/>
+        <g className="cap-burst" style={{transformOrigin:'150px 87px'}}>
+          {[0,45,90,135,180,225,270,315].map((a,i)=>(
+            <line key={i}
+              x1={150+Math.cos(a*Math.PI/180)*15} y1={87+Math.sin(a*Math.PI/180)*15}
+              x2={150+Math.cos(a*Math.PI/180)*24} y2={87+Math.sin(a*Math.PI/180)*24}
+              stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
+          ))}
+          <circle cx="150" cy="87" r="11" fill="rgba(200,169,110,0.35)" stroke={KING_C} strokeWidth="1.5"/>
+        </g>
+        <text x="150" y="148" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Sandwich between two of your own · Piece removed</text>
+      </svg>
+    ),
+    'hostile-squares': (
+      <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+        <style>{`
+          @keyframes hs-glow{0%,100%{opacity:0.45}50%{opacity:1}}
+          @keyframes hs-fade{0%,60%{opacity:1}80%,100%{opacity:0}}
+          @keyframes hs-ring{0%,62%{opacity:0;r:8}78%{opacity:1;r:20}92%,100%{opacity:0;r:26}}
+          .hs-sq{animation:hs-glow 2.5s ease-in-out infinite;}
+          .hs-vic{animation:hs-fade 3.5s ease-in-out infinite;}
+          .hs-ring{animation:hs-ring 3.5s ease-in-out infinite;}
+        `}</style>
+        {/* 4-cell row */}
+        {[0,1,2,3].map(c=>(
+          <rect key={c} x={10+c*70} y={55} width={69} height={69} fill="rgba(60,28,0,0.04)" stroke={GRID} strokeWidth="0.8"/>
+        ))}
+        {/* Left = empty corner acting as captor */}
+        <rect className="hs-sq" x={11} y={56} width={67} height={67} fill={SPECIAL} stroke={KING_C} strokeWidth={2} rx={3}/>
+        <text x="45" y="88" textAnchor="middle" fill={KING_C} fontSize="9" fontFamily="MedievalSharp,cursive">Corner</text>
+        {/* Victim (defender) in cell 1 */}
+        <g className="hs-vic"><Piece cx={115} cy={89} r={15} type="def"/></g>
+        {/* Cell 2 = attacker */}
+        <Piece cx={185} cy={89} r={15} type="atk"/>
+        {/* Cell 3 = empty throne */}
+        <rect x={221} y={56} width={67} height={67} fill="rgba(200,169,110,0.2)" stroke={KING_C} strokeWidth="1.5" strokeDasharray="4 2" rx={3}/>
+        <text x="255" y="88" textAnchor="middle" fill={KING_C} fontSize="9" fontFamily="MedievalSharp,cursive">Throne</text>
+        {/* Ring burst */}
+        <circle className="hs-ring" cx="115" cy="89" fill="none" stroke={KING_C} strokeWidth="1.5"/>
+        <text x="150" y="168" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Empty corner or Throne acts as second captor</text>
+      </svg>
+    ),
+    'king-capture': (
+      <svg viewBox="0 0 240 250" xmlns="http://www.w3.org/2000/svg">
+        <style>{`
+          @keyframes kc-n{0%,100%{transform:translateY(0)}50%{transform:translateY(14px)}}
+          @keyframes kc-s{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+          @keyframes kc-e{0%,100%{transform:translateX(0)}50%{transform:translateX(-14px)}}
+          @keyframes kc-w{0%,100%{transform:translateX(0)}50%{transform:translateX(14px)}}
+          @keyframes kc-king{0%,100%{opacity:1}65%,80%{opacity:0.35}}
+          .kc-n{animation:kc-n 2s ease-in-out infinite;transform-box:fill-box;}
+          .kc-s{animation:kc-s 2s ease-in-out infinite;transform-box:fill-box;}
+          .kc-e{animation:kc-e 2s ease-in-out infinite;transform-box:fill-box;}
+          .kc-w{animation:kc-w 2s ease-in-out infinite;transform-box:fill-box;}
+          .kc-king{animation:kc-king 2s ease-in-out infinite;}
+        `}</style>
+        <Grid cols={5} rows={5} size={40} ox={20} oy={20} throne/>
+        <g className="kc-king"><Piece cx={120} cy={120} r={12} type="king"/></g>
+        <g className="kc-n"><Piece cx={120} cy={40} r={11} type="atk"/></g>
+        <g className="kc-s"><Piece cx={120} cy={200} r={11} type="atk"/></g>
+        <g className="kc-e"><Piece cx={200} cy={120} r={11} type="atk"/></g>
+        <g className="kc-w"><Piece cx={40} cy={120} r={11} type="atk"/></g>
+        <text x="120" y="242" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">All four sides must be sealed simultaneously</text>
+      </svg>
+    ),
+    'king-escape': (
+      <svg viewBox="0 0 240 250" xmlns="http://www.w3.org/2000/svg">
+        <style>{`
+          @keyframes ke-go{0%,10%{transform:translate(0px,0px)}65%,100%{transform:translate(-80px,-80px)}}
+          @keyframes ke-trail{0%,8%{stroke-dashoffset:130;opacity:0}20%{opacity:0.85}62%{stroke-dashoffset:0;opacity:0.85}75%,100%{opacity:0}}
+          @keyframes ke-burst{0%,65%{opacity:0;r:6}75%{opacity:1;r:18}90%,100%{opacity:0;r:26}}
+          @keyframes ke-corner{0%,100%{opacity:0.4}50%{opacity:1}}
+          .ke-king{animation:ke-go 4s ease-in-out infinite;transform-box:fill-box;}
+          .ke-trail{stroke-dasharray:130;animation:ke-trail 4s ease-in-out infinite;}
+          .ke-burst{animation:ke-burst 4s ease-in-out infinite;}
+          .ke-corner{animation:ke-corner 2s ease-in-out infinite;}
+        `}</style>
+        <Grid cols={5} rows={5} size={40} ox={20} oy={20}/>
+        <rect className="ke-corner" x={21} y={21} width={38} height={38} fill={SPECIAL} stroke={KING_C} strokeWidth={2.5} rx={4}/>
+        <text x="40" y="47" textAnchor="middle" fill={KING_C} fontSize="8" fontFamily="MedievalSharp,cursive">escape</text>
+        <line className="ke-trail" x1="120" y1="120" x2="40" y2="40" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round" strokeDasharray="6 4"/>
+        <circle className="ke-burst" cx="40" cy="40" fill="none" stroke={KING_C} strokeWidth="1.5"/>
+        <g className="ke-king" style={{transformOrigin:'120px 120px'}}>
+          <Piece cx={120} cy={120} r={13} type="king"/>
+        </g>
+        <text x="120" y="242" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Move the King to a corner · Defenders win</text>
+      </svg>
+    ),
+    'shieldwall': (
+      <svg viewBox="0 0 320 190" xmlns="http://www.w3.org/2000/svg">
+        <style>{`
+          @keyframes sw-inl{0%,100%{transform:translateX(0)}50%{transform:translateX(22px)}}
+          @keyframes sw-inr{0%,100%{transform:translateX(0)}50%{transform:translateX(-22px)}}
+          @keyframes sw-die{0%,50%{opacity:1;transform:scale(1)}80%{opacity:0;transform:scale(1.5)}100%{opacity:0;transform:scale(1.5)}}
+          .sw-atk-l{animation:sw-inl 2.5s ease-in-out infinite;transform-box:fill-box;}
+          .sw-atk-r{animation:sw-inr 2.5s ease-in-out infinite;transform-box:fill-box;}
+          .sw-d1{animation:sw-die 2.5s ease-in-out infinite;transform-box:fill-box;}
+          .sw-d2{animation:sw-die 2.5s ease-in-out .08s infinite;transform-box:fill-box;}
+          .sw-d3{animation:sw-die 2.5s ease-in-out .16s infinite;transform-box:fill-box;}
+        `}</style>
+        <rect x={20} y={25} width={280} height={10} fill={ATK} opacity="0.35" rx="2"/>
+        <text x="160" y="20" textAnchor="middle" fill="rgba(60,28,0,0.4)" fontSize="8" fontFamily="MedievalSharp,cursive">Board edge</text>
+        {[0,1,2,3,4].map(c=>(
+          <rect key={c} x={20+c*56} y={35} width={55} height={55} fill="rgba(60,28,0,0.04)" stroke={GRID} strokeWidth="0.8"/>
+        ))}
+        <g className="sw-d1"><Piece cx={104} cy={62} r={14} type="def"/></g>
+        <g className="sw-d2"><Piece cx={160} cy={62} r={14} type="def"/></g>
+        <g className="sw-d3"><Piece cx={216} cy={62} r={14} type="def"/></g>
+        <g className="sw-atk-l"><Piece cx={48} cy={62} r={14} type="atk"/></g>
+        <g className="sw-atk-r"><Piece cx={272} cy={62} r={14} type="atk"/></g>
+        <line x1="64" y1="62" x2="82" y2="62" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
+        <polyline points="78,57 84,62 78,67" fill="none" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <line x1="256" y1="62" x2="238" y2="62" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
+        <polyline points="242,57 236,62 242,67" fill="none" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <text x="160" y="160" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Flank both ends simultaneously · Whole line wiped</text>
+      </svg>
+    ),
+    'edge-escape': (
+      <svg viewBox="0 0 240 250" xmlns="http://www.w3.org/2000/svg">
+        <style>{`
+          @keyframes ee-edge{0%,100%{opacity:0.35}50%{opacity:0.85}}
+          @keyframes ee-king{0%,10%{transform:translateY(0)}65%,100%{transform:translateY(-80px)}}
+          @keyframes ee-burst{0%,63%{opacity:0;r:8}77%{opacity:1;r:18}90%,100%{opacity:0;r:24}}
+          .ee-edge{animation:ee-edge 2s ease-in-out infinite;}
+          .ee-king{animation:ee-king 3.5s ease-in-out infinite;transform-box:fill-box;}
+          .ee-burst{animation:ee-burst 3.5s ease-in-out infinite;}
+        `}</style>
+        <Grid cols={5} rows={5} size={40} ox={20} oy={20}/>
+        {[0,1,2,3,4].map(c=>(
+          <rect key={c} className="ee-edge" x={21+c*40} y={21} width={38} height={38} fill={SPECIAL} stroke={KING_C} strokeWidth={1.5} rx={2}/>
+        ))}
+        <text x="120" y="15" textAnchor="middle" fill={KING_C} fontSize="9" fontFamily="MedievalSharp,cursive">any edge square</text>
+        <circle className="ee-burst" cx="120" cy="40" fill="none" stroke={KING_C} strokeWidth="1.5"/>
+        <g className="ee-king" style={{transformOrigin:'120px 120px'}}>
+          <Piece cx={120} cy={120} r={13} type="king"/>
+        </g>
+        <text x="120" y="242" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Tawlbwrdd variant · Reach any edge to win</text>
+      </svg>
+    ),
+    'weak-king': (
+      <svg viewBox="0 0 300 170" xmlns="http://www.w3.org/2000/svg">
+        <style>{`
+          @keyframes wk-l{0%,100%{transform:translateX(0)}55%{transform:translateX(20px)}}
+          @keyframes wk-r{0%,100%{transform:translateX(0)}55%{transform:translateX(-20px)}}
+          @keyframes wk-die{0%,50%{opacity:1;transform:scale(1)}75%{opacity:0;transform:scale(1.5)}100%{opacity:0}}
+          @keyframes wk-burst{0%,52%{opacity:0;r:10}67%{opacity:1;r:22}82%,100%{opacity:0;r:28}}
+          .wk-l{animation:wk-l 3s ease-in-out infinite;transform-box:fill-box;}
+          .wk-r{animation:wk-r 3s ease-in-out infinite;transform-box:fill-box;}
+          .wk-king{animation:wk-die 3s ease-in-out infinite;transform-box:fill-box;}
+          .wk-burst{animation:wk-burst 3s ease-in-out infinite;}
+        `}</style>
+        {[0,1,2].map(c=>(
+          <rect key={c} x={60+c*60} y={55} width={59} height={59} fill="rgba(60,28,0,0.04)" stroke={GRID} strokeWidth="0.8"/>
+        ))}
+        <g className="wk-l"><Piece cx={89} cy={84} r={14} type="atk"/></g>
+        <g className="wk-king" style={{transformOrigin:'150px 84px'}}><Piece cx={150} cy={84} r={14} type="king"/></g>
+        <g className="wk-r"><Piece cx={211} cy={84} r={14} type="atk"/></g>
+        <circle className="wk-burst" cx="150" cy="84" fill="none" stroke={KING_C} strokeWidth="1.5"/>
+        <text x="150" y="148" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Weak king — sandwiched like any other piece</text>
+      </svg>
+    ),
+    'saami-start': (() => {
+      const S = 22, OX = 2, OY = 2
+      const defs: [number,number][] = [[3,4],[5,4],[4,3],[4,5],[2,4],[6,4],[4,2],[4,6]]
+      const atks: [number,number][] = [[0,3],[0,4],[0,5],[3,0],[4,0],[5,0],[8,3],[8,4],[8,5],[3,8],[4,8],[5,8]]
+      return (
+        <svg viewBox="0 0 202 215" xmlns="http://www.w3.org/2000/svg">
+          <Grid cols={9} rows={9} size={S} ox={OX} oy={OY} throne/>
+          {defs.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={7} type="def"/>)}
+          {atks.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={6} type="atk"/>)}
+          <Piece cx={OX+4*S+S/2} cy={OY+4*S+S/2} r={8} type="king"/>
+          <text x="101" y="211" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Saami Tablut · 9×9 · 9 defenders · 16 attackers</text>
+        </svg>
+      )
+    })(),
+    'brandub-board': (() => {
+      const S = 26, OX = 4, OY = 4
+      const defs: [number,number][] = [[2,3],[4,3],[3,2],[3,4]]
+      const atks: [number,number][] = [[0,3],[3,0],[6,3],[3,6],[1,3],[3,1],[5,3],[3,5]]
+      return (
+        <svg viewBox="0 0 196 200" xmlns="http://www.w3.org/2000/svg">
+          <Grid cols={7} rows={7} size={S} ox={OX} oy={OY} throne/>
+          {defs.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={8} type="def"/>)}
+          {atks.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={7} type="atk"/>)}
+          <Piece cx={OX+3*S+S/2} cy={OY+3*S+S/2} r={9} type="king"/>
+          <text x="98" y="196" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Brandub · 7×7 · Celtic · 4 defenders · 8 attackers</text>
+        </svg>
+      )
+    })(),
+    'ard-ri-board': (() => {
+      const S = 26, OX = 4, OY = 4
+      const defs: [number,number][] = [[2,3],[4,3],[3,2],[3,4],[1,3],[5,3],[3,1],[3,5]]
+      const atks: [number,number][] = [[0,2],[0,3],[0,4],[2,0],[3,0],[4,0],[6,2],[6,3],[6,4],[2,6],[3,6],[4,6]]
+      return (
+        <svg viewBox="0 0 196 200" xmlns="http://www.w3.org/2000/svg">
+          <Grid cols={7} rows={7} size={S} ox={OX} oy={OY} throne/>
+          {defs.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={7} type="def"/>)}
+          {atks.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={6} type="atk"/>)}
+          <Piece cx={OX+3*S+S/2} cy={OY+3*S+S/2} r={9} type="king"/>
+          <text x="98" y="196" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Ard Rí · 7×7 · Irish · 8 defenders · 12 attackers</text>
+        </svg>
+      )
+    })(),
+    'alea-board': (
+      <svg viewBox="0 0 220 230" xmlns="http://www.w3.org/2000/svg">
+        <style>{`
+          @keyframes al-glow{0%,100%{opacity:0.4}50%{opacity:1}}
+          .al-king{animation:al-glow 2s ease-in-out infinite;}
+        `}</style>
+        {Array.from({length:19},(_,i)=>(
+          <g key={i}>
+            <line x1={10} y1={10+i*10} x2={190} y2={10+i*10} stroke="rgba(60,28,0,0.18)" strokeWidth="0.6"/>
+            <line x1={10+i*10} y1={10} x2={10+i*10} y2={190} stroke="rgba(60,28,0,0.18)" strokeWidth="0.6"/>
+          </g>
+        ))}
+        <rect x="10" y="10" width="180" height="180" fill="none" stroke="rgba(60,28,0,0.4)" strokeWidth="1.5"/>
+        {[[10,10],[190,10],[10,190],[190,190]].map(([x,y],i)=>(
+          <rect key={i} x={x-6} y={y-6} width={12} height={12} fill={SPECIAL} stroke={KING_C} strokeWidth="1.5" rx="1"/>
+        ))}
+        {([[5,9],[9,5],[9,13],[13,9],[4,9],[9,4],[9,14],[14,9],[6,7],[6,11],[7,6],[7,12],[11,6],[11,12],[12,7],[12,11],[3,9],[9,3],[9,15],[15,9],[7,9],[9,7],[9,11],[11,9]] as [number,number][]).map(([r,c],i)=>(
+          <circle key={i} cx={10+c*10} cy={10+r*10} r={3.5} fill={DEF} stroke="#7a5c2a" strokeWidth="0.7"/>
+        ))}
+        {([[0,6],[0,7],[0,8],[0,9],[0,10],[0,11],[0,12],[6,0],[7,0],[8,0],[9,0],[10,0],[11,0],[12,0],[18,6],[18,7],[18,8],[18,9],[18,10],[18,11],[18,12],[6,18],[7,18],[8,18],[9,18],[10,18],[11,18],[12,18],[1,8],[1,9],[1,10],[8,1],[9,1],[10,1],[17,8],[17,9],[17,10],[8,17],[9,17],[10,17]] as [number,number][]).map(([r,c],i)=>(
+          <circle key={i} cx={10+c*10} cy={10+r*10} r={3} fill={ATK} stroke="#1a0a02" strokeWidth="0.6"/>
+        ))}
+        <g className="al-king">
+          <circle cx="100" cy="100" r="5.5" fill={KING_C} stroke="#8a6020" strokeWidth="1.2"/>
+          <circle cx="100" cy="100" r="2" fill="#8a6020"/>
+        </g>
+        <text x="110" y="216" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Alea Evangelii · 19×19 · ~96 pieces</text>
+      </svg>
+    ),
+  }
+
+  const svg = svgs[label]
+  if (!svg) return <div className="htp-illustration">{label}</div>
+  return <div className="htp-illustration htp-illustration--svg">{svg}</div>
 }
 
 function HowToPlayScroll({ onClose }: { onClose: () => void }) {
