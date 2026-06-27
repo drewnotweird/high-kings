@@ -1,6 +1,6 @@
 import { useRef, Suspense, useState, useEffect, useContext, useMemo } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Environment, useProgress, Line } from '@react-three/drei'
+import { OrbitControls, useProgress, Line } from '@react-three/drei'
 import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group, Vector3, Mesh, MeshStandardMaterial } from 'three'
 import { Board } from './Board'
 import { Piece, type MenuPhase } from '../pieces/Piece'
