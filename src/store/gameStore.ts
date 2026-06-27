@@ -20,7 +20,7 @@ export type Theme = 'natural'
 export type PlayerSide = 'attacker' | 'defender'
 export type GameMode = 'attacker' | 'defender' | '2player'
 export type Difficulty = 'easy' | 'medium' | 'hard'
-export type Rules = 'Copenhagen' | 'Tawlbwrdd' | 'Linnaeus Tablut' | 'Saami Tablut' | 'Brandub' | 'Ard Rí' | 'Alea Evangelii' | 'Tyr' | 'Simple Tyr'
+export type Rules = 'Copenhagen' | 'Fetlar' | 'Tawlbwrdd' | 'Linnaeus Tablut' | 'Saami Tablut' | 'Brandub' | 'Ard Rí' | 'Alea Evangelii' | 'Tyr' | 'Simple Tyr'
 
 interface HistoryEntry {
   pieces: Piece[]

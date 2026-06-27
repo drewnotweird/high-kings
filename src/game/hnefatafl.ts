@@ -38,6 +38,9 @@ const COPENHAGEN: BoardConfig = {
   ],
 }
 
+// Fetlar — 11×11. Same starting positions as Copenhagen but corner escape only, no shieldwall.
+const FETLAR: BoardConfig = { ...COPENHAGEN, shieldwall: false }
+
 // Tawlbwrdd — 11x11 Welsh variant. King escapes to any edge square (not just corners).
 const TAWLBWRDD: BoardConfig = { ...COPENHAGEN, kingEscapeEdge: true }
 
@@ -224,6 +227,7 @@ const SIMPLE_TYR: BoardConfig = {
 
 const CONFIGS: Record<string, BoardConfig> = {
   Copenhagen: COPENHAGEN,
+  Fetlar: FETLAR,
   Tawlbwrdd: TAWLBWRDD,
   'Linnaeus Tablut': LINNAEUS_TABLUT,
   'Saami Tablut': SAAMI_TABLUT,

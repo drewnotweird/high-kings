@@ -414,6 +414,7 @@ body, button, input, select {
   transition: color 0.15s;
 }
 .settings-cycler__arrow:hover { color: #e8d8b8; }
+.settings-cycler__arrow:disabled { opacity: 0.2; cursor: default; }
 .settings-cycler__value {
   font-size: 11px;
   letter-spacing: 1px;
@@ -783,7 +784,7 @@ function Cycler<T extends string>({ options, value, onChange, isDisabled }: {
 const BOARD_SIZE_RULES: Record<number, Rules[]> = {
   7:  ['Brandub', 'Ard Rí'],
   9:  ['Linnaeus Tablut', 'Saami Tablut'],
-  11: ['Copenhagen', 'Tawlbwrdd', 'Simple Tyr'],
+  11: ['Copenhagen', 'Fetlar', 'Tawlbwrdd', 'Simple Tyr'],
   13: [],
   15: ['Tyr'],
   17: [],
@@ -793,12 +794,12 @@ const BOARD_SIZE_RULES: Record<number, Rules[]> = {
 const RULES_BOARD_SIZE: Record<Rules, number> = {
   'Brandub': 7, 'Ard Rí': 7,
   'Linnaeus Tablut': 9, 'Saami Tablut': 9,
-  'Copenhagen': 11, 'Tawlbwrdd': 11, 'Simple Tyr': 11,
+  'Copenhagen': 11, 'Fetlar': 11, 'Tawlbwrdd': 11, 'Simple Tyr': 11,
   'Tyr': 15,
   'Alea Evangelii': 19,
 }
 
-const ALL_RULES: Rules[] = ['Copenhagen', 'Tawlbwrdd', 'Simple Tyr', 'Linnaeus Tablut', 'Saami Tablut', 'Brandub', 'Ard Rí', 'Tyr', 'Alea Evangelii']
+const ALL_RULES: Rules[] = ['Copenhagen', 'Fetlar', 'Tawlbwrdd', 'Simple Tyr', 'Linnaeus Tablut', 'Saami Tablut', 'Brandub', 'Ard Rí', 'Tyr', 'Alea Evangelii']
 const ALL_BOARD_SIZES = [7, 9, 11, 13, 15, 17, 19].filter(n => (BOARD_SIZE_RULES[n] ?? []).length > 0)
 
 
