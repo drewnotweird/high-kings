@@ -15,6 +15,7 @@ export interface BoardConfig {
   kingEscapeEdge?: boolean  // king wins by reaching any edge square (not just corners)
   shieldwall?: boolean      // Copenhagen/Tawlbwrdd: contiguous edge line captured when both ends flanked
   weakKing?: boolean        // king off the throne can be sandwiched like a normal piece
+  noThrone?: boolean        // center square has no special properties (Tyr)
 }
 
 const COPENHAGEN: BoardConfig = {
@@ -150,6 +151,77 @@ const ALEA_EVANGELII: BoardConfig = {
   ],
 }
 
+// Tyr — 15×15. Designed by Aage Nielsen. Weak king (2-sided capture), edge escape,
+// no throne. Attackers move first. 40 attackers, 20 defenders.
+// Starting positions read from the official rules diagram (aagenielsen.dk/tyr_rules.pdf).
+const TYR: BoardConfig = {
+  boardSize: 15,
+  center: 7,
+  kingEscapeEdge: true,
+  weakKing: true,
+  noThrone: true,
+  attackerStarts: [
+    // Row 0 (board row 15)
+    [0,0],[0,3],[0,7],[0,11],[0,14],
+    // Row 2 (board row 13)
+    [2,2],[2,5],[2,9],[2,12],
+    // Row 3 (board row 12)
+    [3,0],[3,3],[3,6],[3,8],[3,11],[3,14],
+    // Row 5 (board row 10)
+    [5,2],[5,12],
+    // Row 6 (board row 9)
+    [6,3],[6,11],
+    // Row 7 (board row 8) — edges
+    [7,0],[7,14],
+    // Row 8 (board row 7)
+    [8,3],[8,11],
+    // Row 9 (board row 6)
+    [9,2],[9,12],
+    // Row 11 (board row 4)
+    [11,0],[11,3],[11,6],[11,8],[11,11],[11,14],
+    // Row 12 (board row 3)
+    [12,2],[12,5],[12,9],[12,12],
+    // Row 14 (board row 1)
+    [14,0],[14,3],[14,7],[14,11],[14,14],
+  ],
+  defenderStarts: [
+    [4,4],[4,7],[4,10],
+    [5,6],[5,8],
+    [6,5],[6,7],[6,9],
+    [7,4],[7,6],[7,8],[7,10],
+    [8,5],[8,7],[8,9],
+    [9,6],[9,8],
+    [10,4],[10,7],[10,10],
+  ],
+}
+
+// Simple Tyr — 11×11. Same rules as Tyr (weak king, edge escape, no throne, attackers first)
+// but without Commanders. 24 attackers, 12 defenders.
+// Starting positions read from the official rules diagram (aagenielsen.dk/tyr_rules.pdf).
+const SIMPLE_TYR: BoardConfig = {
+  boardSize: 11,
+  center: 5,
+  kingEscapeEdge: true,
+  weakKing: true,
+  noThrone: true,
+  attackerStarts: [
+    [0,0],[0,3],[0,7],[0,10],
+    [2,2],[2,5],[2,8],
+    [3,0],[3,3],[3,7],[3,10],
+    [5,2],[5,8],
+    [7,0],[7,3],[7,7],[7,10],
+    [8,2],[8,5],[8,8],
+    [10,0],[10,3],[10,7],[10,10],
+  ],
+  defenderStarts: [
+    [3,5],
+    [4,4],[4,5],[4,6],
+    [5,3],[5,4],[5,6],[5,7],
+    [6,4],[6,5],[6,6],
+    [7,5],
+  ],
+}
+
 const CONFIGS: Record<string, BoardConfig> = {
   Copenhagen: COPENHAGEN,
   Tawlbwrdd: TAWLBWRDD,
@@ -158,10 +230,16 @@ const CONFIGS: Record<string, BoardConfig> = {
   Brandub: BRANDUB,
   'Ard Rí': ARD_RI,
   'Alea Evangelii': ALEA_EVANGELII,
+  Tyr: TYR,
+  'Simple Tyr': SIMPLE_TYR,
 }
 
-export function getBoardConfig(rules: string): BoardConfig {
-  return CONFIGS[rules] ?? COPENHAGEN
+export function getBoardConfig(rules: string, boardSize?: number): BoardConfig {
+  const config = CONFIGS[rules] ?? COPENHAGEN
+  if (boardSize !== undefined && boardSize !== config.boardSize) {
+    return { ...config, boardSize, center: Math.floor(boardSize / 2) }
+  }
+  return config
 }
 
 export function isCorner(row: number, col: number, boardSize: number): boolean {
@@ -194,9 +272,9 @@ function isFriendly(a: Piece, b: Piece): boolean {
 }
 
 // A square that acts as a phantom captor for custodian captures
-function isHostile(row: number, col: number, boardSize: number, center: number, pieces: Piece[]): boolean {
+function isHostile(row: number, col: number, boardSize: number, center: number, pieces: Piece[], noThrone = false): boolean {
   if (isCorner(row, col, boardSize)) return true
-  if (isThrone(row, col, center)) return !pieces.some(p => p.row === row && p.col === col)
+  if (!noThrone && isThrone(row, col, center)) return !pieces.some(p => p.row === row && p.col === col)
   return false
 }
 
@@ -205,7 +283,8 @@ export function getValidMoves(
   piece: Piece,
   allPieces: Piece[],
   boardSize: number,
-  center: number
+  center: number,
+  noThrone = false
 ): [number, number][] {
   const occupied = new Set(allPieces.map(p => `${p.row},${p.col}`))
   const moves: [number, number][] = []
@@ -218,8 +297,8 @@ export function getValidMoves(
       if (r < 0 || r >= boardSize || c < 0 || c >= boardSize) break
       if (occupied.has(`${r},${c}`)) break
 
-      // Corners and throne block non-king movement entirely; king can land on them
-      if (isCorner(r, c, boardSize) || isThrone(r, c, center)) {
+      // Corners and (unless noThrone) throne block non-king movement; king can land on them
+      if (isCorner(r, c, boardSize) || (!noThrone && isThrone(r, c, center))) {
         if (piece.type === 'king') moves.push([r, c])
         break
       }
@@ -231,9 +310,9 @@ export function getValidMoves(
   return moves
 }
 
-function checkKingCaptured(king: Piece, pieces: Piece[], boardSize: number, center: number, weakKing: boolean): boolean {
-  // Weak king off the throne: sandwiched on any axis like a normal piece
-  if (weakKing && !isThrone(king.row, king.col, center)) {
+function checkKingCaptured(king: Piece, pieces: Piece[], boardSize: number, center: number, weakKing: boolean, noThrone = false): boolean {
+  // Weak king off the throne (or when there is no throne): sandwiched on any axis like a normal piece
+  if (weakKing && (noThrone || !isThrone(king.row, king.col, center))) {
     for (const [dr, dc] of DIRS) {
       const r1 = king.row + dr, c1 = king.col + dc
       const r2 = king.row - dr, c2 = king.col - dc
@@ -339,7 +418,8 @@ export function applyMove(
   center: number,
   kingEscapeEdge = false,
   shieldwall = false,
-  weakKing = false
+  weakKing = false,
+  noThrone = false
 ): MoveResult {
   // Move piece
   const moved = pieces.map(p => p.id === pieceId ? { ...p, row: toRow, col: toCol } : p)
@@ -356,7 +436,7 @@ export function applyMove(
     const br = nr + dr
     const bc = nc + dc
     const beyond = moved.find(p => p.row === br && p.col === bc)
-    if ((beyond && isFriendly(mover, beyond)) || isHostile(br, bc, boardSize, center, moved)) {
+    if ((beyond && isFriendly(mover, beyond)) || isHostile(br, bc, boardSize, center, moved, noThrone)) {
       capturedIds.push(neighbor.id)
     }
   }
@@ -381,7 +461,7 @@ export function applyMove(
     return { pieces: remaining, capturedIds, winner: 'defender' }
   }
 
-  if (checkKingCaptured(king, remaining, boardSize, center, weakKing)) {
+  if (checkKingCaptured(king, remaining, boardSize, center, weakKing, noThrone)) {
     return { pieces: remaining.filter(p => p.type !== 'king'), capturedIds: [...capturedIds, king.id], winner: 'attacker' }
   }
 

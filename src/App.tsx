@@ -3,10 +3,12 @@ import { Scene, getIntroDurationMs } from './components/board/Scene'
 import { Board2D } from './components/board/Board2D'
 import { ThemeSwitcher } from './components/ui/ThemeSwitcher'
 import { DefeatFire } from './components/ui/DefeatFire'
+import { AuthModal } from './components/ui/AuthModal'
 import { useGameStore } from './store/gameStore'
 import type { PlayerSide, GameMode, Difficulty, Rules } from './store/gameStore'
 import { getBestMove } from './game/ai'
 import { getBoardConfig } from './game/hnefatafl'
+import { supabase } from './lib/supabase'
 
 const fireCSS = `
 body, button, input, select {
@@ -81,6 +83,21 @@ body, button, input, select {
 .ui-button:hover { opacity: 0.7; }
 .ui-button__icon { width: 22px; height: 22px; flex-shrink: 0; }
 .ui-button__label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; }
+.ui-button__profile-dot { position: absolute; top: 8px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: #5dba85; border: 1.5px solid rgba(0,0,0,0.6); }
+.profile-scroll__name { font-size: clamp(20px, 4vw, 30px); letter-spacing: 3px; text-transform: uppercase; color: #2e1606; margin: 8px 0; }
+.profile-scroll__name-row { display: flex; align-items: center; gap: 12px; justify-content: center; margin: 8px 0; }
+.profile-scroll__edit-btn { background: none; border: 1px solid #a07840; color: #a07840; font-family: inherit; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 10px; cursor: pointer; border-radius: 3px; transition: opacity 0.2s; }
+.profile-scroll__edit-btn:hover { opacity: 0.7; }
+.profile-scroll__edit-name { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 8px 0; }
+.auth-modal__input.profile-scroll__name-input { max-width: 220px; text-align: center; color: #2e1606; background: rgba(255,255,255,0.7); border-color: rgba(100,60,10,0.3); }
+.profile-scroll__name-actions { display: flex; gap: 8px; justify-content: center; }
+.profile-scroll__stat-block { margin: 10px 0; text-align: center; }
+.profile-scroll__stat-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #2e1606; margin-bottom: 4px; }
+.profile-scroll__stat-row { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: clamp(14px, 2.5vw, 20px); letter-spacing: 1px; margin: 2px 0; }
+.profile-scroll__stat-type { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #7a5228; width: 80px; text-align: right; }
+.profile-scroll__stat-win { color: #3a7a3a; }
+.profile-scroll__stat-sep { color: #7a5228; }
+.profile-scroll__stat-loss { color: #7a2020; }
 .menu-overlay {
   position: absolute;
   inset: 0;
@@ -129,6 +146,8 @@ body, button, input, select {
   box-sizing: border-box;
 }
 .menu-overlay__item:hover { border-color: rgba(200,160,40,0.9); background: rgba(30,15,0,0.9); }
+.menu-overlay__row { display: flex; gap: 8px; width: 100%; }
+.menu-overlay__item--half { flex: 1; }
 .settings-panels {
   display: flex;
   flex-direction: column;
@@ -542,6 +561,71 @@ body, button, input, select {
 .role-select__option-text { display: flex; flex-direction: column; gap: 3px; flex: 1; align-items: center; text-align: center; }
 .role-select__option-name { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; }
 .role-select__option-desc { font-size: 11px; letter-spacing: 0.5px; color: #a09070; }
+.auth-modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.75);
+  display: flex; align-items: center; justify-content: center;
+  animation: sceneFadeIn 0.2s ease-out forwards;
+}
+.auth-modal {
+  background: #0e0c09;
+  border: 1px solid rgba(200,160,40,0.3);
+  border-radius: 10px;
+  padding: 32px 28px;
+  width: 100%; max-width: 340px;
+  display: flex; flex-direction: column; gap: 10px;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.8);
+}
+.auth-modal__title { font-size: 18px; letter-spacing: 3px; text-transform: uppercase; color: #e8d8b8; text-align: center; margin-bottom: 4px; }
+.auth-modal__subtitle { font-size: 12px; color: #a09070; text-align: center; letter-spacing: 0.5px; margin-bottom: 4px; }
+.auth-modal__input {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(200,160,40,0.2);
+  border-radius: 6px;
+  padding: 10px 14px;
+  color: #e8d8b8;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+.auth-modal__input:focus { border-color: rgba(200,160,40,0.6); }
+.auth-modal__input::placeholder { color: rgba(200,180,140,0.3); }
+.auth-modal__btn {
+  border-radius: 6px; padding: 10px 16px; font-size: 12px;
+  letter-spacing: 2px; text-transform: uppercase; cursor: pointer;
+  border: none; font-family: inherit; transition: opacity 0.2s;
+}
+.auth-modal__btn:disabled { opacity: 0.5; cursor: default; }
+.auth-modal__btn--primary {
+  background: linear-gradient(135deg, #b8880a, #8a6008);
+  color: #f5e8c0;
+  margin-top: 4px;
+}
+.auth-modal__btn--primary:hover:not(:disabled) { opacity: 0.85; }
+.auth-modal__btn--ghost {
+  background: transparent; color: #a09070;
+  border: 1px solid rgba(200,160,40,0.15);
+}
+.auth-modal__btn--ghost:hover { border-color: rgba(200,160,40,0.4); color: #c8a860; }
+.auth-modal__divider { text-align: center; font-size: 11px; color: rgba(200,180,140,0.3); letter-spacing: 1px; margin: 2px 0; }
+.auth-modal__error { color: #d47060; font-size: 11px; letter-spacing: 0.5px; text-align: center; }
+.auth-user-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px;
+  background: rgba(200,160,40,0.08);
+  border: 1px solid rgba(200,160,40,0.2);
+  border-radius: 20px;
+  font-size: 11px; letter-spacing: 1px; color: #c8a860;
+}
+.auth-user-chip__logout {
+  background: none; border: none; cursor: pointer;
+  color: rgba(200,160,40,0.4); font-size: 14px; line-height: 1;
+  padding: 0; margin-left: 2px; font-family: inherit;
+  transition: color 0.2s;
+}
+.auth-user-chip__logout:hover { color: #d47060; }
 @keyframes mistDrift {
   0%   { transform: translateX(0px)   translateY(0px);  opacity: 0;    }
   15%  { opacity: var(--peak); }
@@ -658,6 +742,16 @@ function MenuButton({ onClick, isOpen }: { onClick: () => void; isOpen: boolean 
   )
 }
 
+function ProfileButton({ onClick, loggedIn }: { onClick: () => void; loggedIn: boolean }) {
+  return (
+    <button className="ui-button ui-button--profile" onClick={onClick} style={{ position: 'relative' }}>
+      <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/profile.svg`} alt="" />
+      <span className="ui-button__label">{loggedIn ? 'You' : 'Login'}</span>
+      {loggedIn && <span className="ui-button__profile-dot" />}
+    </button>
+  )
+}
+
 function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
   return (
     <button className={`settings-toggle settings-toggle--${on ? 'on' : 'off'}`} onClick={onClick}>
@@ -666,22 +760,46 @@ function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
   )
 }
 
-function Cycler<T extends string>({ options, value, onChange }: {
+function Cycler<T extends string>({ options, value, onChange, isDisabled }: {
   options: T[]
   value: T
   onChange: (v: T) => void
+  isDisabled?: (v: T) => boolean
 }) {
-  const idx = options.indexOf(value)
-  const prev = () => onChange(options[(idx - 1 + options.length) % options.length])
-  const next = () => onChange(options[(idx + 1) % options.length])
+  const enabled = isDisabled ? options.filter(o => !isDisabled(o)) : options
+  const ei = enabled.indexOf(value)
+  const prev = () => { if (enabled.length > 0) onChange(enabled[(ei - 1 + enabled.length) % enabled.length]) }
+  const next = () => { if (enabled.length > 0) onChange(enabled[(ei + 1) % enabled.length]) }
+  const valueDisabled = isDisabled?.(value) ?? false
   return (
     <div className="settings-cycler">
-      <button className="settings-cycler__arrow" onClick={prev}>&#8249;</button>
-      <span className="settings-cycler__value">{value}</span>
-      <button className="settings-cycler__arrow" onClick={next}>&#8250;</button>
+      <button className="settings-cycler__arrow" onClick={prev} disabled={enabled.length <= 1}>&#8249;</button>
+      <span className="settings-cycler__value" style={{ opacity: valueDisabled ? 0.35 : 1 }}>{value}</span>
+      <button className="settings-cycler__arrow" onClick={next} disabled={enabled.length <= 1}>&#8250;</button>
     </div>
   )
 }
+
+const BOARD_SIZE_RULES: Record<number, Rules[]> = {
+  7:  ['Brandub', 'Ard Rí'],
+  9:  ['Linnaeus Tablut', 'Saami Tablut'],
+  11: ['Copenhagen', 'Tawlbwrdd', 'Simple Tyr'],
+  13: [],
+  15: ['Tyr'],
+  17: [],
+  19: ['Alea Evangelii'],
+}
+
+const RULES_BOARD_SIZE: Record<Rules, number> = {
+  'Brandub': 7, 'Ard Rí': 7,
+  'Linnaeus Tablut': 9, 'Saami Tablut': 9,
+  'Copenhagen': 11, 'Tawlbwrdd': 11, 'Simple Tyr': 11,
+  'Tyr': 15,
+  'Alea Evangelii': 19,
+}
+
+const ALL_RULES: Rules[] = ['Copenhagen', 'Tawlbwrdd', 'Simple Tyr', 'Linnaeus Tablut', 'Saami Tablut', 'Brandub', 'Ard Rí', 'Tyr', 'Alea Evangelii']
+const ALL_BOARD_SIZES = [7, 9, 11, 13, 15, 17, 19].filter(n => (BOARD_SIZE_RULES[n] ?? []).length > 0)
 
 
 function CreditsScroll({ onClose }: { onClose: () => void }) {
@@ -708,6 +826,129 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
           </div>
           <hr className="credits-page__rule" />
           <button className="credits-page__close-btn" onClick={handleClose}>Close</button>
+        </div>
+      </div>
+      <div className="credits-page__bottom" style={{ backgroundImage: `url(${base}wood-bottom.jpg)` }} />
+    </div>
+  )
+}
+
+type StatRow = { opponent_type: string; result: string; rules: string; board_size: number; count: number }
+
+function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: () => void }) {
+  const [closing, setClosing] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [nameInput, setNameInput] = useState('')
+  const [nameError, setNameError] = useState<string | null>(null)
+  const [nameSaving, setNameSaving] = useState(false)
+  const [stats, setStats] = useState<StatRow[]>([])
+  const { userId, username, setAuth, setUsername } = useGameStore()
+
+  useEffect(() => {
+    if (!userId) return
+    supabase
+      .from('game_results')
+      .select('opponent_type, result, rules, board_size, count:id.count()')
+      .eq('user_id', userId)
+      .then(({ data }) => { if (data) setStats(data as StatRow[]) })
+  }, [userId])
+  const handleClose = () => { setClosing(true); setTimeout(onClose, 350) }
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    setAuth(null, null)
+    handleClose()
+  }
+  const handleStartEdit = () => { setNameInput(username ?? ''); setNameError(null); setEditingName(true) }
+  const handleSaveName = async () => {
+    const trimmed = nameInput.trim()
+    if (!trimmed || trimmed.length < 3) { setNameError('Must be at least 3 characters'); return }
+    if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) { setNameError('Letters, numbers and underscores only'); return }
+    setNameSaving(true); setNameError(null)
+    const { error } = await supabase.from('profiles').upsert({ id: userId, username: trimmed })
+    if (error) {
+      setNameError(error.message.includes('unique') ? 'That name is taken' : error.message)
+      setNameSaving(false); return
+    }
+    setUsername(trimmed)
+    setNameSaving(false)
+    setEditingName(false)
+  }
+  const base = import.meta.env.BASE_URL
+  return (
+    <div className={`credits-page${closing ? ' credits-page--closing' : ''}`}>
+      <div className="credits-page__top" style={{ backgroundImage: `url(${base}wood-top.jpg)` }} />
+      <div className="credits-page__middle">
+        <div className="credits-page__paper" style={{ backgroundImage: `url(${base}pagescroll.png)` }}>
+          {userId ? (
+            <>
+              <h1>Profile</h1>
+              <hr className="credits-page__rule" />
+              {editingName ? (
+                <div className="profile-scroll__edit-name">
+                  <input
+                    className="auth-modal__input profile-scroll__name-input"
+                    type="text"
+                    value={nameInput}
+                    onChange={e => { setNameInput(e.target.value); setNameError(null) }}
+                    onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false) }}
+                    maxLength={20}
+                    autoFocus
+                  />
+                  {nameError && <p className="auth-modal__error">{nameError}</p>}
+                  <div className="profile-scroll__name-actions">
+                    <button className="credits-page__close-btn" onClick={handleSaveName} disabled={nameSaving}>
+                      {nameSaving ? 'Saving…' : 'Save'}
+                    </button>
+                    <button className="credits-page__close-btn" onClick={() => setEditingName(false)}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="profile-scroll__name-row">
+                  <span className="profile-scroll__name">{username ?? 'Anonymous'}</span>
+                  <button className="profile-scroll__edit-btn" onClick={handleStartEdit}>Edit</button>
+                </div>
+              )}
+              <hr className="credits-page__rule" />
+              <h2>Stats</h2>
+              {(() => {
+                const variants = [...new Map(stats.map(s => [`${s.rules}|${s.board_size}`, { rules: s.rules, board_size: s.board_size }])).values()]
+                  .sort((a, b) => a.rules.localeCompare(b.rules) || a.board_size - b.board_size)
+                if (variants.length === 0) return (
+                  <p style={{ color: '#7a5228', fontStyle: 'italic', fontSize: '0.85em' }}>No games recorded yet.</p>
+                )
+                return variants.map(({ rules: v, board_size: bs }) => (
+                  <div key={`${v}|${bs}`} className="profile-scroll__stat-block">
+                    <div className="profile-scroll__stat-label">{v} — {bs}×{bs}</div>
+                    {(['machine', 'human'] as const).map(type => {
+                      const w = stats.find(s => s.rules === v && s.board_size === bs && s.opponent_type === type && s.result === 'win')?.count ?? 0
+                      const l = stats.find(s => s.rules === v && s.board_size === bs && s.opponent_type === type && s.result === 'loss')?.count ?? 0
+                      if (w === 0 && l === 0) return null
+                      return (
+                        <div key={type} className="profile-scroll__stat-row">
+                          <span className="profile-scroll__stat-type">{type === 'machine' ? 'vs Machine' : 'vs Players'}</span>
+                          <span className="profile-scroll__stat-win">{w}W</span>
+                          <span className="profile-scroll__stat-sep">/</span>
+                          <span className="profile-scroll__stat-loss">{l}L</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))
+              })()}
+              <hr className="credits-page__rule" />
+              <button className="credits-page__close-btn" onClick={handleSignOut} style={{ marginBottom: 12 }}>Sign Out</button>
+              <button className="credits-page__close-btn" onClick={handleClose}>Close</button>
+            </>
+          ) : (
+            <>
+              <h1>Profile</h1>
+              <hr className="credits-page__rule" />
+              <p>Sign in to track your wins, losses and rank on the leaderboard.</p>
+              <hr className="credits-page__rule" />
+              <button className="credits-page__close-btn" onClick={() => { handleClose(); setTimeout(onSignIn, 400) }}>Sign In / Register</button>
+              <button className="credits-page__close-btn" style={{ marginTop: 12 }} onClick={handleClose}>Close</button>
+            </>
+          )}
         </div>
       </div>
       <div className="credits-page__bottom" style={{ backgroundImage: `url(${base}wood-bottom.jpg)` }} />
@@ -1275,16 +1516,18 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
 }) {
   const [screen, setScreen] = useState<'main' | 'settings'>('main')
   const [screensOpacity, setScreensOpacity] = useState(1)
-  const { cameraLocked, difficulty, rules, powerSaving, setSetting } = useGameStore()
+  const { cameraLocked, difficulty, rules, boardSize, powerSaving, setSetting } = useGameStore()
 
   // Local draft — changes only committed on Resume/Restart
-  const [draft, setDraft] = useState({ powerSaving, cameraLocked, difficulty, rules })
+  const [draft, setDraft] = useState({ powerSaving, cameraLocked, difficulty, rules, boardSize })
 
-  const panel2Dirty = draft.difficulty !== difficulty || draft.rules !== rules
+  const validRulesForSize = BOARD_SIZE_RULES[draft.boardSize] ?? []
+  const restartValid = validRulesForSize.includes(draft.rules)
+  const panel2Dirty = draft.difficulty !== difficulty || draft.rules !== rules || draft.boardSize !== boardSize
 
   // Reset draft and screen when menu opens
   useEffect(() => {
-    if (isOpen) setDraft({ powerSaving, cameraLocked, difficulty, rules })
+    if (isOpen) setDraft({ powerSaving, cameraLocked, difficulty, rules, boardSize })
     else setScreen('main')
   }, [isOpen])
 
@@ -1303,6 +1546,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
     setSetting('powerSaving', draft.powerSaving)
     setSetting('cameraLocked', draft.cameraLocked)
     setSetting('difficulty', draft.difficulty)
+    setSetting('boardSize', draft.boardSize)
     setSetting('rules', draft.rules)
     onNewGame()
   }
@@ -1319,8 +1563,10 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
             <button className="menu-overlay__item" onClick={onResume}>Resume Game</button>
             <button className="menu-overlay__item" onClick={() => switchScreen('settings')}>Settings</button>
             <button className="menu-overlay__item" onClick={onNewGame}>New Game</button>
-            <button className="menu-overlay__item" onClick={onHowToPlay}>How to Play</button>
-            <button className="menu-overlay__item" onClick={onCredits}>Credits</button>
+            <div className="menu-overlay__row">
+              <button className="menu-overlay__item menu-overlay__item--half" onClick={onHowToPlay}>How to</button>
+              <button className="menu-overlay__item menu-overlay__item--half" onClick={onCredits}>Credits</button>
+            </div>
             <button className="ui-button ui-button--menu" onClick={onResume} style={{ marginTop: 16 }}>
               <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/close.svg`} alt="" />
               <span className="ui-button__label">Close</span>
@@ -1363,15 +1609,34 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
                   />
                 </div>
                 <div className="settings-row">
-                  <span className="settings-row__label">Rules</span>
-                  <Cycler<Rules>
-                    options={['Copenhagen', 'Tawlbwrdd', 'Linnaeus Tablut', 'Saami Tablut', 'Brandub', 'Ard Rí', 'Alea Evangelii']}
-                    value={draft.rules}
-                    onChange={v => setDraft(d => ({ ...d, rules: v }))}
+                  <span className="settings-row__label">Board</span>
+                  <Cycler<string>
+                    options={ALL_BOARD_SIZES.map(n => `${n}×${n}`)}
+                    value={`${draft.boardSize}×${draft.boardSize}`}
+                    onChange={v => {
+                      const size = parseInt(v)
+                      const valid = BOARD_SIZE_RULES[size] ?? []
+                      const newRules = valid.includes(draft.rules) ? draft.rules : (valid[0] ?? draft.rules)
+                      setDraft(d => ({ ...d, boardSize: size, rules: newRules }))
+                    }}
                   />
                 </div>
                 <div className="settings-row">
-                  <button className="menu-overlay__item" onClick={handleRestart}>Restart Game</button>
+                  <span className="settings-row__label">Rules</span>
+                  <Cycler<Rules>
+                    options={ALL_RULES}
+                    value={draft.rules}
+                    isDisabled={v => !validRulesForSize.includes(v)}
+                    onChange={v => setDraft(d => ({ ...d, rules: v, boardSize: RULES_BOARD_SIZE[v] }))}
+                  />
+                </div>
+                <div className="settings-row">
+                  <button
+                    className="menu-overlay__item"
+                    onClick={handleRestart}
+                    disabled={!restartValid}
+                    style={{ opacity: restartValid ? 1 : 0.35, cursor: restartValid ? 'pointer' : 'default' }}
+                  >Restart Game</button>
                 </div>
               </div>
             </div>
@@ -1557,10 +1822,38 @@ function App() {
   const [menuVisible, setMenuVisible] = useState(false)
   const [showCredits, setShowCredits] = useState(false)
   const [showHowToPlay, setShowHowToPlay] = useState(false)
-  const [roleSelectOpen, setRoleSelectOpen] = useState(false)
   const [winnerDismissed, setWinnerDismissed] = useState(false)
   const [displayWinner, setDisplayWinner] = useState<string | null>(null)
-  const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, selectedId, selectPiece, movePiece, history, undoMove, gameKey } = useGameStore()
+  const [showAuth, setShowAuth] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
+  const [showUsernamePrompt, setShowUsernamePrompt] = useState(false)
+  const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, setAuth, setAuthReady } = useGameStore()
+
+  // Restore session on mount, listen for auth changes
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles').select('username').eq('id', session.user.id).single()
+        setAuth(session.user.id, profile?.username ?? null)
+      }
+      setAuthReady(true)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') { setAuth(null, null); return }
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles').select('username').eq('id', session.user.id).single()
+        const resolvedUsername = profile?.username ?? null
+        setAuth(session.user.id, resolvedUsername)
+        // After email confirmation, username will be null — prompt them to choose one
+        if (event === 'SIGNED_IN' && !resolvedUsername) {
+          setShowUsernamePrompt(true)
+        }
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   // Stable hint move — computed once per hint session, cleared on turn change or new game
   const hintMove = useRef<{ pieceId: string; toRow: number; toCol: number } | null>(null)
@@ -1590,6 +1883,20 @@ function App() {
   }, [winner])
   const setupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Record game result when a winner is decided
+  useEffect(() => {
+    if (!winner || !userId || playerMode === '2player') return
+    const userSide = playerMode // 'attacker' or 'defender'
+    const result = winner === userSide ? 'win' : 'loss'
+    supabase.from('game_results').insert({
+      user_id: userId,
+      opponent_type: 'machine',
+      result,
+      rules,
+      board_size: boardSize,
+    })
+  }, [winner])
+
   // ?ps=true in the URL activates power-saving mode on load
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('ps') === 'true') {
@@ -1603,7 +1910,7 @@ function App() {
     const machineSide: PlayerSide = playerMode === 'attacker' ? 'defender' : 'attacker'
     if (currentTurn !== machineSide) return
 
-    const { boardSize, center, kingEscapeEdge, shieldwall, weakKing } = getBoardConfig(rules)
+    const { boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone } = getBoardConfig(rules, boardSize)
     const fire = () => {
       // Read fresh state — pieces may have changed (clearDyingPieces) since the effect ran
       const { pieces: freshPieces, dyingPieces: freshDying, currentTurn: freshTurn, winner: freshWinner, selectedId: freshSelected } = useGameStore.getState()
@@ -1611,7 +1918,7 @@ function App() {
       // If the player still has a piece selected, wait for them to deselect first
       if (freshSelected) { setTimeout(fire, 600); return }
       const alivePieces = freshPieces.filter(p => !freshDying.some(d => d.id === p.id))
-      const move = getBestMove(alivePieces, machineSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing)
+      const move = getBestMove(alivePieces, machineSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing, noThrone)
       if (move) machineMove(move.pieceId, move.toRow, move.toCol)
     }
     const timer = setTimeout(fire, 2200)
@@ -1736,7 +2043,6 @@ function App() {
           onResume={() => setMenuOpen(false)}
           onNewGame={() => {
             setMenuOpen(false)
-            resetGame()
             setRoleSelectOpen(true)
           }}
           onCredits={() => setShowCredits(true)}
@@ -1759,7 +2065,7 @@ function App() {
       </div>
 
       {introStarted && <>
-        <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 15, display: 'flex', gap: 4 }}>
+        <div style={{ position: 'absolute', top: '3vw', left: '3vw', zIndex: 15, display: 'flex', gap: '1vw' }}>
           <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
             <HintButton onClick={() => {
               if (playerMode === '2player' || winner) return
@@ -1767,8 +2073,8 @@ function App() {
               if (currentTurn !== humanSide) return
               // Compute the hint move once and cache it for this turn
               if (!hintMove.current) {
-                const { boardSize, center, kingEscapeEdge, shieldwall, weakKing } = getBoardConfig(rules)
-                hintMove.current = getBestMove(pieces, humanSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing)
+                const { boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone } = getBoardConfig(rules, boardSize)
+                hintMove.current = getBestMove(pieces, humanSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing, noThrone)
               }
               const move = hintMove.current
               if (!move) return
@@ -1787,12 +2093,18 @@ function App() {
             }} />
           </div>
         </div>
-        <div className="ui-button-wrapper ui-button-wrapper--menu" style={{ position: 'absolute', top: 16, right: 16, zIndex: 15, opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
-          <MenuButton isOpen={false} onClick={() => setMenuOpen(o => !o)} />
+        <div style={{ position: 'absolute', top: '3vw', right: '3vw', zIndex: 15, display: 'flex', gap: '1vw', opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
+          <div className="ui-button-wrapper ui-button-wrapper--profile">
+            <ProfileButton loggedIn={!!userId} onClick={() => setShowProfile(true)} />
+          </div>
+          <div className="ui-button-wrapper ui-button-wrapper--menu">
+            <MenuButton isOpen={false} onClick={() => setMenuOpen(o => !o)} />
+          </div>
         </div>
       </>}
 
       <ThemeSwitcher />
+      {showProfile && <ProfileScroll onClose={() => setShowProfile(false)} onSignIn={() => setShowAuth(true)} />}
       {showHowToPlay && <HowToPlayScroll onClose={() => setShowHowToPlay(false)} />}
       {showCredits && <CreditsScroll onClose={() => setShowCredits(false)} />}
       {displayWinner && !winnerDismissed && (
@@ -1800,7 +2112,7 @@ function App() {
           winner={displayWinner as 'attacker' | 'defender'}
           playerMode={playerMode}
           powerSaving={powerSaving}
-          onNewGame={() => { resetGame(); setRoleSelectOpen(true) }}
+          onNewGame={() => { setRoleSelectOpen(true) }}
           onDismiss={() => setWinnerDismissed(true)}
         />
       )}
@@ -1814,6 +2126,8 @@ function App() {
           }}
         />
       )}
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      {showUsernamePrompt && <AuthModal initialScreen="username" onClose={() => setShowUsernamePrompt(false)} />}
     </div>
   )
 }

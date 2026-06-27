@@ -20,7 +20,7 @@ export type Theme = 'natural'
 export type PlayerSide = 'attacker' | 'defender'
 export type GameMode = 'attacker' | 'defender' | '2player'
 export type Difficulty = 'easy' | 'medium' | 'hard'
-export type Rules = 'Copenhagen' | 'Tawlbwrdd' | 'Linnaeus Tablut' | 'Saami Tablut' | 'Brandub' | 'Ard Rí' | 'Alea Evangelii'
+export type Rules = 'Copenhagen' | 'Tawlbwrdd' | 'Linnaeus Tablut' | 'Saami Tablut' | 'Brandub' | 'Ard Rí' | 'Alea Evangelii' | 'Tyr' | 'Simple Tyr'
 
 interface HistoryEntry {
   pieces: Piece[]
@@ -50,21 +50,32 @@ interface GameStore {
   rules: Rules
   powerSaving: boolean
   playerMode: GameMode
+  roleSelectOpen: boolean
+  setRoleSelectOpen: (open: boolean) => void
+  // Auth
+  userId: string | null
+  username: string | null
+  authReady: boolean
+  setAuth: (userId: string | null, username: string | null) => void
+  setAuthReady: (ready: boolean) => void
+  setUsername: (username: string) => void
   setTheme: (theme: Theme) => void
   selectPiece: (id: string | null) => void
   movePiece: (toRow: number, toCol: number) => void
   machineMove: (pieceId: string, toRow: number, toCol: number) => void
   clearDyingPieces: () => void
   resetGame: () => void
+  resetPiecesOnly: () => void
   undoMove: () => void
   setPlayerMode: (mode: GameMode) => void
-  setSetting: <K extends 'musicEnabled' | 'cameraLocked' | 'difficulty' | 'rules' | 'powerSaving'>(
+  boardSize: number
+  setSetting: <K extends 'musicEnabled' | 'cameraLocked' | 'difficulty' | 'rules' | 'powerSaving' | 'boardSize'>(
     key: K, value: GameStore[K]
   ) => void
 }
 
 export const useGameStore = create<GameStore>((set) => ({
-  pieces: createInitialPieces(getBoardConfig('Copenhagen')),
+  pieces: createInitialPieces(getBoardConfig('Copenhagen', 11)),
   dyingPieces: [],
   captorIds: [],
   captureDelayMs: 450,
@@ -82,8 +93,17 @@ export const useGameStore = create<GameStore>((set) => ({
   cameraLocked: false,
   difficulty: 'medium',
   rules: 'Copenhagen',
+  boardSize: 11,
   powerSaving: false,
   playerMode: 'defender' as GameMode,
+  roleSelectOpen: false,
+  setRoleSelectOpen: (open) => set({ roleSelectOpen: open }),
+  userId: null,
+  username: null,
+  authReady: false,
+  setAuth: (userId, username) => set({ userId, username }),
+  setAuthReady: (ready) => set({ authReady: ready }),
+  setUsername: (username) => set({ username }),
 
   setTheme: (theme) => set({ theme }),
 
@@ -108,8 +128,8 @@ export const useGameStore = create<GameStore>((set) => ({
       if (!humanIsDefender && pieceIsDefender) return s
     }
 
-    const { boardSize, center } = getBoardConfig(s.rules)
-    const validMoves = getValidMoves(piece, s.pieces, boardSize, center)
+    const { boardSize, center, noThrone } = getBoardConfig(s.rules, s.boardSize)
+    const validMoves = getValidMoves(piece, s.pieces, boardSize, center, noThrone)
     return { selectedId: id, validMoves }
   }),
 
@@ -117,10 +137,10 @@ export const useGameStore = create<GameStore>((set) => ({
     if (!s.selectedId || s.winner) return s
     if (!s.validMoves.some(([r, c]) => r === toRow && c === toCol)) return s
 
-    const { boardSize, center, kingEscapeEdge, shieldwall, weakKing } = getBoardConfig(s.rules)
+    const { boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone } = getBoardConfig(s.rules, s.boardSize)
     // Exclude any still-dying pieces from move logic — they're logically already gone
     const activePieces = s.pieces.filter(p => !s.dyingPieces.some(d => d.id === p.id))
-    const result = applyMove(activePieces, s.selectedId, toRow, toCol, boardSize, center, kingEscapeEdge, shieldwall, weakKing)
+    const result = applyMove(activePieces, s.selectedId, toRow, toCol, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone)
     const capturedPieces = activePieces.filter(p => result.capturedIds.includes(p.id))
 
     const movedPiece = activePieces.find(p => p.id === s.selectedId)!
@@ -150,9 +170,9 @@ export const useGameStore = create<GameStore>((set) => ({
 
   machineMove: (pieceId, toRow, toCol) => set((s) => {
     if (s.winner) return s
-    const { boardSize, center, kingEscapeEdge, shieldwall, weakKing } = getBoardConfig(s.rules)
+    const { boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone } = getBoardConfig(s.rules, s.boardSize)
     const activePieces = s.pieces.filter(p => !s.dyingPieces.some(d => d.id === p.id))
-    const result = applyMove(activePieces, pieceId, toRow, toCol, boardSize, center, kingEscapeEdge, shieldwall, weakKing)
+    const result = applyMove(activePieces, pieceId, toRow, toCol, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone)
     const capturedPieces = activePieces.filter(p => result.capturedIds.includes(p.id))
 
     const movedPiece = activePieces.find(p => p.id === pieceId)!
@@ -200,7 +220,7 @@ export const useGameStore = create<GameStore>((set) => ({
   }),
 
   resetGame: () => set((s) => ({
-    pieces: createInitialPieces(getBoardConfig(s.rules)),
+    pieces: createInitialPieces(getBoardConfig(s.rules, s.boardSize)),
     dyingPieces: [],
     captorIds: [],
     selectedId: null,
@@ -209,6 +229,20 @@ export const useGameStore = create<GameStore>((set) => ({
     currentTurn: 'defender',
     scores: { attacker: 0, defender: 0 },
     gameKey: s.gameKey + 1,
+    history: [],
+    lastMoveTarget: null,
+    undoTrigger: 0,
+  })),
+
+  resetPiecesOnly: () => set((s) => ({
+    pieces: createInitialPieces(getBoardConfig(s.rules, s.boardSize)),
+    dyingPieces: [],
+    captorIds: [],
+    selectedId: null,
+    validMoves: [],
+    winner: null,
+    currentTurn: 'defender',
+    scores: { attacker: 0, defender: 0 },
     history: [],
     lastMoveTarget: null,
     undoTrigger: 0,
