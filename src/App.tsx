@@ -4,6 +4,9 @@ import { Board2D } from './components/board/Board2D'
 import { ThemeSwitcher } from './components/ui/ThemeSwitcher'
 import { DefeatFire } from './components/ui/DefeatFire'
 import { AuthModal } from './components/ui/AuthModal'
+import { FindMatchModal } from './components/ui/FindMatchModal'
+import { useOnlineGame } from './hooks/useOnlineGame'
+import type { OnlineStatus } from './hooks/useOnlineGame'
 import { useGameStore } from './store/gameStore'
 import type { PlayerSide, GameMode, Difficulty, Rules } from './store/gameStore'
 import { getBestMove } from './game/ai'
@@ -113,6 +116,9 @@ body, button, input, select {
 .menu-overlay--visible { pointer-events: auto; }
 .menu-overlay__screens {
   position: relative;
+  width: 100%;
+  padding: 20px;
+  max-width: 320px;
 }
 .menu-overlay__screen {
   display: flex;
@@ -134,7 +140,7 @@ body, button, input, select {
   border: 1px solid rgba(200,160,40,0.4);
   border-radius: 6px;
   color: #e8d8b8;
-  padding: 14px 48px;
+  padding: 14px;
   font-size: 14px;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -146,25 +152,17 @@ body, button, input, select {
   box-sizing: border-box;
 }
 .menu-overlay__item:hover { border-color: rgba(200,160,40,0.9); background: rgba(30,15,0,0.9); }
+.menu-overlay__item--primary {
+  background: linear-gradient(135deg, #a07820, #5a3e08, #a07820);
+  border-color: #c89a30;
+  color: #fff;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+.menu-overlay__item--primary:hover { background: linear-gradient(135deg, #e0b840, #a07018, #e0b840); border-color: #f0d060; }
+.menu-overlay__item--primary:disabled { background: rgba(200,160,40,0.15); color: #e8d8b8; text-shadow: none; }
 .menu-overlay__row { display: flex; gap: 8px; width: 100%; }
 .menu-overlay__item--half { flex: 1; }
-.settings-panels {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-}
-@media (min-width: 768px) {
-  .settings-panels {
-    flex-direction: row;
-    align-items: flex-start;
-    width: min(560px, calc(100vw - 32px));
-  }
-  .settings-panels .settings-panel {
-    flex: 1;
-    min-width: 0;
-  }
-}
 .settings-panel {
   width: 100%;
   background: rgba(0,0,0,0.88);
@@ -203,6 +201,7 @@ body, button, input, select {
   gap: 12px;
 }
 .settings-row:last-child { border-bottom: none; }
+.settings-row--buttons { gap: 8px; padding: 8px 6px; }
 .settings-row__label {
   font-size: 12px;
   letter-spacing: 1px;
@@ -223,7 +222,7 @@ body, button, input, select {
   animation: creditsEnter 0.9s ease-out forwards;
 }
 .credits-page--closing {
-  animation: creditsExit 0.5s ease-in-out forwards;
+  animation: creditsExit 0.45s ease-in forwards;
 }
 @keyframes creditsEnter {
   from { transform: translateY(-104px); height: 104px; }
@@ -562,6 +561,104 @@ body, button, input, select {
 .role-select__option-text { display: flex; flex-direction: column; gap: 3px; flex: 1; align-items: center; text-align: center; }
 .role-select__option-name { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; }
 .role-select__option-desc { font-size: 11px; letter-spacing: 0.5px; color: #a09070; }
+.find-match-modal__backdrop {
+  position: fixed; inset: 0; z-index: 110;
+  background: rgba(0,0,0,0.8);
+  display: flex; align-items: center; justify-content: center;
+}
+.find-match-modal {
+  background: #1a0d03;
+  border: 1px solid rgba(200,160,40,0.4);
+  border-radius: 4px;
+  padding: 24px 20px;
+  width: 280px;
+  display: flex; flex-direction: column; gap: 16px;
+  font-family: 'MedievalSharp', cursive;
+  color: #e8d8b8;
+}
+.find-match-modal__header {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.find-match-modal__title {
+  font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: #e8d8b8;
+}
+.find-match-modal__close {
+  background: none; border: none; color: #a09070; font-size: 16px; cursor: pointer; padding: 0;
+}
+.find-match-modal__close:hover { color: #e8d8b8; }
+.find-match-modal__player {
+  text-align: center; font-size: 14px; color: #c8a060; letter-spacing: 1px;
+}
+.find-match-modal__settings {
+  display: flex; flex-direction: column; gap: 10px;
+}
+.find-match-modal__setting {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.find-match-modal__setting label {
+  font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #a09070;
+}
+.find-match-modal__cycler {
+  display: flex; align-items: center; gap: 8px;
+}
+.find-match-modal__cycler button {
+  background: none; border: none; color: #c8a060; font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1;
+}
+.find-match-modal__cycler button:disabled { opacity: 0.2; cursor: default; }
+.find-match-modal__cycler span { font-size: 12px; color: #e8d8b8; min-width: 80px; text-align: center; }
+.find-match-modal__find-btn {
+  background: rgba(200,160,40,0.15); border: 1px solid rgba(200,160,40,0.5);
+  color: #e8d8b8; font-family: 'MedievalSharp', cursive; font-size: 12px;
+  letter-spacing: 2px; text-transform: uppercase; padding: 10px; cursor: pointer;
+  border-radius: 2px;
+}
+.find-match-modal__find-btn:hover { background: rgba(200,160,40,0.25); }
+.find-match-modal__cancel-btn {
+  background: none; border: 1px solid rgba(200,160,40,0.3);
+  color: #a09070; font-family: 'MedievalSharp', cursive; font-size: 11px;
+  letter-spacing: 2px; text-transform: uppercase; padding: 8px 16px; cursor: pointer;
+  border-radius: 2px; margin-top: 4px;
+}
+.find-match-modal__cancel-btn:hover { color: #e8d8b8; border-color: rgba(200,160,40,0.6); }
+.find-match-modal__searching {
+  display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 8px 0;
+}
+.find-match-modal__searching p { margin: 0; font-size: 12px; color: #c8a060; letter-spacing: 1px; }
+.find-match-modal__spinner {
+  width: 32px; height: 32px;
+  border: 2px solid rgba(200,160,40,0.2);
+  border-top-color: rgba(200,160,40,0.8);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.find-match-modal__settings-summary { font-size: 10px !important; color: #706050 !important; letter-spacing: 0.5px !important; }
+.find-match-modal__matched {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px 0;
+  font-size: 12px; color: #c8a060; letter-spacing: 1px; text-align: center;
+}
+.find-match-modal__matched p { margin: 0; }
+.find-match-modal__opponent strong { color: #e8d8b8; }
+.find-match-modal__disconnected {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px 0;
+  font-size: 12px; color: #c08060; letter-spacing: 1px; text-align: center;
+}
+.find-match-modal__disconnected p { margin: 0; }
+.match-header {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 16px;
+  background: rgba(10,5,0,0.7);
+  font-family: 'MedievalSharp', cursive;
+  font-size: 11px; letter-spacing: 1px; color: #a09070;
+  pointer-events: none;
+}
+.match-header__player { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.match-header__name { color: #e8d8b8; font-size: 12px; }
+.match-header__side { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: #706050; }
+.match-header__turn { color: #c8a060; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; }
+.match-header__player--active .match-header__name { color: #c8a060; }
+
 .auth-modal-overlay {
   position: fixed; inset: 0; z-index: 100;
   background: rgba(0,0,0,0.75);
@@ -784,22 +881,14 @@ function Cycler<T extends string>({ options, value, onChange, isDisabled }: {
 const BOARD_SIZE_RULES: Record<number, Rules[]> = {
   7:  ['Brandub', 'Ard Rí'],
   9:  ['Linnaeus Tablut', 'Saami Tablut'],
-  11: ['Copenhagen', 'Fetlar', 'Tawlbwrdd', 'Simple Tyr'],
-  13: [],
+  11: ['Copenhagen', 'Fetlar', 'Historical', 'Tawlbwrdd', 'Simple Tyr'],
+  13: ['Copenhagen', 'Fetlar', 'Historical'],
   15: ['Tyr'],
   17: [],
   19: ['Alea Evangelii'],
 }
 
-const RULES_BOARD_SIZE: Record<Rules, number> = {
-  'Brandub': 7, 'Ard Rí': 7,
-  'Linnaeus Tablut': 9, 'Saami Tablut': 9,
-  'Copenhagen': 11, 'Fetlar': 11, 'Tawlbwrdd': 11, 'Simple Tyr': 11,
-  'Tyr': 15,
-  'Alea Evangelii': 19,
-}
-
-const ALL_RULES: Rules[] = ['Copenhagen', 'Fetlar', 'Tawlbwrdd', 'Simple Tyr', 'Linnaeus Tablut', 'Saami Tablut', 'Brandub', 'Ard Rí', 'Tyr', 'Alea Evangelii']
+const ALL_RULES: Rules[] = ['Copenhagen', 'Fetlar', 'Historical', 'Tawlbwrdd', 'Simple Tyr', 'Linnaeus Tablut', 'Saami Tablut', 'Brandub', 'Ard Rí', 'Tyr', 'Alea Evangelii']
 const ALL_BOARD_SIZES = [7, 9, 11, 13, 15, 17, 19].filter(n => (BOARD_SIZE_RULES[n] ?? []).length > 0)
 
 
@@ -807,7 +896,7 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
   const [closing, setClosing] = useState(false)
   const handleClose = () => {
     setClosing(true)
-    setTimeout(onClose, 350)
+    setTimeout(onClose, 450)
   }
   const base = import.meta.env.BASE_URL
   return (
@@ -849,11 +938,23 @@ function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: (
     if (!userId) return
     supabase
       .from('game_results')
-      .select('opponent_type, result, rules, board_size, count:id.count()')
+      .select('opponent_type, result, rules, board_size')
       .eq('user_id', userId)
-      .then(({ data }) => { if (data) setStats(data as StatRow[]) })
+      .then(({ data, error }) => {
+        if (error) { console.error('game_results select:', error.message); return }
+        if (!data) return
+        // Group client-side: count rows per (rules, board_size, opponent_type, result)
+        const grouped = new Map<string, StatRow>()
+        for (const row of data) {
+          const key = `${row.rules}|${row.board_size}|${row.opponent_type}|${row.result}`
+          const existing = grouped.get(key)
+          if (existing) existing.count++
+          else grouped.set(key, { ...row, count: 1 })
+        }
+        setStats([...grouped.values()])
+      })
   }, [userId])
-  const handleClose = () => { setClosing(true); setTimeout(onClose, 350) }
+  const handleClose = () => { setClosing(true); setTimeout(onClose, 450) }
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     setAuth(null, null)
@@ -1391,7 +1492,7 @@ function Illustration({ label }: { label: string }) {
 
 function HowToPlayScroll({ onClose }: { onClose: () => void }) {
   const [closing, setClosing] = useState(false)
-  const handleClose = () => { setClosing(true); setTimeout(onClose, 500) }
+  const handleClose = () => { setClosing(true); setTimeout(onClose, 450) }
   const base = import.meta.env.BASE_URL
   return (
     <div className={`credits-page${closing ? ' credits-page--closing' : ''}`}>
@@ -1507,49 +1608,56 @@ function HowToPlayScroll({ onClose }: { onClose: () => void }) {
   )
 }
 
-function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowToPlay }: {
+function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowToPlay, onOnlineMatch }: {
   isOpen: boolean
   isVisible: boolean
   onResume: () => void
   onNewGame: () => void
   onCredits: () => void
   onHowToPlay: () => void
+  onOnlineMatch: (rules: Rules, boardSize: number) => void
 }) {
-  const [screen, setScreen] = useState<'main' | 'settings'>('main')
-  const [screensOpacity, setScreensOpacity] = useState(1)
-  const { cameraLocked, difficulty, rules, boardSize, powerSaving, setSetting } = useGameStore()
+  const { cameraLocked, difficulty, rules, boardSize, powerSaving, playerMode, setSetting } = useGameStore()
 
-  // Local draft — changes only committed on Resume/Restart
-  const [draft, setDraft] = useState({ powerSaving, cameraLocked, difficulty, rules, boardSize })
+  const modeToPlay = (m: GameMode): 'Online' | 'Vs Machine' | 'Take turns' =>
+    m === '2player' ? 'Take turns' : 'Vs Machine'
+  const playToMode = (p: 'Online' | 'Vs Machine' | 'Take turns'): GameMode =>
+    p === 'Take turns' ? '2player' : 'defender'
+
+  const [draft, setDraft] = useState({ powerSaving, cameraLocked, difficulty, rules, boardSize, play: modeToPlay(playerMode) as 'Online' | 'Vs Machine' | 'Take turns' })
 
   const validRulesForSize = BOARD_SIZE_RULES[draft.boardSize] ?? []
   const restartValid = validRulesForSize.includes(draft.rules)
-  const panel2Dirty = draft.difficulty !== difficulty || draft.rules !== rules || draft.boardSize !== boardSize
+  const requiresNewGame = draft.rules !== rules || draft.boardSize !== boardSize || draft.play !== modeToPlay(playerMode)
 
-  // Reset draft and screen when menu opens
+  // Reset draft when menu opens
   useEffect(() => {
-    if (isOpen) setDraft({ powerSaving, cameraLocked, difficulty, rules, boardSize })
-    else setScreen('main')
+    if (isOpen) setDraft({ powerSaving, cameraLocked, difficulty, rules, boardSize, play: modeToPlay(playerMode) })
   }, [isOpen])
 
-  const switchScreen = (next: 'main' | 'settings') => {
-    setScreensOpacity(0)
-    setTimeout(() => { setScreen(next); setScreensOpacity(1) }, 250)
+  const applyDisplaySettings = () => {
+    setSetting('powerSaving', draft.powerSaving)
+    setSetting('cameraLocked', draft.cameraLocked)
   }
 
   const handleResume = () => {
-    setSetting('powerSaving', draft.powerSaving)
-    setSetting('cameraLocked', draft.cameraLocked)
+    applyDisplaySettings()
     onResume()
   }
 
-  const handleRestart = () => {
-    setSetting('powerSaving', draft.powerSaving)
-    setSetting('cameraLocked', draft.cameraLocked)
+  const handleNewGame = () => {
+    if (draft.play === 'Online') { onOnlineMatch(draft.rules, draft.boardSize); return }
+    applyDisplaySettings()
     setSetting('difficulty', draft.difficulty)
     setSetting('boardSize', draft.boardSize)
     setSetting('rules', draft.rules)
+    setSetting('playerMode', playToMode(draft.play))
     onNewGame()
+  }
+
+  const handleCancel = () => {
+    setDraft({ powerSaving, cameraLocked, difficulty, rules, boardSize, play: modeToPlay(playerMode) })
+    onResume()
   }
 
   if (!isOpen) return null
@@ -1557,98 +1665,83 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
   return (
     <>
     <div className={`menu-overlay${isVisible ? ' menu-overlay--visible' : ''}`} style={{ opacity: isVisible ? 1 : 0 }}>
-      <div className="menu-overlay__screens" style={{ opacity: screensOpacity, transition: 'opacity 0.25s ease' }}>
-
-        {screen === 'main' ? (
-          <div className="menu-overlay__screen">
-            <button className="menu-overlay__item" onClick={onResume}>Resume Game</button>
-            <button className="menu-overlay__item" onClick={() => switchScreen('settings')}>Settings</button>
-            <button className="menu-overlay__item" onClick={onNewGame}>New Game</button>
-            <div className="menu-overlay__row">
-              <button className="menu-overlay__item menu-overlay__item--half" onClick={onHowToPlay}>How to</button>
-              <button className="menu-overlay__item menu-overlay__item--half" onClick={onCredits}>Credits</button>
+      <div className="menu-overlay__screens" style={{ opacity: 1 }}>
+        <div className="menu-overlay__screen">
+          <div className="settings-panel">
+            <div className="settings-row">
+              <span className="settings-row__label">Play</span>
+              <Cycler<'Online' | 'Vs Machine' | 'Take turns'>
+                options={['Online', 'Vs Machine', 'Take turns']}
+                value={draft.play}
+                onChange={v => setDraft(d => ({ ...d, play: v }))}
+              />
             </div>
-            <button className="ui-button ui-button--menu" onClick={onResume} style={{ marginTop: 16 }}>
-              <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/close.svg`} alt="" />
-              <span className="ui-button__label">Close</span>
-            </button>
-          </div>
-        ) : (
-          <div className="menu-overlay__screen">
-            <div className="settings-panels">
-              <div className="settings-panel">
-                <div className="settings-row">
-                  <span className="settings-row__label">Power Saving</span>
-                  <Toggle on={draft.powerSaving} onClick={() => setDraft(d => ({ ...d, powerSaving: !d.powerSaving, cameraLocked: !d.powerSaving ? true : d.cameraLocked }))} />
-                </div>
-                <div className="settings-row">
-                  <span className="settings-row__label">View</span>
-                  <Cycler<'Free' | 'Top-down'>
-                    options={['Free', 'Top-down']}
-                    value={draft.powerSaving ? 'Top-down' : draft.cameraLocked ? 'Top-down' : 'Free'}
-                    onChange={v => {
-                      if (v === 'Top-down') {
-                        setDraft(d => ({ ...d, cameraLocked: true }))
-                      } else {
-                        setDraft(d => ({ ...d, cameraLocked: false, powerSaving: false }))
-                      }
-                    }}
-                  />
-                </div>
-                <div className="settings-row">
-                  <button className="menu-overlay__item" onClick={handleResume} disabled={panel2Dirty} style={{ opacity: panel2Dirty ? 0.35 : 1, cursor: panel2Dirty ? 'default' : 'pointer' }}>Resume Game</button>
-                </div>
-              </div>
-
-              <div className="settings-panel">
-                <div className="settings-row">
-                  <span className="settings-row__label">Difficulty</span>
-                  <Cycler<Difficulty>
-                    options={['easy', 'medium', 'hard']}
-                    value={draft.difficulty}
-                    onChange={v => setDraft(d => ({ ...d, difficulty: v }))}
-                  />
-                </div>
-                <div className="settings-row">
-                  <span className="settings-row__label">Board</span>
-                  <Cycler<string>
-                    options={ALL_BOARD_SIZES.map(n => `${n}×${n}`)}
-                    value={`${draft.boardSize}×${draft.boardSize}`}
-                    onChange={v => {
-                      const size = parseInt(v)
-                      const valid = BOARD_SIZE_RULES[size] ?? []
-                      const newRules = valid.includes(draft.rules) ? draft.rules : (valid[0] ?? draft.rules)
-                      setDraft(d => ({ ...d, boardSize: size, rules: newRules }))
-                    }}
-                  />
-                </div>
-                <div className="settings-row">
-                  <span className="settings-row__label">Rules</span>
-                  <Cycler<Rules>
-                    options={ALL_RULES}
-                    value={draft.rules}
-                    isDisabled={v => !validRulesForSize.includes(v)}
-                    onChange={v => setDraft(d => ({ ...d, rules: v, boardSize: RULES_BOARD_SIZE[v] }))}
-                  />
-                </div>
-                <div className="settings-row">
-                  <button
-                    className="menu-overlay__item"
-                    onClick={handleRestart}
-                    disabled={!restartValid}
-                    style={{ opacity: restartValid ? 1 : 0.35, cursor: restartValid ? 'pointer' : 'default' }}
-                  >Restart Game</button>
-                </div>
-              </div>
+            <div className="settings-row" style={{ opacity: draft.play === 'Vs Machine' ? 1 : 0.25, pointerEvents: draft.play === 'Vs Machine' ? undefined : 'none', transition: 'opacity 0.2s ease' }}>
+              <span className="settings-row__label">Difficulty</span>
+              <Cycler<Difficulty>
+                options={['easy', 'medium', 'hard']}
+                value={draft.difficulty}
+                onChange={v => setDraft(d => ({ ...d, difficulty: v }))}
+              />
             </div>
-
-            <button className="ui-button ui-button--menu" onClick={() => switchScreen('main')} style={{ marginTop: 16 }}>
-              <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/close.svg`} alt="" />
-              <span className="ui-button__label">Cancel</span>
-            </button>
+            <div className="settings-row">
+              <span className="settings-row__label">Board</span>
+              <Cycler<string>
+                options={ALL_BOARD_SIZES.map(n => `${n}×${n}`)}
+                value={`${draft.boardSize}×${draft.boardSize}`}
+                onChange={v => {
+                  const size = parseInt(v)
+                  const valid = BOARD_SIZE_RULES[size] ?? []
+                  const newRules = valid.includes(draft.rules) ? draft.rules : (valid[0] ?? draft.rules)
+                  setDraft(d => ({ ...d, boardSize: size, rules: newRules }))
+                }}
+              />
+            </div>
+            <div className="settings-row">
+              <span className="settings-row__label">Rules</span>
+              <Cycler<Rules>
+                options={ALL_RULES}
+                value={draft.rules}
+                isDisabled={v => !validRulesForSize.includes(v)}
+                onChange={v => setDraft(d => ({ ...d, rules: v }))}
+              />
+            </div>
+            <div className="settings-row">
+              <span className="settings-row__label">Power Saving</span>
+              <Toggle on={draft.powerSaving} onClick={() => setDraft(d => ({ ...d, powerSaving: !d.powerSaving, cameraLocked: !d.powerSaving ? true : d.cameraLocked }))} />
+            </div>
+            <div className="settings-row">
+              <span className="settings-row__label">View</span>
+              <Cycler<'Free' | 'Top-down'>
+                options={['Free', 'Top-down']}
+                value={draft.powerSaving ? 'Top-down' : draft.cameraLocked ? 'Top-down' : 'Free'}
+                onChange={v => {
+                  if (v === 'Top-down') setDraft(d => ({ ...d, cameraLocked: true }))
+                  else setDraft(d => ({ ...d, cameraLocked: false, powerSaving: false }))
+                }}
+              />
+            </div>
+            <div className="settings-row settings-row--buttons">
+              <button className="menu-overlay__item menu-overlay__item--half menu-overlay__item--primary" onClick={handleResume} disabled={requiresNewGame} style={{ opacity: requiresNewGame ? 0.25 : 1, cursor: requiresNewGame ? 'default' : 'pointer' }}>Resume</button>
+              <button
+                className="menu-overlay__item menu-overlay__item--half menu-overlay__item--primary"
+                onClick={handleNewGame}
+                disabled={!restartValid}
+                style={{ opacity: restartValid ? 1 : 0.35, cursor: restartValid ? 'pointer' : 'default' }}
+              >Start</button>
+            </div>
           </div>
-        )}
 
+          <div className="menu-overlay__row" style={{ marginTop: 8 }}>
+            <button className="menu-overlay__item menu-overlay__item--half" onClick={onHowToPlay}>How To</button>
+            <button className="menu-overlay__item menu-overlay__item--half" onClick={onCredits}>Credits</button>
+          </div>
+
+          <button className="ui-button ui-button--menu" onClick={handleCancel} style={{ marginTop: 8 }}>
+            <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/close.svg`} alt="" />
+            <span className="ui-button__label">Cancel</span>
+          </button>
+        </div>
       </div>
     </div>
     </>
@@ -1828,7 +1921,14 @@ function App() {
   const [showAuth, setShowAuth] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
   const [showUsernamePrompt, setShowUsernamePrompt] = useState(false)
-  const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, setAuth, setAuthReady } = useGameStore()
+  const [showFindMatch, setShowFindMatch] = useState(false)
+  const [searchSettings, setSearchSettings] = useState<{ rules: Rules; boardSize: number } | null>(null)
+  const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({ type: 'idle' })
+  const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, dyingPieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, setAuth, setAuthReady, lastMove } = useGameStore()
+  const { findMatch, cancelSearch, sendMove, endGame } = useOnlineGame((status) => {
+    setOnlineStatus(status)
+    if (status.type === 'matched') { setShowFindMatch(false); setMenuOpen(false) }
+  })
 
   // Restore session on mount, listen for auth changes
   useEffect(() => {
@@ -1895,7 +1995,20 @@ function App() {
       result,
       rules,
       board_size: boardSize,
-    })
+    }).then(({ error }) => { if (error) console.error('game_results insert:', error.message) })
+  }, [winner])
+
+  // Broadcast moves in online games
+  useEffect(() => {
+    if (!lastMove || onlineStatus.type !== 'matched') return
+    sendMove(lastMove.pieceId, lastMove.toRow, lastMove.toCol)
+  }, [lastMove])
+
+  // End online game when winner decided
+  useEffect(() => {
+    if (!winner || onlineStatus.type !== 'matched') return
+    const winnerId = winner === playerMode ? userId : null
+    endGame(winnerId)
   }, [winner])
 
   // ?ps=true in the URL activates power-saving mode on load
@@ -1911,7 +2024,7 @@ function App() {
     const machineSide: PlayerSide = playerMode === 'attacker' ? 'defender' : 'attacker'
     if (currentTurn !== machineSide) return
 
-    const { boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone } = getBoardConfig(rules, boardSize)
+    const { center, kingEscapeEdge, shieldwall, weakKing, noThrone } = getBoardConfig(rules, boardSize)
     const fire = () => {
       // Read fresh state — pieces may have changed (clearDyingPieces) since the effect ran
       const { pieces: freshPieces, dyingPieces: freshDying, currentTurn: freshTurn, winner: freshWinner, selectedId: freshSelected } = useGameStore.getState()
@@ -2048,8 +2161,24 @@ function App() {
           }}
           onCredits={() => setShowCredits(true)}
           onHowToPlay={() => setShowHowToPlay(true)}
+          onOnlineMatch={(r, bs) => { setSearchSettings({ rules: r, boardSize: bs }); setShowFindMatch(true); if (!userId) { setShowAuth(true); return }; findMatch(r, bs) }}
         />
       </div>
+
+      {/* Online match header */}
+      {onlineStatus.type === 'matched' && (
+        <div className="match-header">
+          <div className={`match-header__player${playerMode === 'attacker' ? ' match-header__player--active' : ''}`}>
+            <span className="match-header__name">{username ?? 'You'}</span>
+            <span className="match-header__side">Attacker</span>
+          </div>
+          <span className="match-header__turn">{currentTurn === playerMode ? 'Your turn' : 'Their turn'}</span>
+          <div className={`match-header__player${playerMode === 'defender' ? ' match-header__player--active' : ''}`}>
+            <span className="match-header__name">{onlineStatus.opponentName || '…'}</span>
+            <span className="match-header__side">Defender</span>
+          </div>
+        </div>
+      )}
 
       {/* Score panels */}
       {introStarted && <>
@@ -2074,8 +2203,9 @@ function App() {
               if (currentTurn !== humanSide) return
               // Compute the hint move once and cache it for this turn
               if (!hintMove.current) {
-                const { boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone } = getBoardConfig(rules, boardSize)
-                hintMove.current = getBestMove(pieces, humanSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing, noThrone)
+                const { center, kingEscapeEdge, shieldwall, weakKing, noThrone } = getBoardConfig(rules, boardSize)
+                const alivePieces = pieces.filter(p => !dyingPieces.some(d => d.id === p.id))
+                hintMove.current = getBestMove(alivePieces, humanSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing, noThrone)
               }
               const move = hintMove.current
               if (!move) return
@@ -2129,6 +2259,16 @@ function App() {
       )}
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       {showUsernamePrompt && <AuthModal initialScreen="username" onClose={() => setShowUsernamePrompt(false)} />}
+      {showFindMatch && (
+        <FindMatchModal
+          status={onlineStatus}
+          searchRules={searchSettings?.rules}
+          searchBoardSize={searchSettings?.boardSize}
+          onFindMatch={(r, bs) => { if (!userId) { setShowFindMatch(false); setShowAuth(true); return }; findMatch(r, bs) }}
+          onCancel={() => { cancelSearch(); setShowFindMatch(false); setOnlineStatus({ type: 'idle' }) }}
+          onClose={() => { cancelSearch(); setShowFindMatch(false); setOnlineStatus({ type: 'idle' }) }}
+        />
+      )}
     </div>
   )
 }

@@ -33,8 +33,8 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
   const landTime = useRef(0)
   const menuOpacity = useRef(1)
 
-  const { rules, powerSaving, captorIds, undoTrigger, currentTurn, playerMode, winner } = useGameStore()
-  const boardOffset = (getBoardConfig(rules).boardSize - 1) / 2
+  const { rules, boardSize: storedBoardSize, powerSaving, captorIds, undoTrigger, currentTurn, playerMode, winner, roleSelectOpen } = useGameStore()
+  const boardOffset = (getBoardConfig(rules, storedBoardSize).boardSize - 1) / 2
   const x = piece.col - boardOffset
   const z = piece.row - boardOffset
 
@@ -142,7 +142,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
         // Skip drop animation — place instantly
         landed.current = true
         landTime.current = Date.now()
-        meshRef.current.visible = true
+        meshRef.current.visible = !roleSelectOpen
         meshRef.current.position.y = REST_Y
         meshRef.current.rotation.y = Math.PI
         if (materialRef.current) materialRef.current.opacity = 1
@@ -155,7 +155,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
         }
         menuOpacity.current = 1
         if (materialRef.current) materialRef.current.opacity = 1
-        meshRef.current.visible = true
+        meshRef.current.visible = !roleSelectOpen
         const progress = Math.min((t - dropDelay) / JUMP_DURATION, 1)
         meshRef.current.position.y = REST_Y + JUMP_PEAK * 4 * progress * (1 - progress)
         const rotEased = 1 - Math.pow(1 - progress, 2)
@@ -194,8 +194,8 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
     menuOpacity.current += (targetOpacity - menuOpacity.current) * Math.min(delta * 7, 1)
     if (menuPhase === 'hidden') menuOpacity.current = 0
     const op = menuOpacity.current
-    meshRef.current.visible = op > 0.05
-    meshRef.current.castShadow = op > 0.5
+    meshRef.current.visible = op > 0.05 && !roleSelectOpen
+    meshRef.current.castShadow = op > 0.5 && !roleSelectOpen
     if (materialRef.current) materialRef.current.opacity = op
 
     if (menuPhase === 'hiding' || menuPhase === 'hidden') return
@@ -263,6 +263,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
     <mesh
       ref={meshRef}
       position={[0, REST_Y, 0]}
+      visible={!roleSelectOpen}
       castShadow={!powerSaving}
       onClick={(e) => {
         e.stopPropagation()

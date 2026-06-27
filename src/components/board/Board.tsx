@@ -214,8 +214,8 @@ function TileHoverGlow({ x, z, active }: { x: number; z: number; active: boolean
 }
 
 export function Board({ theme, menuPhase }: BoardProps) {
-  const { rules, pieces, validMoves, selectedId, selectPiece, movePiece, gameKey, powerSaving } = useGameStore()
-  const { boardSize, center, attackerStarts, defenderStarts, kingEscapeEdge } = getBoardConfig(rules)
+  const { rules, boardSize: storedBoardSize, pieces, validMoves, selectedId, selectPiece, movePiece, gameKey, powerSaving } = useGameStore()
+  const { boardSize, center, attackerStarts, defenderStarts, kingEscapeEdge } = getBoardConfig(rules, storedBoardSize)
   useEffect(() => { clearPhaseCache() }, [gameKey])
   const [hoveredTile, setHoveredTile] = useState<{ x: number; z: number } | null>(null)
   const boardOffset = (boardSize - 1) / 2

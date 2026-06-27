@@ -20,7 +20,7 @@ export type Theme = 'natural'
 export type PlayerSide = 'attacker' | 'defender'
 export type GameMode = 'attacker' | 'defender' | '2player'
 export type Difficulty = 'easy' | 'medium' | 'hard'
-export type Rules = 'Copenhagen' | 'Fetlar' | 'Tawlbwrdd' | 'Linnaeus Tablut' | 'Saami Tablut' | 'Brandub' | 'Ard Rí' | 'Alea Evangelii' | 'Tyr' | 'Simple Tyr'
+export type Rules = 'Copenhagen' | 'Fetlar' | 'Historical' | 'Tawlbwrdd' | 'Linnaeus Tablut' | 'Saami Tablut' | 'Brandub' | 'Ard Rí' | 'Alea Evangelii' | 'Tyr' | 'Simple Tyr'
 
 interface HistoryEntry {
   pieces: Piece[]
@@ -43,6 +43,7 @@ interface GameStore {
   history: HistoryEntry[]
   undoTrigger: number
   lastMoveTarget: { row: number; col: number } | null
+  lastMove: { pieceId: string; toRow: number; toCol: number } | null
   // Settings
   musicEnabled: boolean
   cameraLocked: boolean
@@ -69,7 +70,7 @@ interface GameStore {
   undoMove: () => void
   setPlayerMode: (mode: GameMode) => void
   boardSize: number
-  setSetting: <K extends 'musicEnabled' | 'cameraLocked' | 'difficulty' | 'rules' | 'powerSaving' | 'boardSize'>(
+  setSetting: <K extends 'musicEnabled' | 'cameraLocked' | 'difficulty' | 'rules' | 'powerSaving' | 'boardSize' | 'playerMode'>(
     key: K, value: GameStore[K]
   ) => void
 }
@@ -89,6 +90,7 @@ export const useGameStore = create<GameStore>((set) => ({
   history: [],
   undoTrigger: 0,
   lastMoveTarget: null,
+  lastMove: null,
   musicEnabled: true,
   cameraLocked: false,
   difficulty: 'medium',
@@ -165,6 +167,7 @@ export const useGameStore = create<GameStore>((set) => ({
       winner: result.winner,
       history: [snapshot],
       lastMoveTarget: { row: toRow, col: toCol },
+      lastMove: { pieceId: s.selectedId!, toRow, toCol },
     }
   }),
 

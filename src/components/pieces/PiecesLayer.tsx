@@ -57,11 +57,11 @@ interface PiecesLayerProps {
 
 export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }: PiecesLayerProps) {
   const {
-    rules, powerSaving, captorIds, undoTrigger,
-    currentTurn, playerMode, winner, selectedId, selectPiece,
+    rules, boardSize: storedBoardSize, powerSaving, captorIds, undoTrigger,
+    currentTurn, playerMode, winner, selectedId, selectPiece, roleSelectOpen,
   } = useGameStore()
 
-  const boardOffset = (getBoardConfig(rules).boardSize - 1) / 2
+  const boardOffset = (getBoardConfig(rules, storedBoardSize).boardSize - 1) / 2
 
   const attackerRef    = useRef<InstancedMesh>(null)
   const defenderRef    = useRef<InstancedMesh>(null)
@@ -173,8 +173,8 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
     const now = Date.now()
     const elapsed = clock.elapsedTime
 
-    // Hide pieces instantly when menu opens — no fade to avoid depth-sort ghost
-    const hiding = menuPhase === 'hiding' || menuPhase === 'hidden'
+    // Hide pieces instantly when menu opens or role select is showing
+    const hiding = menuPhase === 'hiding' || menuPhase === 'hidden' || roleSelectOpen
     attackerRef.current.visible = !hiding
     defenderRef.current.visible = !hiding
     attackerRef.current.castShadow = !hiding
@@ -334,6 +334,7 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
         ref={attackerRef}
         args={[geometry, undefined, MAX_ATTACKERS]}
         castShadow
+        visible={!roleSelectOpen}
         onClick={handleClick(attackerSlots.current)}
         onPointerEnter={handleEnter(attackerSlots.current)}
         onPointerLeave={handleLeave(attackerSlots.current)}
@@ -355,6 +356,7 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
         ref={defenderRef}
         args={[geometry, undefined, MAX_DEFENDERS]}
         castShadow
+        visible={!roleSelectOpen}
         onClick={handleClick(defenderSlots.current)}
         onPointerEnter={handleEnter(defenderSlots.current)}
         onPointerLeave={handleLeave(defenderSlots.current)}

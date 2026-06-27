@@ -10,14 +10,15 @@ function getAllMoves(
   pieces: Piece[],
   side: 'attacker' | 'defender',
   boardSize: number,
-  center: number
+  center: number,
+  noThrone = false
 ): { piece: Piece; row: number; col: number }[] {
   const sidePieces = pieces.filter(p =>
     side === 'attacker' ? p.type === 'attacker' : p.type === 'defender' || p.type === 'king'
   )
   const result: { piece: Piece; row: number; col: number }[] = []
   for (const piece of sidePieces) {
-    for (const [row, col] of getValidMoves(piece, pieces, boardSize, center)) {
+    for (const [row, col] of getValidMoves(piece, pieces, boardSize, center, noThrone)) {
       result.push({ piece, row, col })
     }
   }
@@ -42,9 +43,10 @@ function kingEscapeMoves(
   pieces: Piece[],
   boardSize: number,
   center: number,
-  kingEscapeEdge: boolean
+  kingEscapeEdge: boolean,
+  noThrone = false
 ): [number, number][] {
-  const moves = getValidMoves(king, pieces, boardSize, center)
+  const moves = getValidMoves(king, pieces, boardSize, center, noThrone)
   if (kingEscapeEdge) {
     return moves.filter(([r, c]) => r === 0 || r === boardSize - 1 || c === 0 || c === boardSize - 1)
   }
@@ -59,7 +61,8 @@ function scoreMove(
   side: 'attacker' | 'defender',
   boardSize: number,
   center: number,
-  kingEscapeEdge: boolean
+  kingEscapeEdge: boolean,
+  noThrone = false
 ): number {
   let score = 0
   const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]] as const
@@ -94,13 +97,13 @@ function scoreMove(
     score += (prevDist - newDist) * 12
 
     // Reward opening new escape routes
-    const prevEscapes = kingEscapeMoves(king, pieces, boardSize, center, kingEscapeEdge).length
-    const newEscapes = kingEscapeMoves({ ...king, row: toRow, col: toCol }, afterMove, boardSize, center, kingEscapeEdge).length
+    const prevEscapes = kingEscapeMoves(king, pieces, boardSize, center, kingEscapeEdge, noThrone).length
+    const newEscapes = kingEscapeMoves({ ...king, row: toRow, col: toCol }, afterMove, boardSize, center, kingEscapeEdge, noThrone).length
     score += (newEscapes - prevEscapes) * 35
 
   } else if (side === 'attacker') {
-    const beforeEscapes = kingEscapeMoves(king, pieces, boardSize, center, kingEscapeEdge)
-    const afterEscapes = kingEscapeMoves(king, afterMove, boardSize, center, kingEscapeEdge)
+    const beforeEscapes = kingEscapeMoves(king, pieces, boardSize, center, kingEscapeEdge, noThrone)
+    const afterEscapes = kingEscapeMoves(king, afterMove, boardSize, center, kingEscapeEdge, noThrone)
 
     // Heavily reward blocking an immediate king escape
     if (beforeEscapes.length > 0 && afterEscapes.length < beforeEscapes.length) {
@@ -151,16 +154,17 @@ export function getBestMove(
   difficulty: 'easy' | 'medium' | 'hard',
   kingEscapeEdge = false,
   _shieldwall = false,
-  _weakKing = false
+  _weakKing = false,
+  noThrone = false
 ): AiMove | null {
-  const allMoves = getAllMoves(pieces, side, boardSize, center)
+  const allMoves = getAllMoves(pieces, side, boardSize, center, noThrone)
   if (allMoves.length === 0) return null
 
   if (difficulty === 'easy') {
     // Easy: grab obvious captures if available, otherwise random
     const scored = allMoves.map(m => ({
       ...m,
-      score: scoreMove(pieces, m.piece, m.row, m.col, side, boardSize, center, kingEscapeEdge),
+      score: scoreMove(pieces, m.piece, m.row, m.col, side, boardSize, center, kingEscapeEdge, noThrone),
     }))
     const captures = scored.filter(m => m.score >= 12)
     const pool = captures.length > 0 ? captures : scored
@@ -174,7 +178,7 @@ export function getBestMove(
   const scored = allMoves
     .map(m => ({
       ...m,
-      score: scoreMove(pieces, m.piece, m.row, m.col, side, boardSize, center, kingEscapeEdge) + Math.random() * noise,
+      score: scoreMove(pieces, m.piece, m.row, m.col, side, boardSize, center, kingEscapeEdge, noThrone) + Math.random() * noise,
     }))
     .sort((a, b) => b.score - a.score)
 

@@ -175,8 +175,8 @@ const BOARD_START_Y = -20
 
 function FadingLights({ menuOpen, powerSaving }: { menuOpen: boolean; powerSaving: boolean }) {
   const introStartMs = useContext(IntroStartContext)
-  const { pieces, rules } = useGameStore()
-  const boardSize = getBoardConfig(rules).boardSize
+  const { pieces, rules, boardSize: storedBoardSize } = useGameStore()
+  const boardSize = getBoardConfig(rules, storedBoardSize).boardSize
   const ambientRef = useRef<AmbientLight>(null)
   const moonRef = useRef<DirectionalLight>(null)
   const spotRef = useRef<SpotLight>(null)
@@ -210,7 +210,7 @@ function FadingLights({ menuOpen, powerSaving }: { menuOpen: boolean; powerSavin
     if (spotRef.current) {
       const king = pieces.find(p => p.type === 'king')
       if (king) {
-        const { boardSize } = getBoardConfig(rules)
+        const { boardSize } = getBoardConfig(rules, storedBoardSize)
         const offset = (boardSize - 1) / 2
         const kx = king.col - offset
         const kz = king.row - offset
@@ -498,8 +498,8 @@ const BOARD_RETURN_MS = 1000
 
 function CameraLock({ locked }: { locked: boolean }) {
   const { size } = useThree()
-  const { rules } = useGameStore()
-  const boardSize = getBoardConfig(rules).boardSize
+  const { rules, boardSize: storedBoardSize } = useGameStore()
+  const boardSize = getBoardConfig(rules, storedBoardSize).boardSize
   // Compute height so the board fits horizontally and vertically with margin
   const topDownCam = useMemo(() => {
     const aspect = size.width / size.height
@@ -539,7 +539,7 @@ interface SceneInnerProps {
 }
 
 function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
-  const { pieces, dyingPieces, captureDelayMs, clearDyingPieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules, undoTrigger, lastMoveTarget } = useGameStore()
+  const { pieces, dyingPieces, captureDelayMs, clearDyingPieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules, boardSize: storedBoardSize, undoTrigger, lastMoveTarget } = useGameStore()
   const theme = themes[themeName]
   const [menuPhase, setMenuPhase] = useState<MenuPhase>('idle')
 
@@ -549,7 +549,7 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
 
   useEffect(() => {
     if (powerSaving || !lastMoveTarget) return
-    const { boardSize } = getBoardConfig(rules)
+    const { boardSize } = getBoardConfig(rules, storedBoardSize)
     const offset = (boardSize - 1) / 2
     setBolts(prev => [...prev, {
       key: undoTrigger,
@@ -560,7 +560,7 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
 
   useEffect(() => {
     if (powerSaving || dyingPieces.length === 0) return
-    const { boardSize } = getBoardConfig(rules)
+    const { boardSize } = getBoardConfig(rules, storedBoardSize)
     const boardOffset = (boardSize - 1) / 2
     const clouds = dyingPieces.map(p => ({
       key: Date.now() + Math.random() * 1000,
@@ -647,7 +647,6 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
   return (
     <>
       <fog attach="fog" args={["#0a0800", 28, 55]} />
-      <Environment preset="night" environmentIntensity={0.0} />
       <FadingLights menuOpen={!lightsOn} powerSaving={powerSaving} />
       <FireLight menuOpen={!lightsOn} powerSaving={powerSaving} />
       {!powerSaving && <CaptureFlashLight />}

@@ -44,8 +44,8 @@ const BURST_CSS = `
 `
 
 export function Board2D({ menuOpen }: { menuOpen: boolean }) {
-  const { pieces, dyingPieces: storeDyingPieces, clearDyingPieces, selectedId, selectPiece, movePiece, validMoves, gameKey, rules } = useGameStore()
-  const { boardSize, center } = getBoardConfig(rules)
+  const { pieces, dyingPieces: storeDyingPieces, clearDyingPieces, selectedId, selectPiece, movePiece, validMoves, gameKey, rules, boardSize: storedBoardSize, roleSelectOpen } = useGameStore()
+  const { boardSize, center } = getBoardConfig(rules, storedBoardSize)
   const TOTAL = boardSize * CELL + PAD * 2
 
   const [mounted, setMounted] = useState(false)
@@ -236,8 +236,8 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
           </g>
         ))}
 
-        {/* Pieces — use CSS transform so position changes animate smoothly */}
-        {pieces.map(piece => {
+        {/* Pieces — hidden during role select, animate in after side is chosen */}
+        {!roleSelectOpen && pieces.map(piece => {
           const selected = selectedId === piece.id
           const isKing = piece.type === 'king'
           const isDefender = piece.type === 'defender'

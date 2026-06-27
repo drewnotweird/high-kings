@@ -225,25 +225,70 @@ const SIMPLE_TYR: BoardConfig = {
   ],
 }
 
-const CONFIGS: Record<string, BoardConfig> = {
-  Copenhagen: COPENHAGEN,
-  Fetlar: FETLAR,
-  Tawlbwrdd: TAWLBWRDD,
-  'Linnaeus Tablut': LINNAEUS_TABLUT,
-  'Saami Tablut': SAAMI_TABLUT,
-  Brandub: BRANDUB,
-  'Ard Rí': ARD_RI,
-  'Alea Evangelii': ALEA_EVANGELII,
-  Tyr: TYR,
-  'Simple Tyr': SIMPLE_TYR,
+// Shared 13×13 starting positions (Parlett reconstruction, also used by Copenhagen/Fetlar 13×13).
+// 32 attackers in a symmetric cross-and-edge pattern; 16 defenders + king in a diamond cluster.
+const STARTS_13: Pick<BoardConfig, 'attackerStarts' | 'defenderStarts'> = {
+  attackerStarts: [
+    [0,4],[0,5],[0,6],[0,7],[0,8],
+    [1,5],[1,7],
+    [2,6],
+    [4,0],[4,12],
+    [5,0],[5,1],[5,11],[5,12],
+    [6,0],[6,2],[6,10],[6,12],
+    [7,0],[7,1],[7,11],[7,12],
+    [8,0],[8,12],
+    [10,6],
+    [11,5],[11,7],
+    [12,4],[12,5],[12,6],[12,7],[12,8],
+  ],
+  defenderStarts: [
+    [3,6],
+    [4,4],[4,8],
+    [5,5],[5,6],[5,7],
+    [6,3],[6,5],[6,7],[6,9],
+    [7,5],[7,6],[7,7],
+    [8,4],[8,8],
+    [9,6],
+  ],
+}
+
+// Copenhagen 13×13 — standard Copenhagen rules on a larger board.
+const COPENHAGEN_13: BoardConfig = { boardSize: 13, center: 6, shieldwall: true, ...STARTS_13 }
+
+// Fetlar 13×13 — Fetlar rules (strong king, corner escape, no shieldwall) on 13×13.
+const FETLAR_13: BoardConfig = { ...COPENHAGEN_13, shieldwall: false }
+
+// Historical 11×11 — same piece layout as Copenhagen 11×11, weak king, corner escape, no shieldwall.
+const HISTORICAL_11: BoardConfig = { ...COPENHAGEN, weakKing: true, shieldwall: false }
+
+// Historical 13×13 — Parlett 13×13 reconstruction, weak king, corner escape, no shieldwall.
+const HISTORICAL_13: BoardConfig = { ...COPENHAGEN_13, weakKing: true, shieldwall: false }
+
+const CONFIGS: Record<string, Partial<Record<number, BoardConfig>>> = {
+  'Copenhagen':      { 11: COPENHAGEN,    13: COPENHAGEN_13 },
+  'Fetlar':          { 11: FETLAR,         13: FETLAR_13 },
+  'Historical':      { 11: HISTORICAL_11,  13: HISTORICAL_13 },
+  'Tawlbwrdd':      { 11: TAWLBWRDD },
+  'Linnaeus Tablut': { 9:  LINNAEUS_TABLUT },
+  'Saami Tablut':   { 9:  SAAMI_TABLUT },
+  'Brandub':        { 7:  BRANDUB },
+  'Ard Rí':         { 7:  ARD_RI },
+  'Alea Evangelii': { 19: ALEA_EVANGELII },
+  'Tyr':            { 15: TYR },
+  'Simple Tyr':     { 11: SIMPLE_TYR },
 }
 
 export function getBoardConfig(rules: string, boardSize?: number): BoardConfig {
-  const config = CONFIGS[rules] ?? COPENHAGEN
-  if (boardSize !== undefined && boardSize !== config.boardSize) {
-    return { ...config, boardSize, center: Math.floor(boardSize / 2) }
+  const sizeMap = CONFIGS[rules] ?? CONFIGS['Copenhagen']!
+  if (boardSize !== undefined) {
+    const exact = sizeMap[boardSize]
+    if (exact) return exact
   }
-  return config
+  const fallback = Object.values(sizeMap)[0]!
+  if (boardSize !== undefined && boardSize !== fallback.boardSize) {
+    return { ...fallback, boardSize, center: Math.floor(boardSize / 2) }
+  }
+  return fallback
 }
 
 export function isCorner(row: number, col: number, boardSize: number): boolean {
