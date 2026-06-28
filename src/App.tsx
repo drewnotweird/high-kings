@@ -281,11 +281,17 @@ body, button, input, select {
   box-shadow: -4px -4px 12px rgba(0,0,0,0.6);
 }
 .credits-page__top .credits-page__bar-centre {
+  background-image: var(--corner-img-tm);
+  background-size: cover;
+  background-position: center top;
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.6);
 }
 .credits-page__bottom .credits-page__bar-centre {
+  background-image: var(--corner-img-bm);
+  background-size: cover;
+  background-position: center bottom;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
   box-shadow: 0 -4px 12px rgba(0,0,0,0.6);
@@ -1083,8 +1089,10 @@ function ScrollPage({ title, onClose, children }: { title: string; onClose: () =
   const cornerStyle = {
     '--corner-img-tl': `url(${base}wood-top-left.jpg)`,
     '--corner-img-tr': `url(${base}wood-top-right.jpg)`,
+    '--corner-img-tm': `url(${base}wood-top-middle.jpg)`,
     '--corner-img-bl': `url(${base}wood-bottom-left.jpg)`,
     '--corner-img-br': `url(${base}wood-bottom-right.jpg)`,
+    '--corner-img-bm': `url(${base}wood-bottom-middle.jpg)`,
   } as React.CSSProperties
 
   return (
