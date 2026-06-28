@@ -363,7 +363,7 @@ body, button, input, select {
   color: #e8d8b8;
 }
 @media (min-width: 1200px) {
-  .credits-page__paper { padding: 56px 109px; }
+  .credits-page__paper { padding: 56px 109px 48px; }
 }
 .credits-page__middle {
   position: relative;
