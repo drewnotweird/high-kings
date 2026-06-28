@@ -259,18 +259,32 @@ body, button, input, select {
 .credits-page__top .credits-page__bar-side:first-child {
   background-image: var(--corner-img-tl);
   background-position: top left;
+  border-bottom-right-radius: 12px;
+  box-shadow: 4px 4px 12px rgba(0,0,0,0.6);
 }
 .credits-page__top .credits-page__bar-side:last-child {
   background-image: var(--corner-img-tr);
   background-position: top right;
+  border-bottom-left-radius: 12px;
+  box-shadow: -4px 4px 12px rgba(0,0,0,0.6);
 }
 .credits-page__bottom .credits-page__bar-side:first-child {
   background-image: var(--corner-img-bl);
   background-position: bottom left;
+  border-top-right-radius: 12px;
+  box-shadow: 4px -4px 12px rgba(0,0,0,0.6);
 }
 .credits-page__bottom .credits-page__bar-side:last-child {
   background-image: var(--corner-img-br);
   background-position: bottom right;
+  border-top-left-radius: 12px;
+  box-shadow: -4px -4px 12px rgba(0,0,0,0.6);
+}
+.credits-page__bar-centre {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+}
+.credits-page__bottom .credits-page__bar-centre {
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.6);
 }
 .credits-page__bar-centre {
   width: 60%;
