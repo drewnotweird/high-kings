@@ -1829,13 +1829,14 @@ function HowToPlayScroll({ onClose }: { onClose: () => void }) {
   )
 }
 
-function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowToPlay, onOnlineMatch }: {
+function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowToPlay, onLeaderboard, onOnlineMatch }: {
   isOpen: boolean
   isVisible: boolean
   onResume: () => void
   onNewGame: (play: 'Vs Machine' | 'Take turns') => void
   onCredits: () => void
   onHowToPlay: () => void
+  onLeaderboard: () => void
   onOnlineMatch: (rules: Rules, boardSize: number) => void
 }) {
   const { cameraLocked, difficulty, rules, boardSize, powerSaving, playerMode, setSetting } = useGameStore()
@@ -1953,6 +1954,9 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
             </div>
           </div>
 
+          <div className="menu-overlay__row" style={{ marginTop: 8 }}>
+            <button className="menu-overlay__item" onClick={onLeaderboard}>Leaderboard</button>
+          </div>
           <div className="menu-overlay__row" style={{ marginTop: 8 }}>
             <button className="menu-overlay__item menu-overlay__item--half" onClick={onHowToPlay}>How To</button>
             <button className="menu-overlay__item menu-overlay__item--half" onClick={onCredits}>Credits</button>
@@ -2145,6 +2149,7 @@ function App() {
   const [menuVisible, setMenuVisible] = useState(false)
   const [showCredits, setShowCredits] = useState(false)
   const [showHowToPlay, setShowHowToPlay] = useState(false)
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [winnerDismissed, setWinnerDismissed] = useState(false)
   const [displayWinner, setDisplayWinner] = useState<string | null>(null)
   const [showAuth, setShowAuth] = useState(false)
@@ -2414,6 +2419,7 @@ function App() {
           }}
           onCredits={() => setShowCredits(true)}
           onHowToPlay={() => setShowHowToPlay(true)}
+          onLeaderboard={() => setShowLeaderboard(true)}
           onOnlineMatch={(r, bs) => {
             setSearchSettings({ rules: r, boardSize: bs })
             if (!userId) {
@@ -2500,6 +2506,11 @@ function App() {
       {showProfile && <ProfileScroll onClose={() => setShowProfile(false)} onSignIn={() => setShowAuth(true)} />}
       {showHowToPlay && <HowToPlayScroll onClose={() => setShowHowToPlay(false)} />}
       {showCredits && <CreditsScroll onClose={() => setShowCredits(false)} />}
+      {showLeaderboard && (
+        <ScrollPage title="Leaderboard" onClose={() => setShowLeaderboard(false)}>
+          <p>Leaderboard coming soon.</p>
+        </ScrollPage>
+      )}
       {displayWinner && !winnerDismissed && (
         <WinnerOverlay
           winner={displayWinner as 'attacker' | 'defender'}
