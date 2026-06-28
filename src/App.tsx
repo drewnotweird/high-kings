@@ -311,7 +311,6 @@ body, button, input, select {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: red;
 }
 .credits-page__arrow {
   background: none;
