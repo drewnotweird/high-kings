@@ -1262,7 +1262,7 @@ function Piece({ cx, cy, r = 10, type = 'atk' }: { cx: number; cy: number; r?: n
   return (
     <g>
       <ellipse cx={cx} cy={cy + kr * 0.2} rx={kr * 0.9} ry={kr * 0.22} fill="rgba(0,0,0,0.22)" />
-      <ellipse cx={cx} cy={cy} rx={kr * 0.95} ry={kr} fill={fill} stroke={strokeC} strokeWidth={1.5} />
+      <circle cx={cx} cy={cy} r={kr} fill={fill} stroke={strokeC} strokeWidth={1.5} />
       <ellipse cx={cx - kr * 0.28} cy={cy - kr * 0.3} rx={kr * 0.2} ry={kr * 0.14} fill="rgba(255,255,255,0.28)" />
       {type === 'king' && <>
         <line x1={cx} y1={cy - kr * 0.8} x2={cx} y2={cy - kr * 0.45} stroke={KING_C} strokeWidth={2} strokeLinecap="round"/>
