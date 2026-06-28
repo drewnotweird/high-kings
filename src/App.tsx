@@ -241,9 +241,64 @@ body, button, input, select {
   box-shadow: 0 0 20px rgba(0,0,0,1);
   background-size: auto 100%;
   background-repeat: repeat-x;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
 }
 .credits-page__top  { background-position: center bottom; }
 .credits-page__bottom { background-position: center top; }
+.credits-page__bar-side {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: red;
+}
+.credits-page__bar-centre {
+  width: 60%;
+  max-width: 840px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: red;
+}
+.credits-page__arrow {
+  background: none;
+  border: none;
+  color: #3d2008;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 8px;
+  line-height: 1;
+  opacity: 1;
+  transition: opacity 0.15s;
+}
+.credits-page__arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+.credits-page__title {
+  font-family: 'MedievalSharp', cursive;
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #3d2008;
+}
+.credits-page__close-bar-btn {
+  background: none;
+  border: none;
+  color: #3d2008;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 8px;
+  line-height: 1;
+  opacity: 0.8;
+  transition: opacity 0.15s;
+}
+.credits-page__close-bar-btn:hover { opacity: 1; }
 .credits-page__middle {
   position: relative;
   z-index: 1;
@@ -935,41 +990,96 @@ const ALL_RULES: Rules[] = ['Copenhagen', 'Fetlar', 'Historical', 'Tawlbwrdd', '
 const ALL_BOARD_SIZES = [7, 9, 11, 13, 15, 17, 19].filter(n => (BOARD_SIZE_RULES[n] ?? []).length > 0)
 
 
-function CreditsScroll({ onClose }: { onClose: () => void }) {
+function ScrollPage({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   const [closing, setClosing] = useState(false)
-  const handleClose = () => {
-    setClosing(true)
-    setTimeout(onClose, 450)
-  }
+  const [atTop, setAtTop] = useState(true)
+  const [atBottom, setAtBottom] = useState(false)
+  const middleRef = useRef<HTMLDivElement>(null)
   const base = import.meta.env.BASE_URL
+
+  const handleClose = () => { setClosing(true); setTimeout(onClose, 450) }
+
+  const checkScroll = () => {
+    const el = middleRef.current
+    if (!el) return
+    setAtTop(el.scrollTop <= 1)
+    setAtBottom(el.scrollTop + el.clientHeight >= el.scrollHeight - 1)
+  }
+
+  useEffect(() => {
+    const el = middleRef.current
+    if (!el) return
+    checkScroll()
+    el.addEventListener('scroll', checkScroll, { passive: true })
+    const ro = new ResizeObserver(checkScroll)
+    ro.observe(el)
+    return () => { el.removeEventListener('scroll', checkScroll); ro.disconnect() }
+  }, [])
+
+  const scrollBy = (dir: 1 | -1) => {
+    middleRef.current?.scrollBy({ top: dir * 300, behavior: 'smooth' })
+  }
+
+  const Bars = ({ position }: { position: 'top' | 'bottom' }) => (
+    <div
+      className={`credits-page__${position}`}
+      style={{ backgroundImage: `url(${base}${position === 'top' ? 'wood-top' : 'wood-bottom'}.jpg)` }}
+    >
+      <div className="credits-page__bar-side">
+        {position === 'top'
+          ? <button className="credits-page__arrow" onClick={() => scrollBy(-1)} disabled={atTop}>▲</button>
+          : <button className="credits-page__arrow" onClick={() => scrollBy(1)} disabled={atBottom}>▼</button>
+        }
+      </div>
+      <div className="credits-page__bar-centre">
+        {position === 'top'
+          ? <span className="credits-page__title">{title}</span>
+          : <button className="credits-page__close-bar-btn" onClick={handleClose}>✕</button>
+        }
+      </div>
+      <div className="credits-page__bar-side">
+        {position === 'top'
+          ? <button className="credits-page__arrow" onClick={() => scrollBy(-1)} disabled={atTop}>▲</button>
+          : <button className="credits-page__arrow" onClick={() => scrollBy(1)} disabled={atBottom}>▼</button>
+        }
+      </div>
+    </div>
+  )
+
   return (
     <div className={`credits-page${closing ? ' credits-page--closing' : ''}`}>
-      <div className="credits-page__top" style={{ backgroundImage: `url(${base}wood-top.jpg)` }} />
-      <div className="credits-page__middle">
+      <Bars position="top" />
+      <div className="credits-page__middle" ref={middleRef}>
         <div className="credits-page__paper" style={{ backgroundImage: `url(${base}pagescroll.png)` }}>
-          <h1>Credits</h1>
-          <hr className="credits-page__rule" />
-          <p>
-            High Kings was originally forged around 2010 by three warriors who wanted to bring an ancient Viking strategy game to life. They had an enormous amount of fun building it together, and this site was created to appease the Gods.
-          </p>
-          <div className="credits-page__names">
-            <span className="credits-page__name">Jason Frame</span>
-            <span className="credits-page__name">Lewis MacKenzie</span>
-            <span className="credits-page__name">Andrew Nicolson</span>
-          </div>
-          <hr className="credits-page__rule" />
-          <button className="credits-page__close-btn" onClick={handleClose}>Close</button>
+          {children}
         </div>
       </div>
-      <div className="credits-page__bottom" style={{ backgroundImage: `url(${base}wood-bottom.jpg)` }} />
+      <Bars position="bottom" />
     </div>
+  )
+}
+
+function CreditsScroll({ onClose }: { onClose: () => void }) {
+  return (
+    <ScrollPage title="Credits" onClose={onClose}>
+      <h1>Credits</h1>
+      <hr className="credits-page__rule" />
+      <p>
+        High Kings was originally forged around 2010 by three warriors who wanted to bring an ancient Viking strategy game to life. They had an enormous amount of fun building it together, and this site was created to appease the Gods.
+      </p>
+      <div className="credits-page__names">
+        <span className="credits-page__name">Jason Frame</span>
+        <span className="credits-page__name">Lewis MacKenzie</span>
+        <span className="credits-page__name">Andrew Nicolson</span>
+      </div>
+      <hr className="credits-page__rule" />
+    </ScrollPage>
   )
 }
 
 type StatRow = { opponent_type: string; result: string; rules: string; board_size: number; count: number }
 
 function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: () => void }) {
-  const [closing, setClosing] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [nameError, setNameError] = useState<string | null>(null)
@@ -986,7 +1096,6 @@ function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: (
       .then(({ data, error }) => {
         if (error) { console.error('game_results select:', error.message); return }
         if (!data) return
-        // Group client-side: count rows per (rules, board_size, opponent_type, result)
         const grouped = new Map<string, StatRow>()
         for (const row of data) {
           const key = `${row.rules}|${row.board_size}|${row.opponent_type}|${row.result}`
@@ -997,11 +1106,10 @@ function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: (
         setStats([...grouped.values()])
       })
   }, [userId])
-  const handleClose = () => { setClosing(true); setTimeout(onClose, 450) }
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     setAuth(null, null)
-    handleClose()
+    onClose()
   }
   const handleStartEdit = () => { setNameInput(username ?? ''); setNameError(null); setEditingName(true) }
   const handleSaveName = async () => {
@@ -1018,86 +1126,77 @@ function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: (
     setNameSaving(false)
     setEditingName(false)
   }
-  const base = import.meta.env.BASE_URL
   return (
-    <div className={`credits-page${closing ? ' credits-page--closing' : ''}`}>
-      <div className="credits-page__top" style={{ backgroundImage: `url(${base}wood-top.jpg)` }} />
-      <div className="credits-page__middle">
-        <div className="credits-page__paper" style={{ backgroundImage: `url(${base}pagescroll.png)` }}>
-          {userId ? (
-            <>
-              <h1>Profile</h1>
-              <hr className="credits-page__rule" />
-              {editingName ? (
-                <div className="profile-scroll__edit-name">
-                  <input
-                    className="auth-modal__input profile-scroll__name-input"
-                    type="text"
-                    value={nameInput}
-                    onChange={e => { setNameInput(e.target.value); setNameError(null) }}
-                    onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false) }}
-                    maxLength={20}
-                    autoFocus
-                  />
-                  {nameError && <p className="auth-modal__error">{nameError}</p>}
-                  <div className="profile-scroll__name-actions">
-                    <button className="credits-page__close-btn" onClick={handleSaveName} disabled={nameSaving}>
-                      {nameSaving ? 'Saving…' : 'Save'}
-                    </button>
-                    <button className="credits-page__close-btn" onClick={() => setEditingName(false)}>Cancel</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="profile-scroll__name-row">
-                  <span className="profile-scroll__name">{username ?? 'Anonymous'}</span>
-                  <button className="profile-scroll__edit-btn" onClick={handleStartEdit}>Edit</button>
-                </div>
-              )}
-              <hr className="credits-page__rule" />
-              <h2>Stats</h2>
-              {(() => {
-                const variants = [...new Map(stats.map(s => [`${s.rules}|${s.board_size}`, { rules: s.rules, board_size: s.board_size }])).values()]
-                  .sort((a, b) => a.rules.localeCompare(b.rules) || a.board_size - b.board_size)
-                if (variants.length === 0) return (
-                  <p style={{ color: '#7a5228', fontStyle: 'italic', fontSize: '0.85em' }}>No games recorded yet.</p>
-                )
-                return variants.map(({ rules: v, board_size: bs }) => (
-                  <div key={`${v}|${bs}`} className="profile-scroll__stat-block">
-                    <div className="profile-scroll__stat-label">{v} — {bs}×{bs}</div>
-                    {(['machine', 'human'] as const).map(type => {
-                      const w = stats.find(s => s.rules === v && s.board_size === bs && s.opponent_type === type && s.result === 'win')?.count ?? 0
-                      const l = stats.find(s => s.rules === v && s.board_size === bs && s.opponent_type === type && s.result === 'loss')?.count ?? 0
-                      if (w === 0 && l === 0) return null
-                      return (
-                        <div key={type} className="profile-scroll__stat-row">
-                          <span className="profile-scroll__stat-type">{type === 'machine' ? 'vs Machine' : 'vs Players'}</span>
-                          <span className="profile-scroll__stat-win">{w}W</span>
-                          <span className="profile-scroll__stat-sep">/</span>
-                          <span className="profile-scroll__stat-loss">{l}L</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                ))
-              })()}
-              <hr className="credits-page__rule" />
-              <button className="credits-page__close-btn" onClick={handleSignOut} style={{ marginBottom: 12 }}>Sign Out</button>
-              <button className="credits-page__close-btn" onClick={handleClose}>Close</button>
-            </>
+    <ScrollPage title="Profile" onClose={onClose}>
+      {userId ? (
+        <>
+          <h1>Profile</h1>
+          <hr className="credits-page__rule" />
+          {editingName ? (
+            <div className="profile-scroll__edit-name">
+              <input
+                className="auth-modal__input profile-scroll__name-input"
+                type="text"
+                value={nameInput}
+                onChange={e => { setNameInput(e.target.value); setNameError(null) }}
+                onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false) }}
+                maxLength={20}
+                autoFocus
+              />
+              {nameError && <p className="auth-modal__error">{nameError}</p>}
+              <div className="profile-scroll__name-actions">
+                <button className="credits-page__close-btn" onClick={handleSaveName} disabled={nameSaving}>
+                  {nameSaving ? 'Saving…' : 'Save'}
+                </button>
+                <button className="credits-page__close-btn" onClick={() => setEditingName(false)}>Cancel</button>
+              </div>
+            </div>
           ) : (
-            <>
-              <h1>Profile</h1>
-              <hr className="credits-page__rule" />
-              <p>Sign in to track your wins, losses and rank on the leaderboard.</p>
-              <hr className="credits-page__rule" />
-              <button className="credits-page__close-btn" onClick={() => { handleClose(); setTimeout(onSignIn, 400) }}>Sign In / Register</button>
-              <button className="credits-page__close-btn" style={{ marginTop: 12 }} onClick={handleClose}>Close</button>
-            </>
+            <div className="profile-scroll__name-row">
+              <span className="profile-scroll__name">{username ?? 'Anonymous'}</span>
+              <button className="profile-scroll__edit-btn" onClick={handleStartEdit}>Edit</button>
+            </div>
           )}
-        </div>
-      </div>
-      <div className="credits-page__bottom" style={{ backgroundImage: `url(${base}wood-bottom.jpg)` }} />
-    </div>
+          <hr className="credits-page__rule" />
+          <h2>Stats</h2>
+          {(() => {
+            const variants = [...new Map(stats.map(s => [`${s.rules}|${s.board_size}`, { rules: s.rules, board_size: s.board_size }])).values()]
+              .sort((a, b) => a.rules.localeCompare(b.rules) || a.board_size - b.board_size)
+            if (variants.length === 0) return (
+              <p style={{ color: '#7a5228', fontStyle: 'italic', fontSize: '0.85em' }}>No games recorded yet.</p>
+            )
+            return variants.map(({ rules: v, board_size: bs }) => (
+              <div key={`${v}|${bs}`} className="profile-scroll__stat-block">
+                <div className="profile-scroll__stat-label">{v} — {bs}×{bs}</div>
+                {(['machine', 'human'] as const).map(type => {
+                  const w = stats.find(s => s.rules === v && s.board_size === bs && s.opponent_type === type && s.result === 'win')?.count ?? 0
+                  const l = stats.find(s => s.rules === v && s.board_size === bs && s.opponent_type === type && s.result === 'loss')?.count ?? 0
+                  if (w === 0 && l === 0) return null
+                  return (
+                    <div key={type} className="profile-scroll__stat-row">
+                      <span className="profile-scroll__stat-type">{type === 'machine' ? 'vs Machine' : 'vs Players'}</span>
+                      <span className="profile-scroll__stat-win">{w}W</span>
+                      <span className="profile-scroll__stat-sep">/</span>
+                      <span className="profile-scroll__stat-loss">{l}L</span>
+                    </div>
+                  )
+                })}
+              </div>
+            ))
+          })()}
+          <hr className="credits-page__rule" />
+          <button className="credits-page__close-btn" onClick={handleSignOut}>Sign Out</button>
+        </>
+      ) : (
+        <>
+          <h1>Profile</h1>
+          <hr className="credits-page__rule" />
+          <p>Sign in to track your wins, losses and rank on the leaderboard.</p>
+          <hr className="credits-page__rule" />
+          <button className="credits-page__close-btn" onClick={onSignIn}>Sign In / Register</button>
+        </>
+      )}
+    </ScrollPage>
   )
 }
 
@@ -1534,14 +1633,9 @@ function Illustration({ label }: { label: string }) {
 }
 
 function HowToPlayScroll({ onClose }: { onClose: () => void }) {
-  const [closing, setClosing] = useState(false)
-  const handleClose = () => { setClosing(true); setTimeout(onClose, 450) }
-  const base = import.meta.env.BASE_URL
   return (
-    <div className={`credits-page${closing ? ' credits-page--closing' : ''}`}>
-      <div className="credits-page__top" style={{ backgroundImage: `url(${base}wood-top.jpg)` }} />
-      <div className="credits-page__middle">
-        <div className="credits-page__paper" style={{ backgroundImage: `url(${base}pagescroll.png)` }}>
+    <ScrollPage title="How to Play" onClose={onClose}>
+      <>
 
           <h1>How to Play</h1>
           <hr className="credits-page__rule" />
@@ -1643,11 +1737,8 @@ function HowToPlayScroll({ onClose }: { onClose: () => void }) {
           </div>
 
           <hr className="credits-page__rule" />
-          <button className="credits-page__close-btn" onClick={handleClose}>Close</button>
-        </div>
-      </div>
-      <div className="credits-page__bottom" style={{ backgroundImage: `url(${base}wood-bottom.jpg)` }} />
-    </div>
+      </>
+    </ScrollPage>
   )
 }
 
