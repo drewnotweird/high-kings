@@ -280,10 +280,14 @@ body, button, input, select {
   border-top-left-radius: 12px;
   box-shadow: -4px -4px 12px rgba(0,0,0,0.6);
 }
-.credits-page__bar-centre {
+.credits-page__top .credits-page__bar-centre {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.6);
 }
 .credits-page__bottom .credits-page__bar-centre {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
   box-shadow: 0 -4px 12px rgba(0,0,0,0.6);
 }
 .credits-page__bar-centre {
