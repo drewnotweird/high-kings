@@ -302,7 +302,7 @@ body, button, input, select {
 .credits-page__arrow {
   background: none;
   border: none;
-  color: #3d2008;
+  color: #fff;
   font-size: 22px;
   cursor: pointer;
   padding: 8px;
@@ -319,12 +319,12 @@ body, button, input, select {
   font-size: 13px;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: #3d2008;
+  color: #fff;
 }
 .credits-page__close-bar-btn {
   background: none;
   border: none;
-  color: #3d2008;
+  color: #fff;
   font-size: 22px;
   cursor: pointer;
   padding: 8px;
