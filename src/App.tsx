@@ -436,7 +436,7 @@ body, button, input, select {
 }
 .credits-page__banner {
   width: 100%;
-  max-height: 200px;
+  max-height: 260px;
   object-fit: cover;
   border-radius: 6px;
   margin-bottom: 20px;
