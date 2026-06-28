@@ -1261,12 +1261,12 @@ function Piece({ cx, cy, r = 10, type = 'atk' }: { cx: number; cy: number; r?: n
   const kr = type === 'king' ? r * 1.2 : r
   return (
     <g>
-      <ellipse cx={cx} cy={cy + kr * 0.18} rx={kr * 0.88} ry={kr * 0.26} fill="rgba(0,0,0,0.22)" />
-      <ellipse cx={cx} cy={cy} rx={kr} ry={kr * 1.18} fill={fill} stroke={strokeC} strokeWidth={1.5} />
-      <ellipse cx={cx - kr * 0.28} cy={cy - kr * 0.32} rx={kr * 0.22} ry={kr * 0.16} fill="rgba(255,255,255,0.28)" />
+      <ellipse cx={cx} cy={cy + kr * 0.2} rx={kr * 0.9} ry={kr * 0.22} fill="rgba(0,0,0,0.22)" />
+      <ellipse cx={cx} cy={cy} rx={kr * 0.95} ry={kr} fill={fill} stroke={strokeC} strokeWidth={1.5} />
+      <ellipse cx={cx - kr * 0.28} cy={cy - kr * 0.3} rx={kr * 0.2} ry={kr * 0.14} fill="rgba(255,255,255,0.28)" />
       {type === 'king' && <>
-        <line x1={cx} y1={cy - kr * 0.85} x2={cx} y2={cy - kr * 0.5} stroke={KING_C} strokeWidth={2} strokeLinecap="round"/>
-        <circle cx={cx} cy={cy - kr * 0.85} r={kr * 0.15} fill={KING_C}/>
+        <line x1={cx} y1={cy - kr * 0.8} x2={cx} y2={cy - kr * 0.45} stroke={KING_C} strokeWidth={2} strokeLinecap="round"/>
+        <circle cx={cx} cy={cy - kr * 0.8} r={kr * 0.15} fill={KING_C}/>
       </>}
     </g>
   )
@@ -1332,7 +1332,7 @@ function Illustration({ label }: { label: string }) {
             <circle cx={x} cy={y} r="5" fill="none" stroke={KING_C} strokeWidth="1.5" className="im-ring" style={{animationDelay:`${d}s`}}/>
           </g>
         ))}
-        <text x="370" y="192" fill={KING_C} fontSize="10" fontFamily="MedievalSharp,cursive" opacity="0.6" textAnchor="end">Northern Europe  ·  400–1400 AD</text>
+        <text x="200" y="192" fill={KING_C} fontSize="10" fontFamily="MedievalSharp,cursive" opacity="0.6" textAnchor="middle">Northern Europe  ·  400–1400 AD</text>
       </svg>
     ),
     'board-overview': (
@@ -1392,28 +1392,28 @@ function Illustration({ label }: { label: string }) {
       </svg>
     ),
     'movement': (
-      <svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg">
         <style>{`
-          @keyframes mv-slide{0%,15%{transform:translateX(0)}70%,100%{transform:translateX(168px)}}
-          @keyframes mv-trail{0%,10%{stroke-dashoffset:200;opacity:0}30%{opacity:0.7}70%{stroke-dashoffset:0;opacity:0.7}85%,100%{opacity:0}}
+          @keyframes mv-slide{0%,15%{transform:translateX(0)}70%,100%{transform:translateX(204px)}}
+          @keyframes mv-trail{0%,10%{stroke-dashoffset:220;opacity:0}30%{opacity:0.7}70%{stroke-dashoffset:0;opacity:0.7}85%,100%{opacity:0}}
           @keyframes mv-dest{0%,65%{opacity:0}80%,100%{opacity:1}}
           .mv-piece{animation:mv-slide 3.5s ease-in-out infinite;transform-box:fill-box;}
-          .mv-trail{stroke-dasharray:200;animation:mv-trail 3.5s ease-in-out infinite;}
+          .mv-trail{stroke-dasharray:220;animation:mv-trail 3.5s ease-in-out infinite;}
           .mv-dest{animation:mv-dest 3.5s ease-in-out infinite;}
         `}</style>
-        {[0,1,2,3,4,5].map(c=>(
+        {[0,1,2,3,4,5,6].map(c=>(
           <rect key={c} x={10+c*46} y={50} width={45} height={45}
-            fill={c===4?'rgba(200,169,110,0.18)':'rgba(60,28,0,0.04)'}
-            stroke={c===4?KING_C:GRID} strokeWidth={c===4?1.5:0.8} rx={c===4?2:0}/>
+            fill={c===5?'rgba(200,169,110,0.18)':'rgba(60,28,0,0.04)'}
+            stroke={c===5?KING_C:GRID} strokeWidth={c===5?1.5:0.8} rx={c===5?2:0}/>
         ))}
-        <line className="mv-trail" x1="32" y1="72" x2="200" y2="72" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
+        <line className="mv-trail" x1="32" y1="72" x2="240" y2="72" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
         <g className="mv-dest">
-          <ellipse cx={224} cy={72} rx={10} ry={13} fill="rgba(200,169,110,0.2)" stroke={KING_C} strokeWidth="1.5" strokeDasharray="3 2"/>
+          <rect x={241} y={51} width={43} height={43} fill="rgba(200,169,110,0.2)" stroke={KING_C} strokeWidth="1.5" strokeDasharray="4 2" rx={2}/>
         </g>
         <g className="mv-piece">
           <Piece cx={32} cy={72} r={11} type="atk"/>
         </g>
-        <text x="150" y="130" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Any distance · Straight lines · No jumping</text>
+        <text x="170" y="130" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Any distance · Straight lines · No jumping</text>
       </svg>
     ),
     'capture': (
@@ -1683,106 +1683,125 @@ function HowToPlayScroll({ onClose }: { onClose: () => void }) {
   return (
     <ScrollPage title="How to Play" onClose={onClose}>
       <>
+        <hr className="credits-page__rule" />
+        <p>Before chess, before checkers, there was Hnefatafl — the Viking strategy game that swept northern Europe for a thousand years and was all but forgotten when chess arrived from the south.</p>
+        <p>You play either the <strong>Attackers</strong>, who surround the board and outnumber their enemy, or the <strong>Defenders</strong>, who guard a King they must escort to safety. Every variant shares a core set of rules.</p>
+        <Illustration label="intro-map" />
 
-          <hr className="credits-page__rule" />
-          <p>Before chess, before checkers, there was Hnefatafl.</p>
-          <p>The Vikings played this game. So did the Celts, the Anglo-Saxons, and the peoples of the far north. Boards have been found in Viking graves, in Irish monasteries, scratched into stone in Orkney. For nearly a thousand years — roughly 400 AD to 1400 AD — it was the strategy game of northern Europe.</p>
-          <p>Then chess arrived from the south, and Hnefatafl was forgotten. Almost.</p>
-          <p>The rules survived in fragments: a mention in a Norse saga here, a manuscript illustration there, a living tradition among the Saami people of Scandinavia that never quite died out. Scholars pieced them back together. And now you're playing it.</p>
-          <Illustration label="intro-map" />
+        <hr className="credits-page__rule" />
+        <h2>The Core Rules</h2>
+        <p>These rules apply to every variant.</p>
 
-          <hr className="credits-page__rule" />
-          <h2>Part One: The Core Game</h2>
-          <p>These rules apply to every variant.</p>
+        <h2>The Board</h2>
+        <p>Hnefatafl is played on a square grid. The centre square is the <strong>Throne</strong> — where the King begins. The four corner squares are <strong>escape squares</strong>. Only the King may stand on either.</p>
+        <Illustration label="board-overview" />
 
-          <h2>1. The Board</h2>
-          <p>Hnefatafl is played on a square grid. The centre square is the <strong>Throne</strong> — where the King begins. The four corner squares are <strong>escape squares</strong> — ancient sanctuaries the King must reach to win.</p>
-          <Illustration label="board-overview" />
+        <h2>Two Sides</h2>
+        <p>The <strong>Attackers</strong> surround the board and move first. Their goal: capture the King. The <strong>Defenders</strong> are outnumbered but protect the King and escort him to a corner.</p>
+        <Illustration label="two-sides" />
 
-          <h2>2. Two Sides, One Goal Each</h2>
-          <p>This is an asymmetric game — the two sides play nothing alike.</p>
-          <p>The <strong>Defenders</strong> protect a King. Their goal is to escort him to a corner escape square. They are outnumbered.</p>
-          <p>The <strong>Attackers</strong> surround the board. Their goal is to capture the King before he reaches safety. They have the numbers.</p>
-          <Illustration label="two-sides" />
+        <h2>Movement</h2>
+        <p>Every piece moves any number of squares in a straight line — horizontally or vertically. No diagonals. No jumping. Corners and the Throne block all pieces except the King.</p>
+        <Illustration label="movement" />
 
-          <h2>3. How Pieces Move</h2>
-          <p>Every piece — attacker, defender, and King alike — moves the same way: any number of squares in a straight line, horizontally or vertically. No diagonals. No jumping over other pieces.</p>
-          <p>The corners and the Throne are off-limits to all pieces except the King.</p>
-          <Illustration label="movement" />
+        <h2>Capture</h2>
+        <p>Sandwich an enemy piece between two of your own on a straight line. The trapped piece is removed immediately. Moving into a sandwich voluntarily is safe — the trap only springs when you close it.</p>
+        <Illustration label="capture" />
 
-          <h2>4. Capturing</h2>
-          <p>Capture an enemy piece by sandwiching it between two of your own on a straight line — one on each side. The trapped piece is removed immediately.</p>
-          <p>You have to move to complete the trap. A piece sitting between two enemies is perfectly safe until you close the other side.</p>
-          <Illustration label="capture" />
+        <h2>Hostile Squares</h2>
+        <p>Empty corners and the empty Throne act as phantom captors. A single friendly piece is enough to capture if an empty special square covers the other side.</p>
+        <Illustration label="hostile-squares" />
 
-          <h2>5. The Throne & Corners Assist Captures</h2>
-          <p>Empty special squares — the Throne and all four corners — count as phantom captors. You only need one friendly piece to complete a capture if an empty special square covers the other side.</p>
-          <Illustration label="hostile-squares" />
+        <h2>Capturing the King</h2>
+        <p>The King requires all four sides sealed simultaneously — by attackers or empty special squares. One open side keeps him safe.</p>
+        <Illustration label="king-capture" />
 
-          <h2>6. Capturing the King</h2>
-          <p>The King cannot be captured like a normal piece. He must be surrounded on <strong>all four sides</strong> simultaneously — by attackers or by empty special squares. As long as even one side is open, he is safe.</p>
-          <Illustration label="king-capture" />
+        <h2>King Escapes</h2>
+        <p>Move the King to a corner square and the Defenders win. The Attackers must hold every path to every corner the entire game.</p>
+        <Illustration label="king-escape" />
 
-          <h2>7. The King Escapes</h2>
-          <p>Move the King to any corner square and the Defenders win. The Attackers must keep every path to every corner blocked — all game long.</p>
-          <Illustration label="king-escape" />
+        <hr className="credits-page__rule" />
+        <h2>The Variants</h2>
+        <p>Each variant changes one or two rules. Everything else is the core game above.</p>
 
-          <hr className="credits-page__rule" />
-          <h2>Part Two: The Variants</h2>
-          <p>Each variant shares the core rules above. Below is only what's different.</p>
+        <div className="htp-variants">
 
-          <div className="htp-variants">
-            <div className="htp-variant">
-              <h3>Copenhagen</h3>
-              <p className="htp-variant__tag">11×11 · The standard game</p>
-              <p><strong>Shieldwall captures:</strong> A line of two or more enemy pieces pressed against the board edge can be wiped out in a single move — if you flank both ends simultaneously (a corner counts as one flank). The King cannot be taken this way.</p>
-              <Illustration label="shieldwall" />
-            </div>
-
-            <div className="htp-variant">
-              <h3>Tawlbwrdd</h3>
-              <p className="htp-variant__tag">11×11 · Same board as Copenhagen, stronger King</p>
-              <p><strong>Edge escape:</strong> The King wins by reaching <strong>any square on the board edge</strong> — not just the four corners. Much harder to contain him. Also includes shieldwall captures.</p>
-              <Illustration label="edge-escape" />
-            </div>
-
-            <div className="htp-variant">
-              <h3>Linnaeus Tablut</h3>
-              <p className="htp-variant__tag">9×9 · Recorded by Carl Linnaeus in 1732</p>
-              <p><strong>Weak King + edge escape:</strong> Once the King steps off the Throne, he can be sandwiched like any other piece — just two attackers is enough. He still escapes to any edge square. Play is more urgent and aggressive.</p>
-              <Illustration label="weak-king" />
-            </div>
-
-            <div className="htp-variant">
-              <h3>Saami Tablut</h3>
-              <p className="htp-variant__tag">9×9 · The living tradition</p>
-              <p>Same rules as Linnaeus Tablut (weak King, edge escape), but the defenders begin in a broader diamond pattern. A slightly more open and tactical opening.</p>
-              <Illustration label="saami-start" />
-            </div>
-
-            <div className="htp-variant">
-              <h3>Brandub</h3>
-              <p className="htp-variant__tag">7×7 · The Irish variant</p>
-              <p><strong>Weak King, fewer pieces:</strong> Only four defenders and eight attackers. The King escapes to a corner. His weakness means every move matters — there's nowhere to hide on this board.</p>
-              <Illustration label="brandub-board" />
-            </div>
-
-            <div className="htp-variant">
-              <h3>Ard Rí</h3>
-              <p className="htp-variant__tag">7×7 · The Irish High King</p>
-              <p><strong>Strong King, more pieces:</strong> Eight defenders and twelve attackers — a denser 7×7 board. The King reverts to the strong rule: he needs all four sides sealed. Corner escape. A harder fight in a tight space.</p>
-              <Illustration label="ard-ri-board" />
-            </div>
-
-            <div className="htp-variant">
-              <h3>Alea Evangelii</h3>
-              <p className="htp-variant__tag">19×19 · The epic</p>
-              <p>72 attackers. 24 defenders. A 19×19 board. The same core rules apply — strong King, corner escape — but the scale transforms the game entirely. Opening theory is deeper, endgames are longer, and the King's journey to a corner is a true odyssey.</p>
-              <Illustration label="alea-board" />
-            </div>
+          <div className="htp-variant">
+            <h3>Copenhagen</h3>
+            <p className="htp-variant__tag">11×11 or 13×13 · The modern standard</p>
+            <p><strong>Shieldwall:</strong> A line of two or more defenders pressed against the board edge can be wiped out in a single move — flank both ends simultaneously (a corner counts as one flank). The King is immune to shieldwall capture. Strong King, corner escape.</p>
+            <Illustration label="shieldwall" />
           </div>
 
-          <hr className="credits-page__rule" />
+          <div className="htp-variant">
+            <h3>Fetlar</h3>
+            <p className="htp-variant__tag">11×11 or 13×13 · The Shetland ruleset</p>
+            <p>Same board and piece count as Copenhagen but <strong>no shieldwall</strong>. Captures are always one-at-a-time. Strong King, corner escape. Widely played in tournament settings.</p>
+          </div>
+
+          <div className="htp-variant">
+            <h3>Historical</h3>
+            <p className="htp-variant__tag">11×11 or 13×13 · Reconstructed rules</p>
+            <p>Based on documented historical records. <strong>Weak King:</strong> once he steps off the Throne, two attackers can sandwich him like any other piece. No shieldwall. Corner escape.</p>
+          </div>
+
+          <div className="htp-variant">
+            <h3>Tawlbwrdd</h3>
+            <p className="htp-variant__tag">11×11 · The Welsh board</p>
+            <p><strong>Edge escape:</strong> The King wins by reaching <strong>any square on the board edge</strong> — not just the corners. Much harder to contain him. Includes shieldwall captures. Strong King.</p>
+            <Illustration label="edge-escape" />
+          </div>
+
+          <div className="htp-variant">
+            <h3>Linnaeus Tablut</h3>
+            <p className="htp-variant__tag">9×9 · Recorded by Carl Linnaeus in 1732</p>
+            <p><strong>Weak King + edge escape:</strong> Once off the Throne, the King can be sandwiched by just two attackers. He escapes to any edge square. Play is faster and more aggressive.</p>
+            <Illustration label="weak-king" />
+          </div>
+
+          <div className="htp-variant">
+            <h3>Saami Tablut</h3>
+            <p className="htp-variant__tag">9×9 · The living tradition</p>
+            <p>Same rules as Linnaeus Tablut but with a broader starting diamond for the defenders. A slightly more open, tactical opening game.</p>
+            <Illustration label="saami-start" />
+          </div>
+
+          <div className="htp-variant">
+            <h3>Brandub</h3>
+            <p className="htp-variant__tag">7×7 · The Irish variant</p>
+            <p><strong>Small board, weak King:</strong> Only four defenders and eight attackers. Corner escape. The King's vulnerability means every move matters — there is nowhere to hide.</p>
+            <Illustration label="brandub-board" />
+          </div>
+
+          <div className="htp-variant">
+            <h3>Ard Rí</h3>
+            <p className="htp-variant__tag">7×7 · The Irish High King</p>
+            <p><strong>Dense 7×7, strong King:</strong> Eight defenders and twelve attackers packed onto the smallest board. The King needs all four sides sealed. Corner escape. Tight, tactical fighting.</p>
+            <Illustration label="ard-ri-board" />
+          </div>
+
+          <div className="htp-variant">
+            <h3>Tyr</h3>
+            <p className="htp-variant__tag">15×15 · Modern design by Aage Nielsen</p>
+            <p><strong>Weak King, edge escape, no Throne:</strong> The centre square has no special properties — pieces may pass through it freely and it does not assist captures. Edge escape, weak King. The largest competitive board size.</p>
+          </div>
+
+          <div className="htp-variant">
+            <h3>Simple Tyr</h3>
+            <p className="htp-variant__tag">11×11 · Tyr rules on a standard board</p>
+            <p>All the Tyr rules — weak King, edge escape, no special Throne — on an 11×11 board. A good entry point to the Tyr family.</p>
+          </div>
+
+          <div className="htp-variant">
+            <h3>Alea Evangelii</h3>
+            <p className="htp-variant__tag">19×19 · The epic</p>
+            <p>72 attackers. 24 defenders. A 19×19 board. The same core rules — strong King, corner escape — but the scale changes everything. Openings are deeper, endgames longer, and the King's journey is a true odyssey.</p>
+            <Illustration label="alea-board" />
+          </div>
+
+        </div>
+
+        <hr className="credits-page__rule" />
       </>
     </ScrollPage>
   )
