@@ -1158,7 +1158,7 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
         before chess arrived from the south and slowly pushed it into obscurity.
       </p>
       <p>
-        The game is built in Three.js and React, running entirely in your browser. The board and pieces are rendered in real-time 3D,
+        This site is built in Three.js and React, running entirely in your browser. The board and pieces are rendered in real-time 3D,
         and the AI opponent uses a minimax search with alpha-beta pruning — it will not go easy on you.
       </p>
       <p>
