@@ -242,11 +242,10 @@ body, button, input, select {
   background-size: auto 100%;
   background-repeat: repeat-x;
   display: flex;
-  align-items: flex-end;
   justify-content: space-between;
 }
-.credits-page__top  { background-position: center bottom; }
-.credits-page__bottom { background-position: center top; }
+.credits-page__top  { background-position: center bottom; align-items: flex-start; }
+.credits-page__bottom { background-position: center top; align-items: flex-end; }
 .credits-page__bar-side {
   width: 60px;
   height: 60px;
