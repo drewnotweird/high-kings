@@ -1939,8 +1939,7 @@ function RoleSelectOverlay({ onConfirm }: { onConfirm: (mode: GameMode) => void 
   )
 }
 
-function GuestLoginModal({ onGuest, onLogin, onClose }: {
-  onGuest: () => void
+function GuestLoginModal({ onLogin, onClose }: {
   onLogin: () => void
   onClose: () => void
 }) {
@@ -1951,10 +1950,9 @@ function GuestLoginModal({ onGuest, onLogin, onClose }: {
           <span className="guest-login-modal__title">Online Match</span>
           <button className="guest-login-modal__close" onClick={onClose}>✕</button>
         </div>
-        <p className="guest-login-modal__body">Sign in to track your match history, or jump straight in as a guest.</p>
+        <p className="guest-login-modal__body">Sign in to play online and track your match history.</p>
         <div className="guest-login-modal__actions">
           <button className="guest-login-modal__btn guest-login-modal__btn--primary" onClick={onLogin}>Log In / Register</button>
-          <button className="guest-login-modal__btn" onClick={onGuest}>Continue as Guest</button>
         </div>
       </div>
     </div>
@@ -1984,6 +1982,15 @@ function App() {
     setOnlineStatus(status)
     if (status.type === 'matched') { setShowFindMatch(false); setMenuOpen(false) }
   })
+
+  // Warm up the matchmaking edge function so it's ready when the user needs it
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/matchmaking`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'ping' }),
+    }).catch(() => {})
+  }, [])
 
   // Restore session on mount, listen for auth changes
   useEffect(() => {
@@ -2338,17 +2345,6 @@ function App() {
       {showUsernamePrompt && <AuthModal initialScreen="username" onClose={() => setShowUsernamePrompt(false)} />}
       {showGuestLogin && pendingOnlineSearch.current && (
         <GuestLoginModal
-          onGuest={async () => {
-            const pending = pendingOnlineSearch.current!
-            pendingOnlineSearch.current = null
-            setShowGuestLogin(false)
-            const { data: { session } } = await supabase.auth.signInAnonymously()
-            if (session?.user) {
-              setAuth(session.user.id, null)
-              setShowFindMatch(true)
-              findMatch(pending.rules, pending.boardSize)
-            }
-          }}
           onLogin={() => { setShowGuestLogin(false); setShowAuth(true) }}
           onClose={() => { setShowGuestLogin(false); pendingOnlineSearch.current = null }}
         />
