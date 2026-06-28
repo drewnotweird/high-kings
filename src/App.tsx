@@ -1394,11 +1394,11 @@ function Illustration({ label }: { label: string }) {
     'movement': (
       <svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg">
         <style>{`
-          @keyframes mv-slide{0%,15%{transform:translateX(0)}70%,100%{transform:translateX(204px)}}
-          @keyframes mv-trail{0%,10%{stroke-dashoffset:220;opacity:0}30%{opacity:0.7}70%{stroke-dashoffset:0;opacity:0.7}85%,100%{opacity:0}}
+          @keyframes mv-slide{0%,15%{transform:translateX(0)}70%,100%{transform:translateX(230px)}}
+          @keyframes mv-trail{0%,10%{stroke-dashoffset:230;opacity:0}30%{opacity:0.7}70%{stroke-dashoffset:0;opacity:0.7}85%,100%{opacity:0}}
           @keyframes mv-dest{0%,65%{opacity:0}80%,100%{opacity:1}}
           .mv-piece{animation:mv-slide 3.5s ease-in-out infinite;transform-box:fill-box;}
-          .mv-trail{stroke-dasharray:220;animation:mv-trail 3.5s ease-in-out infinite;}
+          .mv-trail{stroke-dasharray:230;animation:mv-trail 3.5s ease-in-out infinite;}
           .mv-dest{animation:mv-dest 3.5s ease-in-out infinite;}
         `}</style>
         {[0,1,2,3,4,5,6].map(c=>(
@@ -1406,7 +1406,7 @@ function Illustration({ label }: { label: string }) {
             fill={c===5?'rgba(200,169,110,0.18)':'rgba(60,28,0,0.04)'}
             stroke={c===5?KING_C:GRID} strokeWidth={c===5?1.5:0.8} rx={c===5?2:0}/>
         ))}
-        <line className="mv-trail" x1="32" y1="72" x2="240" y2="72" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
+        <line className="mv-trail" x1="32" y1="72" x2="262" y2="72" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
         <g className="mv-dest">
           <rect x={241} y={51} width={43} height={43} fill="rgba(200,169,110,0.2)" stroke={KING_C} strokeWidth="1.5" strokeDasharray="4 2" rx={2}/>
         </g>
