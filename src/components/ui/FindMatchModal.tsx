@@ -11,7 +11,7 @@ interface Props {
 }
 
 export function FindMatchModal({ status, searchRules, searchBoardSize, onCancel, onClose }: Props) {
-  const { rules, boardSize, username } = useGameStore()
+  const { rules, boardSize } = useGameStore()
   const displayRules = searchRules ?? rules
   const displayBoardSize = searchBoardSize ?? boardSize
 
