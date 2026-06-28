@@ -226,10 +226,10 @@ body, button, input, select {
 }
 @keyframes creditsEnter {
   from { transform: translateY(-104px); height: 104px; }
-  to   { transform: translateY(0);      height: 100vh; }
+  to   { transform: translateY(0);      height: 100vh; height: 100dvh; }
 }
 @keyframes creditsExit {
-  from { transform: translateY(0);      height: 100vh; }
+  from { transform: translateY(0);      height: 100vh; height: 100dvh; }
   to   { transform: translateY(-104px); height: 104px; }
 }
 .credits-page__top,
