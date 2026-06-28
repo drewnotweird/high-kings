@@ -242,7 +242,7 @@ body, button, input, select {
   background-size: auto 100%;
   background-repeat: repeat-x;
   display: flex;
-  align-items: stretch;
+  align-items: flex-end;
   justify-content: space-between;
 }
 .credits-page__top  { background-position: center bottom; }
