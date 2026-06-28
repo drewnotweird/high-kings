@@ -361,9 +361,6 @@ body, button, input, select {
   text-transform: uppercase;
   color: #e8d8b8;
 }
-@media (min-width: 1200px) {
-  .credits-page__paper { padding: 56px 109px 48px; }
-}
 .credits-page__middle {
   position: relative;
   z-index: 1;
@@ -393,7 +390,7 @@ body, button, input, select {
   .credits-page__paper { font-size: 18px; line-height: 28px; }
 }
 @media (min-width: 1200px) {
-  .credits-page__paper { padding: 28px 109px 48px; }
+  .credits-page__paper { padding: 56px 109px 48px; }
 }
 .credits-page h1 {
   font-size: clamp(22px, 5vw, 36px);
