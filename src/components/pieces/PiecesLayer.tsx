@@ -213,7 +213,7 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
       const mesh = isAttacker ? attackerRef.current : defenderRef.current
       const isSelected = id === selectedId
 
-      // Hoverable
+      // Hoverable — computed every frame from current store values
       const pieceIsDefender = anim.type === 'defender'
       anim.isHoverable = !powerSaving && !winner && (
         playerMode === '2player'
@@ -222,7 +222,7 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
             ? pieceIsDefender && currentTurn === 'defender'
             : !pieceIsDefender && currentTurn === 'attacker'
       )
-      if (!anim.isHoverable) anim.hovered = false
+      anim.hovered = anim.isHoverable && hoveredPieceId.current === id
 
       // Intro drop
       const dropT = dropStartMs ? (now - dropStartMs) / 1000 : -1
@@ -319,13 +319,17 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
     const id = slots[instanceId as number]
     if (id) selectPiece(id)
   }
-  const handleEnter = (slots: (string | null)[]) => (e: any) => {
-    const id = slots[e.instanceId as number]
-    if (id) { const a = animMap.current.get(id); if (a?.isHoverable) a.hovered = true }
+  // Track which piece the cursor is currently over (updated every pointermove).
+  // Avoids R3F's onPointerEnter being consumed before isHoverable is true.
+  const hoveredPieceId = useRef<string | null>(null)
+  const handleMove = (slots: (string | null)[]) => (e: any) => {
+    hoveredPieceId.current = slots[e.instanceId as number] ?? null
   }
+  // Only clear if this specific piece is still the active one — avoids leave-after-move ordering issues
+  // when the cursor transitions between the two InstancedMeshes (attacker ↔ defender).
   const handleLeave = (slots: (string | null)[]) => (e: any) => {
     const id = slots[e.instanceId as number]
-    if (id) { const a = animMap.current.get(id); if (a) a.hovered = false }
+    if (id && hoveredPieceId.current === id) hoveredPieceId.current = null
   }
 
   return (
@@ -336,7 +340,7 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
         castShadow
         visible={!roleSelectOpen}
         onClick={handleClick(attackerSlots.current)}
-        onPointerEnter={handleEnter(attackerSlots.current)}
+        onPointerMove={handleMove(attackerSlots.current)}
         onPointerLeave={handleLeave(attackerSlots.current)}
       >
         <meshPhysicalMaterial
@@ -358,7 +362,7 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
         castShadow
         visible={!roleSelectOpen}
         onClick={handleClick(defenderSlots.current)}
-        onPointerEnter={handleEnter(defenderSlots.current)}
+        onPointerMove={handleMove(defenderSlots.current)}
         onPointerLeave={handleLeave(defenderSlots.current)}
       >
         <meshPhysicalMaterial
