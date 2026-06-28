@@ -979,9 +979,10 @@ function MenuButton({ onClick, isOpen }: { onClick: () => void; isOpen: boolean 
 }
 
 function ProfileButton({ onClick, loggedIn }: { onClick: () => void; loggedIn: boolean }) {
+  const base = import.meta.env.BASE_URL
   return (
     <button className="ui-button ui-button--profile" onClick={onClick} style={{ position: 'relative' }}>
-      <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/profile.svg`} alt="" />
+      <img className="ui-button__icon" src={`${base}icons/${loggedIn ? 'profile' : 'login'}.svg`} alt="" />
       <span className="ui-button__label">{loggedIn ? 'You' : 'Login'}</span>
       {loggedIn && <span className="ui-button__profile-dot" />}
     </button>
@@ -2450,7 +2451,7 @@ function App() {
         </div>
         <div style={{ position: 'absolute', top: '3vw', right: '3vw', zIndex: 15, display: 'flex', gap: '1vw', opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
           <div className="ui-button-wrapper ui-button-wrapper--profile">
-            <ProfileButton loggedIn={!!userId} onClick={() => setShowProfile(true)} />
+            <ProfileButton loggedIn={!!userId} onClick={() => userId ? setShowProfile(true) : setShowAuth(true)} />
           </div>
           <div className="ui-button-wrapper ui-button-wrapper--menu">
             <MenuButton isOpen={false} onClick={() => setMenuOpen(o => !o)} />
