@@ -21,12 +21,9 @@ export function AuthModal({ onClose, initialScreen = 'login' }: {
 
   const handleLogin = async () => {
     setLoading(true); setError(null)
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) { setError(error.message); setLoading(false); return }
-    const { data: profile } = await supabase
-      .from('profiles').select('username').eq('id', data.user.id).single()
-    setAuth(data.user.id, profile?.username ?? null)
-    setLoading(false)
+    // onAuthStateChange in App.tsx handles profile fetch and setAuth
     onClose()
   }
 
