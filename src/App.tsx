@@ -101,6 +101,11 @@ body, button, input, select {
 .profile-scroll__stat-win { color: #3a7a3a; }
 .profile-scroll__stat-sep { color: #7a5228; }
 .profile-scroll__stat-loss { color: #7a2020; }
+.profile-scroll__summary { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 12px 0 4px; }
+.profile-scroll__summary-wins { font-size: clamp(26px, 5vw, 38px); color: #3a7a3a; letter-spacing: 1px; }
+.profile-scroll__summary-sep { font-size: clamp(18px, 3vw, 26px); color: #7a5228; }
+.profile-scroll__summary-losses { font-size: clamp(26px, 5vw, 38px); color: #7a2020; letter-spacing: 1px; }
+.profile-scroll__summary-rate { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #7a5228; margin-left: 8px; }
 .menu-overlay {
   position: absolute;
   inset: 0;
@@ -119,6 +124,9 @@ body, button, input, select {
   width: 100%;
   padding: 20px;
   max-width: 320px;
+}
+@media (min-width: 1024px) {
+  .menu-overlay__screens { margin-top: 100px; }
 }
 .menu-overlay__screen {
   display: flex;
@@ -308,11 +316,10 @@ body, button, input, select {
 .credits-page__arrow {
   background: none;
   border: none;
-  color: #fff;
-  font-size: 22px;
   cursor: pointer;
-  padding: 8px;
-  line-height: 1;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
   opacity: 1;
   transition: opacity 0.15s;
 }
@@ -320,25 +327,44 @@ body, button, input, select {
   opacity: 0.25;
   cursor: default;
 }
+.credits-page__arrow img {
+  width: 20px;
+  height: 20px;
+}
 .credits-page__title {
   font-family: 'MedievalSharp', cursive;
-  font-size: 13px;
+  font-size: 24px;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: #fff;
+  color: #e8d8b8;
 }
 .credits-page__close-bar-btn {
   background: none;
   border: none;
-  color: #fff;
-  font-size: 22px;
   cursor: pointer;
-  padding: 8px;
-  line-height: 1;
-  opacity: 0.8;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.85;
   transition: opacity 0.15s;
 }
 .credits-page__close-bar-btn:hover { opacity: 1; }
+.credits-page__close-bar-btn img {
+  width: 20px;
+  height: 20px;
+}
+.credits-page__close-bar-btn span {
+  font-family: 'MedievalSharp', cursive;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #e8d8b8;
+}
+@media (min-width: 1200px) {
+  .credits-page__paper { padding: 56px 109px; }
+}
 .credits-page__middle {
   position: relative;
   z-index: 1;
@@ -362,6 +388,7 @@ body, button, input, select {
   background-position: center top;
   font-size: 14px;
   line-height: 20px;
+  text-align: center;
 }
 @media (min-width: 600px) {
   .credits-page__paper { font-size: 18px; line-height: 28px; }
@@ -406,6 +433,14 @@ body, button, input, select {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(60,28,0,0.35) 20%, rgba(60,28,0,0.35) 80%, transparent);
   margin: 20px 0 24px;
+}
+.credits-page__banner {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  opacity: 0.9;
 }
 .credits-page__close-btn {
   display: block;
@@ -800,17 +835,19 @@ body, button, input, select {
 .auth-modal-overlay {
   position: fixed; inset: 0; z-index: 100;
   background: rgba(0,0,0,0.75);
-  display: flex; align-items: center; justify-content: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px;
   animation: sceneFadeIn 0.2s ease-out forwards;
 }
 .auth-modal {
   background: #0e0c09;
   border: 1px solid rgba(200,160,40,0.3);
   border-radius: 10px;
-  padding: 32px 28px;
-  width: 100%; max-width: 340px;
+  padding: 20px;
+  width: calc(100% - 48px); max-width: 340px;
   display: flex; flex-direction: column; gap: 10px;
   box-shadow: 0 8px 48px rgba(0,0,0,0.8);
+  box-sizing: border-box;
 }
 .auth-modal__title { font-size: 18px; letter-spacing: 3px; text-transform: uppercase; color: #e8d8b8; text-align: center; margin-bottom: 4px; }
 .auth-modal__subtitle { font-size: 12px; color: #a09070; text-align: center; letter-spacing: 0.5px; margin-bottom: 4px; }
@@ -845,6 +882,7 @@ body, button, input, select {
   border: 1px solid rgba(200,160,40,0.15);
 }
 .auth-modal__btn--ghost:hover { border-color: rgba(200,160,40,0.4); color: #c8a860; }
+.auth-modal__cancel { flex-shrink: 0; }
 .auth-modal__divider { text-align: center; font-size: 11px; color: rgba(200,180,140,0.3); letter-spacing: 1px; margin: 2px 0; }
 .auth-modal__error { color: #d47060; font-size: 11px; letter-spacing: 0.5px; text-align: center; }
 .auth-user-chip {
@@ -983,7 +1021,7 @@ function ProfileButton({ onClick, loggedIn }: { onClick: () => void; loggedIn: b
   return (
     <button className="ui-button ui-button--profile" onClick={onClick} style={{ position: 'relative' }}>
       <img className="ui-button__icon" src={`${base}icons/${loggedIn ? 'profile' : 'login'}.svg`} alt="" />
-      <span className="ui-button__label">{loggedIn ? 'You' : 'Login'}</span>
+      <span className="ui-button__label">{loggedIn ? 'You' : 'Log In'}</span>
       {loggedIn && <span className="ui-button__profile-dot" />}
     </button>
   )
@@ -1068,20 +1106,20 @@ function ScrollPage({ title, onClose, children }: { title: string; onClose: () =
     >
       <div className="credits-page__bar-side">
         {position === 'top'
-          ? <button className="credits-page__arrow" onClick={() => scrollBy(-1)} disabled={atTop}>▲</button>
-          : <button className="credits-page__arrow" onClick={() => scrollBy(1)} disabled={atBottom}>▼</button>
+          ? <button className="credits-page__arrow" onClick={() => scrollBy(-1)} disabled={atTop}><img src={`${base}icons/arrow-up.svg`} alt="" /></button>
+          : <button className="credits-page__arrow" onClick={() => scrollBy(1)} disabled={atBottom}><img src={`${base}icons/arrow-down.svg`} alt="" /></button>
         }
       </div>
       <div className="credits-page__bar-centre">
         {position === 'top'
           ? <span className="credits-page__title">{title}</span>
-          : <button className="credits-page__close-bar-btn" onClick={handleClose}>✕</button>
+          : <button className="credits-page__close-bar-btn" onClick={handleClose}><img src={`${base}icons/close.svg`} alt="" /><span>Close</span></button>
         }
       </div>
       <div className="credits-page__bar-side">
         {position === 'top'
-          ? <button className="credits-page__arrow" onClick={() => scrollBy(-1)} disabled={atTop}>▲</button>
-          : <button className="credits-page__arrow" onClick={() => scrollBy(1)} disabled={atBottom}>▼</button>
+          ? <button className="credits-page__arrow" onClick={() => scrollBy(-1)} disabled={atTop}><img src={`${base}icons/arrow-up.svg`} alt="" /></button>
+          : <button className="credits-page__arrow" onClick={() => scrollBy(1)} disabled={atBottom}><img src={`${base}icons/arrow-down.svg`} alt="" /></button>
         }
       </div>
     </div>
@@ -1110,18 +1148,29 @@ function ScrollPage({ title, onClose, children }: { title: string; onClose: () =
 }
 
 function CreditsScroll({ onClose }: { onClose: () => void }) {
+  const base = import.meta.env.BASE_URL
   return (
     <ScrollPage title="Credits" onClose={onClose}>
-      <hr className="credits-page__rule" />
+      <img src={`${base}credits-banner.jpg`} alt="" className="credits-page__banner" />
       <p>
-        High Kings was originally forged around 2010 by three warriors who wanted to bring an ancient Viking strategy game to life. They had an enormous amount of fun building it together, and this site was created to appease the Gods.
+        High Kings was forged around 2010 by three friends who wanted to bring one of history's forgotten strategy games back to life.
+        Hnefatafl was the chess of the Norse world — a game of kings and raiders played across northern Europe for hundreds of years,
+        before chess arrived from the south and slowly pushed it into obscurity.
       </p>
+      <p>
+        The game is built in Three.js and React, running entirely in your browser. The board and pieces are rendered in real-time 3D,
+        and the AI opponent uses a minimax search with alpha-beta pruning — it will not go easy on you.
+      </p>
+      <p>
+        Online play is powered by Supabase. All eleven variants are faithful to their historical sources where records survive, and to the
+        best available reconstructions where they don't.
+      </p>
+      <hr className="credits-page__rule" />
       <div className="credits-page__names">
         <span className="credits-page__name">Jason Frame</span>
         <span className="credits-page__name">Lewis MacKenzie</span>
         <span className="credits-page__name">Andrew Nicolson</span>
       </div>
-      <hr className="credits-page__rule" />
     </ScrollPage>
   )
 }
@@ -1179,7 +1228,6 @@ function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: (
     <ScrollPage title="Profile" onClose={onClose}>
       {userId ? (
         <>
-          <hr className="credits-page__rule" />
           {editingName ? (
             <div className="profile-scroll__edit-name">
               <input
@@ -1206,7 +1254,22 @@ function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: (
             </div>
           )}
           <hr className="credits-page__rule" />
-          <h2>Stats</h2>
+          {(() => {
+            const totalW = stats.filter(s => s.result === 'win').reduce((a, s) => a + s.count, 0)
+            const totalL = stats.filter(s => s.result === 'loss').reduce((a, s) => a + s.count, 0)
+            const total = totalW + totalL
+            const rate = total > 0 ? Math.round((totalW / total) * 100) : null
+            if (total === 0) return null
+            return (
+              <div className="profile-scroll__summary">
+                <span className="profile-scroll__summary-wins">{totalW}W</span>
+                <span className="profile-scroll__summary-sep">/</span>
+                <span className="profile-scroll__summary-losses">{totalL}L</span>
+                {rate !== null && <span className="profile-scroll__summary-rate">{rate}% win rate</span>}
+              </div>
+            )
+          })()}
+          <h2>Stats by Variant</h2>
           {(() => {
             const variants = [...new Map(stats.map(s => [`${s.rules}|${s.board_size}`, { rules: s.rules, board_size: s.board_size }])).values()]
               .sort((a, b) => a.rules.localeCompare(b.rules) || a.board_size - b.board_size)
@@ -1232,15 +1295,12 @@ function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: (
               </div>
             ))
           })()}
-          <hr className="credits-page__rule" />
-          <button className="credits-page__close-btn" onClick={handleSignOut}>Sign Out</button>
+          <button className="credits-page__close-btn" onClick={handleSignOut}>Log Out</button>
         </>
       ) : (
         <>
-          <hr className="credits-page__rule" />
-          <p>Sign in to track your wins, losses and rank on the leaderboard.</p>
-          <hr className="credits-page__rule" />
-          <button className="credits-page__close-btn" onClick={onSignIn}>Sign In / Register</button>
+          <p>Log in to track your wins, losses and rank on the leaderboard.</p>
+          <button className="credits-page__close-btn" onClick={onSignIn}>Log In / Register</button>
         </>
       )}
     </ScrollPage>
@@ -1419,11 +1479,11 @@ function Illustration({ label }: { label: string }) {
     'capture': (
       <svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg">
         <style>{`
-          @keyframes cap-move{0%,10%{transform:translateX(0)}60%,100%{transform:translateX(80px)}}
-          @keyframes cap-fade{0%,55%{opacity:1}80%,100%{opacity:0}}
+          @keyframes cap-move{0%,10%{transform:translateX(0)}60%,100%{transform:translateX(56px)}}
+          @keyframes cap-fade{0%,55%{opacity:1;transform:scale(1)}80%,100%{opacity:0;transform:scale(1.4)}}
           @keyframes cap-flash{0%,58%{opacity:0;transform:scale(0.5)}72%{opacity:1;transform:scale(1)}90%,100%{opacity:0;transform:scale(1.4)}}
           .cap-mover{animation:cap-move 4s ease-in-out infinite;transform-box:fill-box;}
-          .cap-victim{animation:cap-fade 4s ease-in-out infinite;}
+          .cap-victim{animation:cap-fade 4s ease-in-out infinite;transform-box:fill-box;transform-origin:center;}
           .cap-burst{animation:cap-flash 4s ease-in-out infinite;transform-box:fill-box;}
         `}</style>
         {[0,1,2,3,4].map(c=>(
@@ -1448,11 +1508,9 @@ function Illustration({ label }: { label: string }) {
       <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
         <style>{`
           @keyframes hs-glow{0%,100%{opacity:0.45}50%{opacity:1}}
-          @keyframes hs-fade{0%,60%{opacity:1}80%,100%{opacity:0}}
-          @keyframes hs-ring{0%,62%{opacity:0;r:8}78%{opacity:1;r:20}92%,100%{opacity:0;r:26}}
+          @keyframes hs-fade{0%,60%{opacity:1;transform:scale(1)}80%,100%{opacity:0;transform:scale(1.4)}}
           .hs-sq{animation:hs-glow 2.5s ease-in-out infinite;}
-          .hs-vic{animation:hs-fade 3.5s ease-in-out infinite;}
-          .hs-ring{animation:hs-ring 3.5s ease-in-out infinite;}
+          .hs-vic{animation:hs-fade 3.5s ease-in-out infinite;transform-box:fill-box;transform-origin:center;}
         `}</style>
         {/* 4-cell row */}
         {[0,1,2,3].map(c=>(
@@ -1469,52 +1527,45 @@ function Illustration({ label }: { label: string }) {
         <rect x={221} y={56} width={67} height={67} fill="rgba(200,169,110,0.2)" stroke={KING_C} strokeWidth="1.5" strokeDasharray="4 2" rx={3}/>
         <text x="255" y="88" textAnchor="middle" fill={KING_C} fontSize="9" fontFamily="MedievalSharp,cursive">Throne</text>
         {/* Ring burst */}
-        <circle className="hs-ring" cx="115" cy="89" fill="none" stroke={KING_C} strokeWidth="1.5"/>
         <text x="150" y="168" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Empty corner or Throne counts as captor</text>
       </svg>
     ),
     'king-capture': (
       <svg viewBox="0 0 240 250" xmlns="http://www.w3.org/2000/svg">
         <style>{`
-          @keyframes kc-n{0%,100%{transform:translateY(0)}50%{transform:translateY(14px)}}
-          @keyframes kc-s{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
-          @keyframes kc-e{0%,100%{transform:translateX(0)}50%{transform:translateX(-14px)}}
-          @keyframes kc-w{0%,100%{transform:translateX(0)}50%{transform:translateX(14px)}}
-          @keyframes kc-king{0%,100%{opacity:1}65%,80%{opacity:0.35}}
-          .kc-n{animation:kc-n 2s ease-in-out infinite;transform-box:fill-box;}
-          .kc-s{animation:kc-s 2s ease-in-out infinite;transform-box:fill-box;}
-          .kc-e{animation:kc-e 2s ease-in-out infinite;transform-box:fill-box;}
-          .kc-w{animation:kc-w 2s ease-in-out infinite;transform-box:fill-box;}
-          .kc-king{animation:kc-king 2s ease-in-out infinite;}
+          @keyframes kc-mover{0%,5%{transform:translateX(-110px)}50%,100%{transform:translateX(0)}}
+          @keyframes kc-king{0%,55%{opacity:1;transform:scale(1)}75%,100%{opacity:0;transform:scale(1.4)}}
+          .kc-mover{animation:kc-mover 3s ease-in-out infinite;transform-box:fill-box;transform-origin:center;}
+          .kc-king{animation:kc-king 3s ease-in-out infinite;transform-box:fill-box;transform-origin:center;}
         `}</style>
         <Grid cols={5} rows={5} size={40} ox={20} oy={20} throne/>
+        <Piece cx={120} cy={80}  r={11} type="atk"/>
+        <Piece cx={120} cy={160} r={11} type="atk"/>
+        <Piece cx={160} cy={120} r={11} type="atk"/>
+        <g className="kc-mover"><Piece cx={80} cy={120} r={11} type="atk"/></g>
         <g className="kc-king"><Piece cx={120} cy={120} r={12} type="king"/></g>
-        <g className="kc-n"><Piece cx={120} cy={40} r={11} type="atk"/></g>
-        <g className="kc-s"><Piece cx={120} cy={200} r={11} type="atk"/></g>
-        <g className="kc-e"><Piece cx={200} cy={120} r={11} type="atk"/></g>
-        <g className="kc-w"><Piece cx={40} cy={120} r={11} type="atk"/></g>
-        <text x="120" y="242" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">All four sides sealed simultaneously</text>
+        <text x="120" y="242" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Final attacker seals all four sides</text>
       </svg>
     ),
     'king-escape': (
       <svg viewBox="0 0 240 250" xmlns="http://www.w3.org/2000/svg">
         <style>{`
-          @keyframes ke-go{0%,10%{transform:translate(0px,0px)}65%,100%{transform:translate(-80px,-80px)}}
-          @keyframes ke-trail{0%,8%{stroke-dashoffset:130;opacity:0}20%{opacity:0.85}62%{stroke-dashoffset:0;opacity:0.85}75%,100%{opacity:0}}
+          @keyframes ke-go{0%,10%{transform:translateX(0)}65%,100%{transform:translateX(-80px)}}
+          @keyframes ke-trail{0%,8%{stroke-dashoffset:80;opacity:0}20%{opacity:0.85}62%{stroke-dashoffset:0;opacity:0.85}75%,100%{opacity:0}}
           @keyframes ke-burst{0%,65%{opacity:0;r:6}75%{opacity:1;r:18}90%,100%{opacity:0;r:26}}
           @keyframes ke-corner{0%,100%{opacity:0.4}50%{opacity:1}}
-          .ke-king{animation:ke-go 4s ease-in-out infinite;transform-box:fill-box;}
-          .ke-trail{stroke-dasharray:130;animation:ke-trail 4s ease-in-out infinite;}
+          .ke-king{animation:ke-go 4s ease-in-out infinite;transform-box:fill-box;transform-origin:center;}
+          .ke-trail{stroke-dasharray:80;animation:ke-trail 4s ease-in-out infinite;}
           .ke-burst{animation:ke-burst 4s ease-in-out infinite;}
           .ke-corner{animation:ke-corner 2s ease-in-out infinite;}
         `}</style>
         <Grid cols={5} rows={5} size={40} ox={20} oy={20}/>
-        <rect className="ke-corner" x={21} y={21} width={38} height={38} fill={SPECIAL} stroke={KING_C} strokeWidth={2.5} rx={4}/>
-        <text x="40" y="47" textAnchor="middle" fill={KING_C} fontSize="8" fontFamily="MedievalSharp,cursive">escape</text>
-        <line className="ke-trail" x1="120" y1="120" x2="40" y2="40" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round" strokeDasharray="6 4"/>
-        <circle className="ke-burst" cx="40" cy="40" fill="none" stroke={KING_C} strokeWidth="1.5"/>
-        <g className="ke-king" style={{transformOrigin:'120px 120px'}}>
-          <Piece cx={120} cy={120} r={13} type="king"/>
+        <rect className="ke-corner" x={21} y={181} width={38} height={38} fill={SPECIAL} stroke={KING_C} strokeWidth={2.5} rx={4}/>
+        <text x="40" y="177" textAnchor="middle" fill={KING_C} fontSize="8" fontFamily="MedievalSharp,cursive">escape</text>
+        <line className="ke-trail" x1="120" y1="200" x2="40" y2="200" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round" strokeDasharray="6 4"/>
+        <circle className="ke-burst" cx="40" cy="200" fill="none" stroke={KING_C} strokeWidth="1.5"/>
+        <g className="ke-king" style={{transformOrigin:'120px 200px'}}>
+          <Piece cx={120} cy={200} r={13} type="king"/>
         </g>
         <text x="120" y="242" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">King at a corner · Defenders win</text>
       </svg>
@@ -1522,14 +1573,12 @@ function Illustration({ label }: { label: string }) {
     'shieldwall': (
       <svg viewBox="0 0 320 190" xmlns="http://www.w3.org/2000/svg">
         <style>{`
-          @keyframes sw-inl{0%,100%{transform:translateX(0)}50%{transform:translateX(22px)}}
-          @keyframes sw-inr{0%,100%{transform:translateX(0)}50%{transform:translateX(-22px)}}
-          @keyframes sw-die{0%,50%{opacity:1;transform:scale(1)}80%{opacity:0;transform:scale(1.5)}100%{opacity:0;transform:scale(1.5)}}
-          .sw-atk-l{animation:sw-inl 2.5s ease-in-out infinite;transform-box:fill-box;}
-          .sw-atk-r{animation:sw-inr 2.5s ease-in-out infinite;transform-box:fill-box;}
-          .sw-d1{animation:sw-die 2.5s ease-in-out infinite;transform-box:fill-box;}
-          .sw-d2{animation:sw-die 2.5s ease-in-out .08s infinite;transform-box:fill-box;}
-          .sw-d3{animation:sw-die 2.5s ease-in-out .16s infinite;transform-box:fill-box;}
+          @keyframes sw-in{0%,5%{transform:translateX(-90px)}50%,100%{transform:translateX(0)}}
+          @keyframes sw-die{0%,52%{opacity:1;transform:scale(1)}74%{opacity:0;transform:scale(1.4)}88%,100%{opacity:0;transform:scale(1.4)}}
+          .sw-mover{animation:sw-in 3s ease-in-out infinite;transform-box:fill-box;transform-origin:center;}
+          .sw-d1{animation:sw-die 3s ease-in-out infinite;transform-box:fill-box;transform-origin:center;}
+          .sw-d2{animation:sw-die 3s ease-in-out .07s infinite;transform-box:fill-box;transform-origin:center;}
+          .sw-d3{animation:sw-die 3s ease-in-out .14s infinite;transform-box:fill-box;transform-origin:center;}
         `}</style>
         <rect x={20} y={25} width={280} height={10} fill={ATK} opacity="0.35" rx="2"/>
         <text x="160" y="20" textAnchor="middle" fill="rgba(60,28,0,0.4)" fontSize="8" fontFamily="MedievalSharp,cursive">Board edge</text>
@@ -1539,12 +1588,8 @@ function Illustration({ label }: { label: string }) {
         <g className="sw-d1"><Piece cx={104} cy={62} r={14} type="def"/></g>
         <g className="sw-d2"><Piece cx={160} cy={62} r={14} type="def"/></g>
         <g className="sw-d3"><Piece cx={216} cy={62} r={14} type="def"/></g>
-        <g className="sw-atk-l"><Piece cx={48} cy={62} r={14} type="atk"/></g>
-        <g className="sw-atk-r"><Piece cx={272} cy={62} r={14} type="atk"/></g>
-        <line x1="64" y1="62" x2="82" y2="62" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
-        <polyline points="78,57 84,62 78,67" fill="none" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <line x1="256" y1="62" x2="238" y2="62" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
-        <polyline points="242,57 236,62 242,67" fill="none" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <g className="sw-mover"><Piece cx={48} cy={62} r={14} type="atk"/></g>
+        <Piece cx={272} cy={62} r={14} type="atk"/>
         <text x="160" y="160" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Flank both ends · Whole line wiped</text>
       </svg>
     ),
@@ -1573,22 +1618,17 @@ function Illustration({ label }: { label: string }) {
     'weak-king': (
       <svg viewBox="0 0 300 170" xmlns="http://www.w3.org/2000/svg">
         <style>{`
-          @keyframes wk-l{0%,100%{transform:translateX(0)}55%{transform:translateX(20px)}}
-          @keyframes wk-r{0%,100%{transform:translateX(0)}55%{transform:translateX(-20px)}}
-          @keyframes wk-die{0%,50%{opacity:1;transform:scale(1)}75%{opacity:0;transform:scale(1.5)}100%{opacity:0}}
-          @keyframes wk-burst{0%,52%{opacity:0;r:10}67%{opacity:1;r:22}82%,100%{opacity:0;r:28}}
-          .wk-l{animation:wk-l 3s ease-in-out infinite;transform-box:fill-box;}
-          .wk-r{animation:wk-r 3s ease-in-out infinite;transform-box:fill-box;}
-          .wk-king{animation:wk-die 3s ease-in-out infinite;transform-box:fill-box;}
-          .wk-burst{animation:wk-burst 3s ease-in-out infinite;}
+          @keyframes wk-in{0%,5%{transform:translateX(80px)}50%,100%{transform:translateX(0)}}
+          @keyframes wk-die{0%,50%{opacity:1;transform:scale(1)}75%,100%{opacity:0;transform:scale(1.4)}}
+          .wk-in{animation:wk-in 3s ease-in-out infinite;transform-box:fill-box;transform-origin:center;}
+          .wk-king{animation:wk-die 3s ease-in-out infinite;transform-box:fill-box;transform-origin:center;}
         `}</style>
         {[0,1,2].map(c=>(
           <rect key={c} x={60+c*60} y={55} width={59} height={59} fill="rgba(60,28,0,0.04)" stroke={GRID} strokeWidth="0.8"/>
         ))}
-        <g className="wk-l"><Piece cx={89} cy={84} r={14} type="atk"/></g>
+        <Piece cx={89} cy={84} r={14} type="atk"/>
         <g className="wk-king" style={{transformOrigin:'150px 84px'}}><Piece cx={150} cy={84} r={14} type="king"/></g>
-        <g className="wk-r"><Piece cx={211} cy={84} r={14} type="atk"/></g>
-        <circle className="wk-burst" cx="150" cy="84" fill="none" stroke={KING_C} strokeWidth="1.5"/>
+        <g className="wk-in"><Piece cx={211} cy={84} r={14} type="atk"/></g>
         <text x="150" y="148" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Weak king — sandwiched like any other piece</text>
       </svg>
     ),
@@ -1602,10 +1642,7 @@ function Illustration({ label }: { label: string }) {
           {defs.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={7} type="def"/>)}
           {atks.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={6} type="atk"/>)}
           <Piece cx={OX+4*S+S/2} cy={OY+4*S+S/2} r={8} type="king"/>
-          <text textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">
-            <tspan x="101" y="205">Saami Tablut · 9×9</tspan>
-            <tspan x="101" dy="13">9 defenders · 16 attackers</tspan>
-          </text>
+          <text x="101" y="210" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">9 defenders · 16 attackers</text>
         </svg>
       )
     })(),
@@ -1619,10 +1656,7 @@ function Illustration({ label }: { label: string }) {
           {defs.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={8} type="def"/>)}
           {atks.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={7} type="atk"/>)}
           <Piece cx={OX+3*S+S/2} cy={OY+3*S+S/2} r={9} type="king"/>
-          <text textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">
-            <tspan x="98" y="194">Brandub · 7×7 · Celtic</tspan>
-            <tspan x="98" dy="13">4 defenders · 8 attackers</tspan>
-          </text>
+          <text x="98" y="199" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">4 defenders · 8 attackers</text>
         </svg>
       )
     })(),
@@ -1636,42 +1670,34 @@ function Illustration({ label }: { label: string }) {
           {defs.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={7} type="def"/>)}
           {atks.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={6} type="atk"/>)}
           <Piece cx={OX+3*S+S/2} cy={OY+3*S+S/2} r={9} type="king"/>
-          <text textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">
-            <tspan x="98" y="194">Ard Rí · 7×7 · Irish</tspan>
-            <tspan x="98" dy="13">8 defenders · 12 attackers</tspan>
-          </text>
+          <text x="98" y="199" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">8 defenders · 12 attackers</text>
         </svg>
       )
     })(),
-    'alea-board': (
-      <svg viewBox="0 0 220 230" xmlns="http://www.w3.org/2000/svg">
+    'alea-board': (() => {
+      const s = 9, ox = 34, oy = 14
+      const pc = (r: number, c: number) => ({ cx: ox + c*s + s/2, cy: oy + r*s + s/2 })
+      return (
+      <svg viewBox="0 0 240 224" xmlns="http://www.w3.org/2000/svg">
         <style>{`
           @keyframes al-glow{0%,100%{opacity:0.4}50%{opacity:1}}
           .al-king{animation:al-glow 2s ease-in-out infinite;}
         `}</style>
-        {Array.from({length:19},(_,i)=>(
-          <g key={i}>
-            <line x1={10} y1={10+i*10} x2={190} y2={10+i*10} stroke="rgba(60,28,0,0.18)" strokeWidth="0.6"/>
-            <line x1={10+i*10} y1={10} x2={10+i*10} y2={190} stroke="rgba(60,28,0,0.18)" strokeWidth="0.6"/>
-          </g>
-        ))}
-        <rect x="10" y="10" width="180" height="180" fill="none" stroke="rgba(60,28,0,0.4)" strokeWidth="1.5"/>
-        {[[10,10],[190,10],[10,190],[190,190]].map(([x,y],i)=>(
-          <rect key={i} x={x-6} y={y-6} width={12} height={12} fill={SPECIAL} stroke={KING_C} strokeWidth="1.5" rx="1"/>
-        ))}
+        <Grid cols={19} rows={19} size={s} ox={ox} oy={oy}/>
         {([[5,9],[9,5],[9,13],[13,9],[4,9],[9,4],[9,14],[14,9],[6,7],[6,11],[7,6],[7,12],[11,6],[11,12],[12,7],[12,11],[3,9],[9,3],[9,15],[15,9],[7,9],[9,7],[9,11],[11,9]] as [number,number][]).map(([r,c],i)=>(
-          <circle key={i} cx={10+c*10} cy={10+r*10} r={3.5} fill={DEF} stroke="#7a5c2a" strokeWidth="0.7"/>
+          <circle key={i} {...pc(r,c)} r={3.2} fill={DEF} stroke="#7a5c2a" strokeWidth="0.6"/>
         ))}
         {([[0,6],[0,7],[0,8],[0,9],[0,10],[0,11],[0,12],[6,0],[7,0],[8,0],[9,0],[10,0],[11,0],[12,0],[18,6],[18,7],[18,8],[18,9],[18,10],[18,11],[18,12],[6,18],[7,18],[8,18],[9,18],[10,18],[11,18],[12,18],[1,8],[1,9],[1,10],[8,1],[9,1],[10,1],[17,8],[17,9],[17,10],[8,17],[9,17],[10,17]] as [number,number][]).map(([r,c],i)=>(
-          <circle key={i} cx={10+c*10} cy={10+r*10} r={3} fill={ATK} stroke="#1a0a02" strokeWidth="0.6"/>
+          <circle key={i} {...pc(r,c)} r={2.8} fill={ATK} stroke="#1a0a02" strokeWidth="0.5"/>
         ))}
         <g className="al-king">
-          <circle cx="100" cy="100" r="5.5" fill={KING_C} stroke="#8a6020" strokeWidth="1.2"/>
-          <circle cx="100" cy="100" r="2" fill="#8a6020"/>
+          <circle {...pc(9,9)} r={4} fill={KING_C} stroke="#8a6020" strokeWidth="1"/>
+          <circle {...pc(9,9)} r={1.5} fill="#8a6020"/>
         </g>
-        <text x="110" y="216" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Alea Evangelii · 19×19 · ~96 pieces</text>
+        <text x="120" y="213" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="8" fontFamily="MedievalSharp,cursive">72 attackers · 24 defenders · 1 king</text>
       </svg>
-    ),
+      )
+    })(),
   }
 
   const svg = svgs[label]
@@ -1683,13 +1709,10 @@ function HowToPlayScroll({ onClose }: { onClose: () => void }) {
   return (
     <ScrollPage title="How to Play" onClose={onClose}>
       <>
-        <hr className="credits-page__rule" />
-        <p>Before chess, before checkers, there was Hnefatafl — the Viking strategy game that swept northern Europe for a thousand years and was all but forgotten when chess arrived from the south.</p>
-        <p>You play either the <strong>Attackers</strong>, who surround the board and outnumber their enemy, or the <strong>Defenders</strong>, who guard a King they must escort to safety. Every variant shares a core set of rules.</p>
-        <Illustration label="intro-map" />
-
+        <p>Before chess took hold, there was Hnefatafl — the Viking strategy game that dominated northern Europe for centuries, until chess arrived from the south and gradually eclipsed it.</p>
         <hr className="credits-page__rule" />
         <h2>The Core Rules</h2>
+        <p>You play either the <strong>Attackers</strong>, who surround the board and outnumber their enemy, or the <strong>Defenders</strong>, who guard a King they must escort to safety. Every variant shares a core set of rules.</p>
         <p>These rules apply to every variant.</p>
 
         <h2>The Board</h2>
@@ -1801,7 +1824,6 @@ function HowToPlayScroll({ onClose }: { onClose: () => void }) {
 
         </div>
 
-        <hr className="credits-page__rule" />
       </>
     </ScrollPage>
   )
@@ -2106,7 +2128,7 @@ function GuestLoginModal({ onLogin, onClose }: {
           <span className="guest-login-modal__title">Online Match</span>
           <button className="guest-login-modal__close" onClick={onClose}>✕</button>
         </div>
-        <p className="guest-login-modal__body">Sign in to play online and track your match history.</p>
+        <p className="guest-login-modal__body">Log in to play online and track your match history.</p>
         <div className="guest-login-modal__actions">
           <button className="guest-login-modal__btn guest-login-modal__btn--primary" onClick={onLogin}>Log In / Register</button>
         </div>

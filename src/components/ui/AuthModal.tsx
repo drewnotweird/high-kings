@@ -73,7 +73,7 @@ export function AuthModal({ onClose, initialScreen = 'login' }: {
 
         {screen === 'login' && (
           <>
-            <h2 className="auth-modal__title">Sign In</h2>
+            <h2 className="auth-modal__title">Log In</h2>
             <input className="auth-modal__input" type="email" placeholder="Email" value={email}
               onChange={e => { setEmail(e.target.value); clearError() }} autoComplete="email" />
             <input className="auth-modal__input" type="password" placeholder="Password" value={password}
@@ -81,12 +81,11 @@ export function AuthModal({ onClose, initialScreen = 'login' }: {
               onKeyDown={e => e.key === 'Enter' && handleLogin()} autoComplete="current-password" />
             {error && <p className="auth-modal__error">{error}</p>}
             <button className="auth-modal__btn auth-modal__btn--primary" onClick={handleLogin} disabled={loading}>
-              {loading ? 'Signing in…' : 'Sign In'}
+              {loading ? 'Logging in…' : 'Log In'}
             </button>
             <button className="auth-modal__btn auth-modal__btn--ghost" onClick={() => { setScreen('forgot'); clearError() }}>
               Forgot password?
             </button>
-            <div className="auth-modal__divider">No account?</div>
             <button className="auth-modal__btn auth-modal__btn--ghost" onClick={() => { setScreen('signup'); clearError() }}>
               Create Account
             </button>
@@ -106,7 +105,7 @@ export function AuthModal({ onClose, initialScreen = 'login' }: {
               {loading ? 'Creating…' : 'Create Account'}
             </button>
             <button className="auth-modal__btn auth-modal__btn--ghost" onClick={() => { setScreen('login'); clearError() }}>
-              Back to Sign In
+              Back to Log In
             </button>
           </>
         )}
@@ -122,7 +121,7 @@ export function AuthModal({ onClose, initialScreen = 'login' }: {
               Got it
             </button>
             <button className="auth-modal__btn auth-modal__btn--ghost" onClick={() => { setScreen('login'); clearError() }}>
-              Sign In
+              Log In
             </button>
           </>
         )}
@@ -159,12 +158,18 @@ export function AuthModal({ onClose, initialScreen = 'login' }: {
               </>
             )}
             <button className="auth-modal__btn auth-modal__btn--ghost" onClick={() => { setScreen('login'); clearError() }}>
-              Back to Sign In
+              Back to Log In
             </button>
           </>
         )}
 
       </div>
+      {screen !== 'username' && (
+        <button className="ui-button ui-button--menu auth-modal__cancel" onClick={onClose}>
+          <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/close.svg`} alt="" />
+          <span className="ui-button__label">Close</span>
+        </button>
+      )}
     </div>
   )
 }
