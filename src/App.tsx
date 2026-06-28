@@ -1612,7 +1612,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
   isOpen: boolean
   isVisible: boolean
   onResume: () => void
-  onNewGame: () => void
+  onNewGame: (play: 'Vs Machine' | 'Take turns') => void
   onCredits: () => void
   onHowToPlay: () => void
   onOnlineMatch: (rules: Rules, boardSize: number) => void
@@ -1652,7 +1652,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
     setSetting('boardSize', draft.boardSize)
     setSetting('rules', draft.rules)
     setSetting('playerMode', playToMode(draft.play))
-    onNewGame()
+    onNewGame(draft.play as 'Vs Machine' | 'Take turns')
   }
 
   const handleCancel = () => {
@@ -1890,18 +1890,6 @@ function RoleSelectOverlay({ onConfirm }: { onConfirm: (mode: GameMode) => void 
             <span className="role-select__option-desc">Capture the King</span>
           </div>
           <img className="role-select__option-icon" src={`${import.meta.env.BASE_URL}blue-piece.png`} alt="" />
-        </button>
-        <button className="role-select__option" onClick={() => onConfirm('2player')}>
-          <div className="role-select__option-icon--2p">
-            <img style={{ width: 36, height: 36, objectFit: 'contain' }} src={`${import.meta.env.BASE_URL}white-piece.png`} alt="" />
-          </div>
-          <div className="role-select__option-text">
-            <span className="role-select__option-name">2 Player</span>
-            <span className="role-select__option-desc">Play both sides</span>
-          </div>
-          <div className="role-select__option-icon--2p">
-            <img style={{ width: 36, height: 36, objectFit: 'contain' }} src={`${import.meta.env.BASE_URL}blue-piece.png`} alt="" />
-          </div>
         </button>
       </div>
     </div>
@@ -2155,9 +2143,14 @@ function App() {
           isOpen={menuOpen}
           isVisible={menuVisible}
           onResume={() => setMenuOpen(false)}
-          onNewGame={() => {
+          onNewGame={(play) => {
             setMenuOpen(false)
-            setRoleSelectOpen(true)
+            if (play === 'Take turns') {
+              resetGame()
+              startSetupAnim()
+            } else {
+              setRoleSelectOpen(true)
+            }
           }}
           onCredits={() => setShowCredits(true)}
           onHowToPlay={() => setShowHowToPlay(true)}
