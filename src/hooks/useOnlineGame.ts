@@ -108,12 +108,11 @@ export function useOnlineGame(
   }, [machineMove, onStatusChange, pieces, userId, username])
 
   const findMatch = useCallback(async (matchRules: string, matchBoardSize: number) => {
-    if (!userId) return
     onStatusChange({ type: 'searching' })
 
     const { data: { session } } = await supabase.auth.getSession()
     const token = session?.access_token
-    if (!token) return
+    if (!token) { onStatusChange({ type: 'idle' }); return }
 
     const handleMatched = (gameId: string, side: 'attacker' | 'defender') => {
       if (state.current.pollInterval) clearInterval(state.current.pollInterval)
@@ -161,7 +160,7 @@ export function useOnlineGame(
         }
       }, 5 * 60 * 1000)
     }
-  }, [userId, setSetting, setPlayerMode, resetGame, joinGameChannel, onStatusChange])
+  }, [setSetting, setPlayerMode, resetGame, joinGameChannel, onStatusChange])
 
   const cancelSearch = useCallback(async () => {
     if (state.current.pollInterval) {
