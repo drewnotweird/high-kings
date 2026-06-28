@@ -253,7 +253,24 @@ body, button, input, select {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: red;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+.credits-page__top .credits-page__bar-side:first-child {
+  background-image: var(--corner-img-tl);
+  background-position: top left;
+}
+.credits-page__top .credits-page__bar-side:last-child {
+  background-image: var(--corner-img-tr);
+  background-position: top right;
+}
+.credits-page__bottom .credits-page__bar-side:first-child {
+  background-image: var(--corner-img-bl);
+  background-position: bottom left;
+}
+.credits-page__bottom .credits-page__bar-side:last-child {
+  background-image: var(--corner-img-br);
+  background-position: bottom right;
 }
 .credits-page__bar-centre {
   width: 60%;
@@ -1045,8 +1062,15 @@ function ScrollPage({ title, onClose, children }: { title: string; onClose: () =
     </div>
   )
 
+  const cornerStyle = {
+    '--corner-img-tl': `url(${base}wood-top-left.jpg)`,
+    '--corner-img-tr': `url(${base}wood-top-right.jpg)`,
+    '--corner-img-bl': `url(${base}wood-bottom-left.jpg)`,
+    '--corner-img-br': `url(${base}wood-bottom-right.jpg)`,
+  } as React.CSSProperties
+
   return (
-    <div className={`credits-page${closing ? ' credits-page--closing' : ''}`}>
+    <div className={`credits-page${closing ? ' credits-page--closing' : ''}`} style={cornerStyle}>
       <Bars position="top" />
       <div className="credits-page__middle" ref={middleRef}>
         <div className="credits-page__paper" style={{ backgroundImage: `url(${base}pagescroll.png)` }}>
