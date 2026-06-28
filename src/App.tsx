@@ -1112,7 +1112,6 @@ function ScrollPage({ title, onClose, children }: { title: string; onClose: () =
 function CreditsScroll({ onClose }: { onClose: () => void }) {
   return (
     <ScrollPage title="Credits" onClose={onClose}>
-      <h1>Credits</h1>
       <hr className="credits-page__rule" />
       <p>
         High Kings was originally forged around 2010 by three warriors who wanted to bring an ancient Viking strategy game to life. They had an enormous amount of fun building it together, and this site was created to appease the Gods.
@@ -1180,7 +1179,6 @@ function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: (
     <ScrollPage title="Profile" onClose={onClose}>
       {userId ? (
         <>
-          <h1>Profile</h1>
           <hr className="credits-page__rule" />
           {editingName ? (
             <div className="profile-scroll__edit-name">
@@ -1239,7 +1237,6 @@ function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: (
         </>
       ) : (
         <>
-          <h1>Profile</h1>
           <hr className="credits-page__rule" />
           <p>Sign in to track your wins, losses and rank on the leaderboard.</p>
           <hr className="credits-page__rule" />
@@ -1687,7 +1684,6 @@ function HowToPlayScroll({ onClose }: { onClose: () => void }) {
     <ScrollPage title="How to Play" onClose={onClose}>
       <>
 
-          <h1>How to Play</h1>
           <hr className="credits-page__rule" />
           <p>Before chess, before checkers, there was Hnefatafl.</p>
           <p>The Vikings played this game. So did the Celts, the Anglo-Saxons, and the peoples of the far north. Boards have been found in Viking graves, in Irish monasteries, scratched into stone in Orkney. For nearly a thousand years — roughly 400 AD to 1400 AD — it was the strategy game of northern Europe.</p>
