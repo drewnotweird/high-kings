@@ -644,6 +644,49 @@ body, button, input, select {
   font-size: 12px; color: #c08060; letter-spacing: 1px; text-align: center;
 }
 .find-match-modal__disconnected p { margin: 0; }
+.guest-login-modal__backdrop {
+  position: fixed; inset: 0; z-index: 120;
+  background: rgba(0,0,0,0.8);
+  display: flex; align-items: center; justify-content: center;
+}
+.guest-login-modal {
+  background: #1a0d03;
+  border: 1px solid rgba(200,160,40,0.4);
+  border-radius: 4px;
+  padding: 24px 20px;
+  width: 300px;
+  display: flex; flex-direction: column; gap: 16px;
+  font-family: 'MedievalSharp', cursive;
+  color: #e8d8b8;
+}
+.guest-login-modal__header {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.guest-login-modal__title {
+  font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: #e8d8b8;
+}
+.guest-login-modal__close {
+  background: none; border: none; color: #a09070; font-size: 16px; cursor: pointer; padding: 0;
+}
+.guest-login-modal__close:hover { color: #e8d8b8; }
+.guest-login-modal__body {
+  margin: 0; font-size: 12px; color: #a09070; letter-spacing: 0.5px; line-height: 1.6;
+  font-family: 'MedievalSharp', cursive;
+}
+.guest-login-modal__actions {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.guest-login-modal__btn {
+  background: none; border: 1px solid rgba(200,160,40,0.3);
+  color: #a09070; font-family: 'MedievalSharp', cursive; font-size: 11px;
+  letter-spacing: 2px; text-transform: uppercase; padding: 10px 16px; cursor: pointer;
+  border-radius: 2px;
+}
+.guest-login-modal__btn:hover { color: #e8d8b8; border-color: rgba(200,160,40,0.6); }
+.guest-login-modal__btn--primary {
+  background: rgba(200,160,40,0.15); border-color: rgba(200,160,40,0.5); color: #e8d8b8;
+}
+.guest-login-modal__btn--primary:hover { background: rgba(200,160,40,0.25); }
 .match-header {
   position: absolute; top: 0; left: 0; right: 0; z-index: 10;
   display: flex; justify-content: space-between; align-items: center;
@@ -1896,6 +1939,28 @@ function RoleSelectOverlay({ onConfirm }: { onConfirm: (mode: GameMode) => void 
   )
 }
 
+function GuestLoginModal({ onGuest, onLogin, onClose }: {
+  onGuest: () => void
+  onLogin: () => void
+  onClose: () => void
+}) {
+  return (
+    <div className="guest-login-modal__backdrop" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="guest-login-modal">
+        <div className="guest-login-modal__header">
+          <span className="guest-login-modal__title">Online Match</span>
+          <button className="guest-login-modal__close" onClick={onClose}>✕</button>
+        </div>
+        <p className="guest-login-modal__body">Sign in to track your match history, or jump straight in as a guest.</p>
+        <div className="guest-login-modal__actions">
+          <button className="guest-login-modal__btn guest-login-modal__btn--primary" onClick={onLogin}>Log In / Register</button>
+          <button className="guest-login-modal__btn" onClick={onGuest}>Continue as Guest</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [introStarted, setIntroStarted] = useState(false)
   const [uiVisible, setUiVisible] = useState(false)
@@ -1910,8 +1975,10 @@ function App() {
   const [showProfile, setShowProfile] = useState(false)
   const [showUsernamePrompt, setShowUsernamePrompt] = useState(false)
   const [showFindMatch, setShowFindMatch] = useState(false)
+  const [showGuestLogin, setShowGuestLogin] = useState(false)
   const [searchSettings, setSearchSettings] = useState<{ rules: Rules; boardSize: number } | null>(null)
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({ type: 'idle' })
+  const pendingOnlineSearch = useRef<{ rules: Rules; boardSize: number } | null>(null)
   const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, dyingPieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, setAuth, setAuthReady, lastMove } = useGameStore()
   const { findMatch, cancelSearch, sendMove, endGame } = useOnlineGame((status) => {
     setOnlineStatus(status)
@@ -1938,6 +2005,14 @@ function App() {
         // After email confirmation, username will be null — prompt them to choose one
         if (event === 'SIGNED_IN' && !resolvedUsername) {
           setShowUsernamePrompt(true)
+        }
+        // If the user just authenticated to start an online game, kick off the search
+        if (pendingOnlineSearch.current) {
+          const pending = pendingOnlineSearch.current
+          pendingOnlineSearch.current = null
+          setShowGuestLogin(false)
+          setShowFindMatch(true)
+          findMatch(pending.rules, pending.boardSize)
         }
       }
     })
@@ -2154,7 +2229,16 @@ function App() {
           }}
           onCredits={() => setShowCredits(true)}
           onHowToPlay={() => setShowHowToPlay(true)}
-          onOnlineMatch={(r, bs) => { setSearchSettings({ rules: r, boardSize: bs }); setShowFindMatch(true); if (!userId) { setShowAuth(true); return }; findMatch(r, bs) }}
+          onOnlineMatch={(r, bs) => {
+            setSearchSettings({ rules: r, boardSize: bs })
+            if (!userId) {
+              pendingOnlineSearch.current = { rules: r, boardSize: bs }
+              setShowGuestLogin(true)
+            } else {
+              setShowFindMatch(true)
+              findMatch(r, bs)
+            }
+          }}
         />
       </div>
 
@@ -2252,12 +2336,28 @@ function App() {
       )}
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       {showUsernamePrompt && <AuthModal initialScreen="username" onClose={() => setShowUsernamePrompt(false)} />}
+      {showGuestLogin && pendingOnlineSearch.current && (
+        <GuestLoginModal
+          onGuest={async () => {
+            const pending = pendingOnlineSearch.current!
+            pendingOnlineSearch.current = null
+            setShowGuestLogin(false)
+            const { data: { session } } = await supabase.auth.signInAnonymously()
+            if (session?.user) {
+              setAuth(session.user.id, null)
+              setShowFindMatch(true)
+              findMatch(pending.rules, pending.boardSize)
+            }
+          }}
+          onLogin={() => { setShowGuestLogin(false); setShowAuth(true) }}
+          onClose={() => { setShowGuestLogin(false); pendingOnlineSearch.current = null }}
+        />
+      )}
       {showFindMatch && (
         <FindMatchModal
           status={onlineStatus}
           searchRules={searchSettings?.rules}
           searchBoardSize={searchSettings?.boardSize}
-          onFindMatch={(r, bs) => { if (!userId) { setShowFindMatch(false); setShowAuth(true); return }; findMatch(r, bs) }}
           onCancel={() => { cancelSearch(); setShowFindMatch(false); setOnlineStatus({ type: 'idle' }) }}
           onClose={() => { cancelSearch(); setShowFindMatch(false); setOnlineStatus({ type: 'idle' }) }}
         />
