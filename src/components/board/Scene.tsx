@@ -709,6 +709,28 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
   )
 }
 
+const UI_ASSETS = [
+  'wood-top.jpg', 'wood-bottom.jpg',
+  'wood-top-left.jpg', 'wood-top-middle.jpg', 'wood-top-right.jpg',
+  'wood-bottom-left.jpg', 'wood-bottom-middle.jpg', 'wood-bottom-right.jpg',
+  'pagescroll.png', 'topscroll.png',
+  'logo.png', 'credits-banner.jpg',
+  'blue-piece.png', 'white-piece.png',
+  'icons/close.svg', 'icons/arrow-up.svg', 'icons/arrow-down.svg',
+  'icons/hint.svg', 'icons/menu.svg', 'icons/profile.svg',
+  'icons/login.svg', 'icons/undo.svg',
+]
+
+function preloadUIAssets(base: string): Promise<void> {
+  const loads = UI_ASSETS.map(path => new Promise<void>(resolve => {
+    const img = new Image()
+    img.onload = () => resolve()
+    img.onerror = () => resolve() // don't block on missing assets
+    img.src = `${base}${path}`
+  }))
+  return Promise.all(loads).then(() => undefined)
+}
+
 type LoaderPhase = 'loading' | 'holding' | 'fading' | 'done'
 
 function LoadingOverlay({ onDone }: { onDone: () => void }) {
@@ -716,10 +738,11 @@ function LoadingOverlay({ onDone }: { onDone: () => void }) {
   const [phase, setPhase] = useState<LoaderPhase>('loading')
   const minHoldMet = useRef(false)
   const loadingDone = useRef(false)
+  const assetsDone = useRef(false)
   const wasActive = useRef(false)
 
   const tryStartFade = () => {
-    if (minHoldMet.current && loadingDone.current) {
+    if (minHoldMet.current && loadingDone.current && assetsDone.current) {
       setPhase('fading')
       setTimeout(() => {
         setPhase('done')
@@ -729,6 +752,12 @@ function LoadingOverlay({ onDone }: { onDone: () => void }) {
   }
 
   useEffect(() => {
+    const base = import.meta.env.BASE_URL
+    preloadUIAssets(base).then(() => {
+      assetsDone.current = true
+      tryStartFade()
+    })
+
     const t = setTimeout(() => {
       minHoldMet.current = true
       // If active never went true, assets were cached — treat as loaded
