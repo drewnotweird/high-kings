@@ -129,13 +129,23 @@ export function useOnlineGame(
     const poll = async () => {
       // Stop polling if user already cancelled
       if (!state.current.pollInterval) return
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/matchmaking`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rules: matchRules, board_size: matchBoardSize }),
-      })
-      const data = await res.json()
-      if (data.status === 'matched') handleMatched(data.game_id, data.side)
+      try {
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/matchmaking`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rules: matchRules, board_size: matchBoardSize }),
+        })
+        const data = await res.json()
+        if (data.status === 'matched') handleMatched(data.game_id, data.side)
+        else if (data.status !== 'waiting') {
+          // Unexpected status — stop polling and surface the error
+          clearInterval(state.current.pollInterval!)
+          state.current.pollInterval = null
+          onStatusChange({ type: 'idle' })
+        }
+      } catch {
+        // Network error — keep polling, it may recover
+      }
     }
 
     // Initial call

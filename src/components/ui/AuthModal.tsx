@@ -32,7 +32,7 @@ export function AuthModal({ onClose, initialScreen = 'login' }: {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: window.location.href },
+      options: { emailRedirectTo: window.location.origin + import.meta.env.BASE_URL },
     })
     if (error) { setError(error.message); setLoading(false); return }
     if (data.user) setAuth(data.user.id, null)
@@ -60,7 +60,7 @@ export function AuthModal({ onClose, initialScreen = 'login' }: {
   const handleForgot = async () => {
     setLoading(true); setError(null)
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.href,
+      redirectTo: window.location.origin + import.meta.env.BASE_URL,
     })
     if (error) { setError(error.message); setLoading(false); return }
     setForgotSent(true)

@@ -2267,9 +2267,9 @@ function App() {
     }
   }, [])
 
-  // Machine player — fires after each player move when not in 2-player mode
+  // Machine player — fires after each player move when not in 2-player or online mode
   useEffect(() => {
-    if (playerMode === '2player' || winner || roleSelectOpen || setupAnimating) return
+    if (playerMode === '2player' || onlineStatus.type === 'matched' || winner || roleSelectOpen || setupAnimating) return
     const machineSide: PlayerSide = playerMode === 'attacker' ? 'defender' : 'attacker'
     if (currentTurn !== machineSide) return
 
