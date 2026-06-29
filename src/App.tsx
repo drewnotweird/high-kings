@@ -2286,7 +2286,7 @@ function App() {
     }
     const timer = setTimeout(fire, 2200)
     return () => clearTimeout(timer)
-  }, [currentTurn, playerMode, winner, roleSelectOpen, setupAnimating])
+  }, [currentTurn, playerMode, onlineStatus.type, winner, roleSelectOpen, setupAnimating])
 
   const startSetupAnim = () => {
     if (setupTimerRef.current) clearTimeout(setupTimerRef.current)
