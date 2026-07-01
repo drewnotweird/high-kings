@@ -1348,16 +1348,18 @@ function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: (
               </div>
             </div>
           ) : (
-            <div className="profile-scroll__name-row">
-              <span className="profile-scroll__name">{username ?? 'Anonymous'}</span>
-              <button className="profile-scroll__edit-btn" onClick={handleStartEdit}>Edit</button>
-            </div>
-            {elo !== null && (
-              <div className="profile-scroll__elo">
-                <span className="profile-scroll__elo-label">ELO</span>
-                <span className="profile-scroll__elo-value">{elo}</span>
+            <>
+              <div className="profile-scroll__name-row">
+                <span className="profile-scroll__name">{username ?? 'Anonymous'}</span>
+                <button className="profile-scroll__edit-btn" onClick={handleStartEdit}>Edit</button>
               </div>
-            )}
+              {elo !== null && (
+                <div className="profile-scroll__elo">
+                  <span className="profile-scroll__elo-label">ELO</span>
+                  <span className="profile-scroll__elo-value">{elo}</span>
+                </div>
+              )}
+            </>
           )}
           <hr className="credits-page__rule" />
           {(() => {
