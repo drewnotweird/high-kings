@@ -102,7 +102,7 @@ export function useOnlineGame(
 
   const startGame = useCallback((gameId: string, mySide: 'attacker' | 'defender') => {
     joinGameChannel(gameId, mySide)
-    onStatusChange({ type: 'matched', gameId, opponentName: '' })
+    onStatusChange({ type: 'matched', gameId, opponentName: '', opponentElo: null })
   }, [joinGameChannel, onStatusChange])
 
   const sendMove = useCallback((pieceId: string, toRow: number, toCol: number) => {

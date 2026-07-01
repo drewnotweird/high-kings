@@ -2319,7 +2319,7 @@ function App() {
   const [lobbyDraft, setLobbyDraft] = useState<{ rules: Rules; boardSize: number; side: 'attacker' | 'defender' } | null>(null)
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({ type: 'idle' })
   const pendingLobby = useRef<{ rules: Rules; boardSize: number; side: 'attacker' | 'defender' } | null>(null)
-  const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, dyingPieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, setAuth, setAuthReady, lastMove } = useGameStore()
+  const { currentTurn, resetGame, powerSaving, setSetting, pieces, dyingPieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, elo, setAuth, setAuthReady, lastMove } = useGameStore()
   const { startGame, sendMove, endGame } = useOnlineGame(setOnlineStatus)
 
   const handleGameStart = useCallback((gameId: string, mySide: 'attacker' | 'defender', gameRules: string, gameBoardSize: number) => {
