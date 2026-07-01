@@ -56,10 +56,12 @@ interface GameStore {
   // Auth
   userId: string | null
   username: string | null
+  elo: number | null
   authReady: boolean
-  setAuth: (userId: string | null, username: string | null) => void
+  setAuth: (userId: string | null, username: string | null, elo?: number | null) => void
   setAuthReady: (ready: boolean) => void
   setUsername: (username: string) => void
+  setElo: (elo: number) => void
   setTheme: (theme: Theme) => void
   selectPiece: (id: string | null) => void
   movePiece: (toRow: number, toCol: number) => void
@@ -102,10 +104,12 @@ export const useGameStore = create<GameStore>((set) => ({
   setRoleSelectOpen: (open) => set({ roleSelectOpen: open }),
   userId: null,
   username: null,
+  elo: null,
   authReady: false,
-  setAuth: (userId, username) => set({ userId, username }),
+  setAuth: (userId, username, elo = null) => set({ userId, username, elo }),
   setAuthReady: (ready) => set({ authReady: ready }),
   setUsername: (username) => set({ username }),
+  setElo: (elo) => set({ elo }),
 
   setTheme: (theme) => set({ theme }),
 

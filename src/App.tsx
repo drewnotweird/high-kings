@@ -102,6 +102,9 @@ body, button, input, select {
 .profile-scroll__stat-win { color: #3a7a3a; }
 .profile-scroll__stat-sep { color: #7a5228; }
 .profile-scroll__stat-loss { color: #7a2020; }
+.profile-scroll__elo { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 6px 0 2px; }
+.profile-scroll__elo-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #a07840; }
+.profile-scroll__elo-value { font-size: 28px; color: #c8880a; letter-spacing: 1px; font-weight: 600; }
 .profile-scroll__summary { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 12px 0 4px; }
 .profile-scroll__summary-wins { font-size: clamp(26px, 5vw, 38px); color: #3a7a3a; letter-spacing: 1px; }
 .profile-scroll__summary-sep { font-size: clamp(18px, 3vw, 26px); color: #7a5228; }
@@ -1267,7 +1270,7 @@ function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: (
   const [nameError, setNameError] = useState<string | null>(null)
   const [nameSaving, setNameSaving] = useState(false)
   const [stats, setStats] = useState<StatRow[]>([])
-  const { userId, username, setAuth, setUsername } = useGameStore()
+  const { userId, username, elo, setAuth, setUsername } = useGameStore()
 
   useEffect(() => {
     if (!userId) return
@@ -1336,6 +1339,12 @@ function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: (
               <span className="profile-scroll__name">{username ?? 'Anonymous'}</span>
               <button className="profile-scroll__edit-btn" onClick={handleStartEdit}>Edit</button>
             </div>
+            {elo !== null && (
+              <div className="profile-scroll__elo">
+                <span className="profile-scroll__elo-label">ELO</span>
+                <span className="profile-scroll__elo-value">{elo}</span>
+              </div>
+            )}
           )}
           <hr className="credits-page__rule" />
           {(() => {
@@ -2275,8 +2284,8 @@ function App() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         const { data: profile } = await supabase
-          .from('profiles').select('username').eq('id', session.user.id).single()
-        setAuth(session.user.id, profile?.username ?? null)
+          .from('profiles').select('username, elo').eq('id', session.user.id).single()
+        setAuth(session.user.id, profile?.username ?? null, profile?.elo ?? null)
       }
       setAuthReady(true)
     })
