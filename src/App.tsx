@@ -149,7 +149,7 @@ body, button, input, select {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 0;
   transition: opacity 0.25s ease;
 }
 .menu-overlay__screen--hidden {
