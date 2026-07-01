@@ -165,7 +165,7 @@ body, button, input, select {
   border: 1px solid rgba(200,160,40,0.4);
   border-radius: 6px;
   color: #e8d8b8;
-  padding: 14px;
+  padding: 8px 14px;
   font-size: 14px;
   letter-spacing: 2px;
   text-transform: uppercase;
