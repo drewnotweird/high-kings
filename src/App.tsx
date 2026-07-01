@@ -2319,10 +2319,10 @@ function App() {
   const [lobbyDraft, setLobbyDraft] = useState<{ rules: Rules; boardSize: number; side: 'attacker' | 'defender' } | null>(null)
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({ type: 'idle' })
   const pendingLobby = useRef<{ rules: Rules; boardSize: number; side: 'attacker' | 'defender' } | null>(null)
-  const { currentTurn, resetGame, powerSaving, setSetting, pieces, dyingPieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, elo, setAuth, setAuthReady, lastMove } = useGameStore()
+  const { currentTurn, resetGame, powerSaving, setSetting, pieces, dyingPieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, elo, setElo, setAuth, setAuthReady, lastMove } = useGameStore()
   const { startGame, sendMove, endGame } = useOnlineGame(setOnlineStatus)
 
-  const handleGameStart = useCallback((gameId: string, mySide: 'attacker' | 'defender', gameRules: string, gameBoardSize: number) => {
+  const handleGameStart = useCallback(async (gameId: string, mySide: 'attacker' | 'defender', gameRules: string, gameBoardSize: number) => {
     setSetting('rules', gameRules as Rules)
     setSetting('boardSize', gameBoardSize as never)
     setPlayerMode(mySide)
@@ -2330,7 +2330,19 @@ function App() {
     startGame(gameId, mySide)
     setShowLobby(false)
     setMenuOpen(false)
-  }, [setSetting, setPlayerMode, resetGame, startGame])
+    // Fetch both players' names + ELOs directly from DB — avoids broadcast timing issues
+    const { data } = await supabase
+      .from('games')
+      .select('attacker:attacker_id(username, elo), defender:defender_id(username, elo)')
+      .eq('id', gameId)
+      .single()
+    if (data) {
+      const me = mySide === 'attacker' ? (data.attacker as any) : (data.defender as any)
+      const opp = mySide === 'attacker' ? (data.defender as any) : (data.attacker as any)
+      if (me?.elo != null) setElo(me.elo)
+      setOnlineStatus({ type: 'matched', gameId, opponentName: opp?.username ?? '…', opponentElo: opp?.elo ?? null })
+    }
+  }, [setSetting, setPlayerMode, resetGame, startGame, setElo, setOnlineStatus])
 
   const { challenges, myChallenge, hostChallenge, cancelChallenge, acceptChallenge } = useLobby(userId, username ?? null, handleGameStart)
 
