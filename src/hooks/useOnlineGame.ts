@@ -5,11 +5,12 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export type OnlineStatus =
   | { type: 'idle' }
-  | { type: 'matched'; gameId: string; opponentName: string }
+  | { type: 'matched'; gameId: string; opponentName: string; opponentElo: number | null }
   | { type: 'opponent_disconnected'; secondsLeft: number }
   | { type: 'ended' }
 
 type MoveEvent = { type: 'move'; seq: number; pieceId: string; toRow: number; toCol: number }
+type NameEvent = { type: 'opponent_name'; name: string; elo: number | null }
 
 interface OnlineGameState {
   gameId: string | null
@@ -22,7 +23,7 @@ interface OnlineGameState {
 export function useOnlineGame(
   onStatusChange: (status: OnlineStatus) => void,
 ) {
-  const { machineMove, pieces, userId, username } = useGameStore()
+  const { machineMove, pieces, userId, username, elo } = useGameStore()
   const state = useRef<OnlineGameState>({
     gameId: null,
     mySide: null,
@@ -65,8 +66,8 @@ export function useOnlineGame(
           payload: { type: 'resync', seq: state.current.seq, pieces },
         })
       })
-      .on('broadcast', { event: 'opponent_name' }, ({ payload }: { payload: { type: string; name: string } }) => {
-        onStatusChange({ type: 'matched', gameId, opponentName: payload.name })
+      .on('broadcast', { event: 'opponent_name' }, ({ payload }: { payload: NameEvent }) => {
+        onStatusChange({ type: 'matched', gameId, opponentName: payload.name, opponentElo: payload.elo ?? null })
       })
       .on('presence', { event: 'leave' }, () => {
         let secondsLeft = 30
@@ -88,13 +89,13 @@ export function useOnlineGame(
           clearInterval(state.current.disconnectTimer)
           state.current.disconnectTimer = null
         }
-        onStatusChange({ type: 'matched', gameId, opponentName: '' })
-        channel.send({ type: 'broadcast', event: 'opponent_name', payload: { type: 'opponent_name', name: username ?? 'Unknown' } })
+        onStatusChange({ type: 'matched', gameId, opponentName: '', opponentElo: null })
+        channel.send({ type: 'broadcast', event: 'opponent_name', payload: { type: 'opponent_name', name: username ?? 'Unknown', elo: elo ?? null } })
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           await channel.track({ userId, username })
-          channel.send({ type: 'broadcast', event: 'opponent_name', payload: { type: 'opponent_name', name: username ?? 'Unknown' } })
+          channel.send({ type: 'broadcast', event: 'opponent_name', payload: { type: 'opponent_name', name: username ?? 'Unknown', elo: elo ?? null } })
         }
       })
   }, [machineMove, onStatusChange, pieces, userId, username])

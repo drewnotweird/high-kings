@@ -2098,53 +2098,36 @@ function PieceIcon({ side }: { side: PlayerSide }) {
   )
 }
 
-function ScorePanel({ side, score, isActive, name }: { side: PlayerSide; score: number; isActive: boolean; name?: string }) {
+function ScorePanel({ side, isActive, name, elo }: { side: PlayerSide; isActive: boolean; name?: string; elo?: number }) {
   const isAttacker = side === 'attacker'
-  const prevScore = useRef(score)
-  const [flashing, setFlashing] = useState(false)
-
-  useEffect(() => {
-    if (score > prevScore.current) {
-      setFlashing(false)
-      requestAnimationFrame(() => setFlashing(true))
-    }
-    prevScore.current = score
-  }, [score])
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: isAttacker ? 'flex-end' : 'flex-start', gap: 3 }}>
       {name && <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: '#706050', paddingLeft: isAttacker ? 0 : 4, paddingRight: isAttacker ? 4 : 0 }}>{name}</span>}
-    <div className={`score-panel score-panel--${side}${isActive ? ' score-panel--active' : ''}`} style={{
-      padding: 3,
-      borderRadius: 8,
-      background: isActive
-        ? 'linear-gradient(135deg, #f5e070, #c8880a, #e8c040, #a06808)'
-        : 'transparent',
-      transition: 'background 0.6s ease',
-    }}>
-      <div className="score-panel__inner" style={{
-        display: 'flex',
-        alignItems: 'center',
-        flexDirection: isAttacker ? 'row-reverse' : 'row',
-        gap: 10,
-        background: 'rgba(0,0,0,0.85)',
-        borderRadius: 6,
-        padding: '8px 14px',
-        backdropFilter: 'blur(4px)',
-        minWidth: 60,
+      <div className={`score-panel score-panel--${side}${isActive ? ' score-panel--active' : ''}`} style={{
+        padding: 3,
+        borderRadius: 8,
+        background: isActive
+          ? 'linear-gradient(135deg, #f5e070, #c8880a, #e8c040, #a06808)'
+          : 'transparent',
+        transition: 'background 0.6s ease',
       }}>
-        <PieceIcon side={side} />
-        <span
-          className="score-panel__score"
-          style={{ color: '#e8d8b8', fontSize: 18, fontWeight: 600, letterSpacing: 1 }}
-          onAnimationEnd={() => setFlashing(false)}
-        >
-          <span style={flashing ? { display: 'inline-block', animation: 'scoreFlash 0.55s ease-out forwards' } : undefined}>
-            {score}
-          </span>
-        </span>
+        <div className="score-panel__inner" style={{
+          display: 'flex',
+          alignItems: 'center',
+          flexDirection: isAttacker ? 'row-reverse' : 'row',
+          gap: elo !== undefined ? 8 : 0,
+          background: 'rgba(0,0,0,0.85)',
+          borderRadius: 6,
+          padding: '8px 14px',
+          backdropFilter: 'blur(4px)',
+          minWidth: 60,
+        }}>
+          <PieceIcon side={side} />
+          {elo !== undefined && (
+            <span style={{ color: '#e8d8b8', fontSize: 16, fontWeight: 600, letterSpacing: 1 }}>{elo}</span>
+          )}
+        </div>
       </div>
-    </div>
     </div>
   )
 }
@@ -2613,15 +2596,19 @@ function App() {
       {introStarted && (() => {
         const isOnline = onlineStatus.type === 'matched'
         const myName = username ?? 'You'
-        const opponentName = isOnline && onlineStatus.type === 'matched' ? (onlineStatus.opponentName || '…') : undefined
+        const opponentName = isOnline ? (onlineStatus.opponentName || '…') : undefined
+        const opponentElo = isOnline ? (onlineStatus.opponentElo ?? undefined) : undefined
+        const myElo = isOnline ? (elo ?? undefined) : undefined
         const defenderName = isOnline ? (playerMode === 'defender' ? myName : opponentName) : undefined
         const attackerName = isOnline ? (playerMode === 'attacker' ? myName : opponentName) : undefined
+        const defenderElo = isOnline ? (playerMode === 'defender' ? myElo : opponentElo) : undefined
+        const attackerElo = isOnline ? (playerMode === 'attacker' ? myElo : opponentElo) : undefined
         return <>
           <div className="score-panel-wrapper score-panel-wrapper--defender" style={{ position: 'absolute', bottom: 24, left: '10vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
-            <ScorePanel side="defender" score={scores.defender} isActive={currentTurn === 'defender'} name={defenderName} />
+            <ScorePanel side="defender" isActive={currentTurn === 'defender'} name={defenderName} elo={defenderElo} />
           </div>
           <div className="score-panel-wrapper score-panel-wrapper--attacker" style={{ position: 'absolute', bottom: 24, right: '10vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
-            <ScorePanel side="attacker" score={scores.attacker} isActive={currentTurn === 'attacker'} name={attackerName} />
+            <ScorePanel side="attacker" isActive={currentTurn === 'attacker'} name={attackerName} elo={attackerElo} />
           </div>
         </>
       })()}
