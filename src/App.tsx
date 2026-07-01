@@ -2157,9 +2157,14 @@ function App() {
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({ type: 'idle' })
   const pendingOnlineSearch = useRef<{ rules: Rules; boardSize: number } | null>(null)
   const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, dyingPieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, setAuth, setAuthReady, lastMove } = useGameStore()
+  const matchDismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { findMatch, cancelSearch, sendMove, endGame } = useOnlineGame((status) => {
     setOnlineStatus(status)
-    if (status.type === 'matched') { setShowFindMatch(false); setMenuOpen(false) }
+    if (status.type === 'matched') {
+      setMenuOpen(false)
+      if (matchDismissTimer.current) clearTimeout(matchDismissTimer.current)
+      matchDismissTimer.current = setTimeout(() => { setShowFindMatch(false) }, 3000)
+    }
   })
 
   // Warm up the matchmaking edge function so it's ready when the user needs it

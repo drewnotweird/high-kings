@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import type { OnlineStatus } from '../../hooks/useOnlineGame'
 import { useGameStore } from '../../store/gameStore'
 import type { Rules } from '../../store/gameStore'
@@ -18,6 +19,14 @@ export function FindMatchModal({ status, searchRules, searchBoardSize, onCancel,
   const isSearching = status.type === 'searching'
   const isMatched = status.type === 'matched'
   const isDisconnected = status.type === 'opponent_disconnected'
+
+  const [countdown, setCountdown] = useState(3)
+  useEffect(() => {
+    if (!isMatched) { setCountdown(3); return }
+    setCountdown(3)
+    const id = setInterval(() => setCountdown(c => Math.max(0, c - 1)), 1000)
+    return () => clearInterval(id)
+  }, [isMatched])
 
   return (
     <div className="find-match-modal__backdrop" onClick={e => { if (e.target === e.currentTarget && !isSearching && !isMatched) onClose() }}>
@@ -43,6 +52,9 @@ export function FindMatchModal({ status, searchRules, searchBoardSize, onCancel,
             <p>Match found!</p>
             <p className="find-match-modal__opponent">vs <strong>{status.opponentName || '…'}</strong></p>
             <p className="find-match-modal__settings-summary">{displayRules} · {displayBoardSize}×{displayBoardSize}</p>
+            <p style={{ fontSize: 11, color: '#706050', marginTop: 4 }}>
+              {countdown > 0 ? `Starting in ${countdown}…` : 'Get ready!'}
+            </p>
           </div>
         )}
 
