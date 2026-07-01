@@ -831,6 +831,27 @@ body, button, input, select {
 .lobby-panel__accept-btn:hover:not(:disabled) { background: rgba(200,160,40,0.28); }
 .lobby-panel__accept-btn:disabled { opacity: 0.3; cursor: default; }
 .lobby-panel__empty { margin: 0; font-size: 11px; color: #504030; text-align: center; padding: 8px 0; letter-spacing: 0.5px; }
+.challenge-invites {
+  position: fixed; bottom: 20px; right: 16px; z-index: 105;
+  display: flex; flex-direction: column; gap: 8px; max-width: 260px;
+}
+.challenge-invite {
+  background: rgba(20,10,2,0.97); border: 1px solid rgba(200,160,40,0.4);
+  border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6); animation: invite-in 0.25s ease;
+}
+@keyframes invite-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.challenge-invite__label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #706050; margin: 0; }
+.challenge-invite__host { font-size: 14px; color: #e8d8b8; margin: 0; }
+.challenge-invite__detail { font-size: 10px; color: #706050; margin: 0; }
+.challenge-invite__side { font-size: 11px; color: #c8a060; margin: 0; }
+.challenge-invite__side strong { color: #e8d8b8; }
+.challenge-invite__accept {
+  margin-top: 2px; background: rgba(200,160,40,0.15); border: 1px solid rgba(200,160,40,0.5);
+  border-radius: 4px; color: #e8d8b8; font-size: 11px; letter-spacing: 1.5px;
+  text-transform: uppercase; padding: 6px 0; cursor: pointer; transition: background 0.15s; width: 100%;
+}
+.challenge-invite__accept:hover { background: rgba(200,160,40,0.28); }
 .disconnect-banner {
   position: fixed; top: 56px; left: 50%; transform: translateX(-50%);
   background: rgba(20,10,2,0.95); border: 1px solid rgba(200,100,40,0.5);
@@ -2620,6 +2641,19 @@ function App() {
           onAccept={acceptChallenge}
           onClose={() => { cancelChallenge(); setShowLobby(false) }}
         />
+      )}
+      {userId && onlineStatus.type !== 'matched' && !showLobby && challenges.length > 0 && (
+        <div className="challenge-invites">
+          {challenges.map(c => (
+            <div key={c.id} className="challenge-invite">
+              <p className="challenge-invite__label">Challenge received</p>
+              <p className="challenge-invite__host">{c.host_name}</p>
+              <p className="challenge-invite__detail">{c.rules} · {c.board_size}×{c.board_size}</p>
+              <p className="challenge-invite__side">You play: <strong>{c.host_side === 'attacker' ? 'Defender' : 'Attacker'}</strong></p>
+              <button className="challenge-invite__accept" onClick={() => acceptChallenge(c)}>Accept</button>
+            </div>
+          ))}
+        </div>
       )}
       {onlineStatus.type === 'opponent_disconnected' && (
         <div className="disconnect-banner">
