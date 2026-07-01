@@ -961,7 +961,7 @@ body, button, input, select {
   letter-spacing: 0.5px;
   outline: none;
   transition: border-color 0.2s;
-  font-family: inherit;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 .auth-modal__input:focus { border-color: rgba(200,160,40,0.6); }
 .auth-modal__input::placeholder { color: rgba(200,180,140,0.3); }
