@@ -114,7 +114,8 @@ body, button, input, select {
 .leaderboard__row:hover { background: rgba(100,60,10,0.08); }
 .leaderboard__row--me { background: rgba(200,136,10,0.12); border-radius: 4px; }
 .leaderboard__row--me .leaderboard__col--name { color: #c8880a; font-weight: 600; }
-.leaderboard__col { font-size: 13px; color: #3a1e06; }
+.leaderboard__col { font-size: 16px; color: #3a1e06; }
+@media (min-width: 768px) { .leaderboard__col { font-size: 24px; } }
 .leaderboard__col--rank { width: 36px; flex-shrink: 0; color: #a07840; font-size: 12px; }
 .leaderboard__col--name { flex: 1; }
 .leaderboard__col--elo { width: 52px; text-align: right; flex-shrink: 0; font-weight: 600; color: #c8880a; font-size: 14px; }
