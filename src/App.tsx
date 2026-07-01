@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Scene, getIntroDurationMs } from './components/board/Scene'
 import { Board2D } from './components/board/Board2D'
 import { ThemeSwitcher } from './components/ui/ThemeSwitcher'
 import { DefeatFire } from './components/ui/DefeatFire'
 import { AuthModal } from './components/ui/AuthModal'
-import { FindMatchModal } from './components/ui/FindMatchModal'
+import { LobbyPanel } from './components/ui/LobbyPanel'
 import { useOnlineGame } from './hooks/useOnlineGame'
 import type { OnlineStatus } from './hooks/useOnlineGame'
+import { useLobby } from './hooks/useLobby'
 import { useGameStore } from './store/gameStore'
 import type { PlayerSide, GameMode, Difficulty, Rules } from './store/gameStore'
 import { getBestMove } from './game/ai'
@@ -770,6 +771,72 @@ body, button, input, select {
   font-size: 12px; color: #c08060; letter-spacing: 1px; text-align: center;
 }
 .find-match-modal__disconnected p { margin: 0; }
+.lobby-backdrop {
+  position: fixed; inset: 0; z-index: 120;
+  background: rgba(10,5,0,0.75); display: flex; align-items: center; justify-content: center;
+}
+.lobby-panel {
+  background: rgba(20,10,2,0.97); border: 1px solid rgba(200,160,40,0.35); border-radius: 8px;
+  padding: 20px; width: min(360px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 14px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+}
+.lobby-panel__header { display: flex; align-items: center; justify-content: space-between; }
+.lobby-panel__title { font-family: 'MedievalSharp', cursive; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; color: #e8d8b8; }
+.lobby-panel__close { background: none; border: none; cursor: pointer; color: #706050; font-size: 16px; padding: 4px 8px; transition: color 0.15s; }
+.lobby-panel__close:hover { color: #e8d8b8; }
+.lobby-panel__mine { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px 0; text-align: center; }
+.lobby-panel__mine-label { margin: 0; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #706050; }
+.lobby-panel__mine-detail { margin: 0; font-size: 12px; color: #c8a060; }
+.lobby-panel__mine-detail strong { color: #e8d8b8; }
+.lobby-panel__spinner {
+  width: 24px; height: 24px; border: 2px solid rgba(200,160,40,0.2);
+  border-top-color: rgba(200,160,40,0.8); border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+.lobby-panel__waiting { margin: 0; font-size: 12px; color: #c8a060; letter-spacing: 1px; }
+.lobby-panel__cancel-btn {
+  background: none; border: 1px solid rgba(200,160,40,0.35); border-radius: 4px;
+  color: #a08040; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 6px 16px; cursor: pointer; transition: border-color 0.15s, color 0.15s; margin-top: 4px;
+}
+.lobby-panel__cancel-btn:hover { border-color: rgba(200,160,40,0.7); color: #e8d8b8; }
+.lobby-panel__host-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 12px; background: rgba(200,160,40,0.07); border-radius: 6px;
+  border: 1px solid rgba(200,160,40,0.15);
+}
+.lobby-panel__host-summary { font-size: 11px; color: #c8a060; flex: 1; }
+.lobby-panel__host-summary strong { color: #e8d8b8; }
+.lobby-panel__host-btn {
+  background: rgba(200,160,40,0.15); border: 1px solid rgba(200,160,40,0.5); border-radius: 4px;
+  color: #e8d8b8; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+  padding: 6px 12px; cursor: pointer; white-space: nowrap; transition: background 0.15s;
+}
+.lobby-panel__host-btn:hover { background: rgba(200,160,40,0.28); }
+.lobby-panel__list { display: flex; flex-direction: column; gap: 8px; }
+.lobby-panel__challenge {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(200,160,40,0.15); border-radius: 6px;
+}
+.lobby-panel__challenge-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.lobby-panel__challenge-host { font-size: 13px; color: #e8d8b8; }
+.lobby-panel__challenge-detail { font-size: 10px; color: #706050; letter-spacing: 0.5px; }
+.lobby-panel__challenge-side { font-size: 11px; color: #c8a060; }
+.lobby-panel__challenge-side strong { color: #e8d8b8; }
+.lobby-panel__accept-btn {
+  background: rgba(200,160,40,0.15); border: 1px solid rgba(200,160,40,0.5); border-radius: 4px;
+  color: #e8d8b8; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+  padding: 6px 12px; cursor: pointer; transition: background 0.15s; white-space: nowrap;
+}
+.lobby-panel__accept-btn:hover:not(:disabled) { background: rgba(200,160,40,0.28); }
+.lobby-panel__accept-btn:disabled { opacity: 0.3; cursor: default; }
+.lobby-panel__empty { margin: 0; font-size: 11px; color: #504030; text-align: center; padding: 8px 0; letter-spacing: 0.5px; }
+.disconnect-banner {
+  position: fixed; top: 56px; left: 50%; transform: translateX(-50%);
+  background: rgba(20,10,2,0.95); border: 1px solid rgba(200,100,40,0.5);
+  border-radius: 6px; padding: 8px 16px; font-size: 11px; color: #c88040;
+  letter-spacing: 1px; z-index: 110; white-space: nowrap;
+}
 .guest-login-modal__backdrop {
   position: fixed; inset: 0; z-index: 120;
   background: rgba(0,0,0,0.8);
@@ -1833,7 +1900,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
   onCredits: () => void
   onHowToPlay: () => void
   onLeaderboard: () => void
-  onOnlineMatch: (rules: Rules, boardSize: number) => void
+  onOnlineMatch: (rules: Rules, boardSize: number, side: 'attacker' | 'defender') => void
 }) {
   const { cameraLocked, difficulty, rules, boardSize, powerSaving, playerMode, setSetting } = useGameStore()
 
@@ -1842,7 +1909,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
   const playToMode = (p: 'Online' | 'Vs Machine' | 'Take turns'): GameMode =>
     p === 'Take turns' ? '2player' : 'defender'
 
-  const [draft, setDraft] = useState({ powerSaving, cameraLocked, difficulty, rules, boardSize, play: modeToPlay(playerMode) as 'Online' | 'Vs Machine' | 'Take turns' })
+  const [draft, setDraft] = useState({ powerSaving, cameraLocked, difficulty, rules, boardSize, play: modeToPlay(playerMode) as 'Online' | 'Vs Machine' | 'Take turns', side: 'attacker' as 'attacker' | 'defender' })
 
   const validRulesForSize = BOARD_SIZE_RULES[draft.boardSize] ?? []
   const restartValid = validRulesForSize.includes(draft.rules)
@@ -1850,7 +1917,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
 
   // Reset draft when menu opens
   useEffect(() => {
-    if (isOpen) setDraft({ powerSaving, cameraLocked, difficulty, rules, boardSize, play: modeToPlay(playerMode) })
+    if (isOpen) setDraft(d => ({ ...d, powerSaving, cameraLocked, difficulty, rules, boardSize, play: modeToPlay(playerMode) }))
   }, [isOpen])
 
   const applyDisplaySettings = () => {
@@ -1864,7 +1931,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
   }
 
   const handleNewGame = () => {
-    if (draft.play === 'Online') { onOnlineMatch(draft.rules, draft.boardSize); return }
+    if (draft.play === 'Online') { onOnlineMatch(draft.rules, draft.boardSize, draft.side); return }
     applyDisplaySettings()
     setSetting('difficulty', draft.difficulty)
     setSetting('boardSize', draft.boardSize)
@@ -1874,7 +1941,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
   }
 
   const handleCancel = () => {
-    setDraft({ powerSaving, cameraLocked, difficulty, rules, boardSize, play: modeToPlay(playerMode) })
+    setDraft(d => ({ ...d, powerSaving, cameraLocked, difficulty, rules, boardSize, play: modeToPlay(playerMode) }))
     onResume()
   }
 
@@ -1892,6 +1959,14 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
                 options={['Online', 'Vs Machine', 'Take turns']}
                 value={draft.play}
                 onChange={v => setDraft(d => ({ ...d, play: v }))}
+              />
+            </div>
+            <div className="settings-row" style={{ opacity: draft.play === 'Online' ? 1 : 0.25, pointerEvents: draft.play === 'Online' ? undefined : 'none', transition: 'opacity 0.2s ease' }}>
+              <span className="settings-row__label">Side</span>
+              <Cycler<'attacker' | 'defender'>
+                options={['attacker', 'defender']}
+                value={draft.side}
+                onChange={v => setDraft(d => ({ ...d, side: v }))}
               />
             </div>
             <div className="settings-row" style={{ opacity: draft.play === 'Vs Machine' ? 1 : 0.25, pointerEvents: draft.play === 'Vs Machine' ? undefined : 'none', transition: 'opacity 0.2s ease' }}>
@@ -1946,7 +2021,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
                 onClick={handleNewGame}
                 disabled={!restartValid}
                 style={{ opacity: restartValid ? 1 : 0.35, cursor: restartValid ? 'pointer' : 'default' }}
-              >Start</button>
+              >New Game</button>
             </div>
           </div>
 
@@ -2151,30 +2226,25 @@ function App() {
   const [showAuth, setShowAuth] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
   const [showUsernamePrompt, setShowUsernamePrompt] = useState(false)
-  const [showFindMatch, setShowFindMatch] = useState(false)
+  const [showLobby, setShowLobby] = useState(false)
   const [showGuestLogin, setShowGuestLogin] = useState(false)
-  const [searchSettings, setSearchSettings] = useState<{ rules: Rules; boardSize: number } | null>(null)
+  const [lobbyDraft, setLobbyDraft] = useState<{ rules: Rules; boardSize: number; side: 'attacker' | 'defender' } | null>(null)
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({ type: 'idle' })
-  const pendingOnlineSearch = useRef<{ rules: Rules; boardSize: number } | null>(null)
+  const pendingLobby = useRef<{ rules: Rules; boardSize: number; side: 'attacker' | 'defender' } | null>(null)
   const { currentTurn, scores, resetGame, powerSaving, setSetting, pieces, dyingPieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, setAuth, setAuthReady, lastMove } = useGameStore()
-  const matchDismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const { findMatch, cancelSearch, sendMove, endGame } = useOnlineGame((status) => {
-    setOnlineStatus(status)
-    if (status.type === 'matched') {
-      setMenuOpen(false)
-      if (matchDismissTimer.current) clearTimeout(matchDismissTimer.current)
-      matchDismissTimer.current = setTimeout(() => { setShowFindMatch(false) }, 3000)
-    }
-  })
+  const { startGame, sendMove, endGame } = useOnlineGame(setOnlineStatus)
 
-  // Warm up the matchmaking edge function so it's ready when the user needs it
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/matchmaking`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'ping' }),
-    }).catch(() => {})
-  }, [])
+  const handleGameStart = useCallback((gameId: string, mySide: 'attacker' | 'defender', gameRules: string, gameBoardSize: number) => {
+    setSetting('rules', gameRules as Rules)
+    setSetting('boardSize', gameBoardSize as never)
+    setPlayerMode(mySide)
+    resetGame()
+    startGame(gameId, mySide)
+    setShowLobby(false)
+    setMenuOpen(false)
+  }, [setSetting, setPlayerMode, resetGame, startGame])
+
+  const { challenges, myChallenge, hostChallenge, cancelChallenge, acceptChallenge } = useLobby(userId, username ?? null, handleGameStart)
 
   // Restore session on mount, listen for auth changes
   useEffect(() => {
@@ -2197,13 +2267,13 @@ function App() {
         if (event === 'SIGNED_IN' && !resolvedUsername) {
           setShowUsernamePrompt(true)
         }
-        // If the user just authenticated to start an online game, kick off the search
-        if (pendingOnlineSearch.current) {
-          const pending = pendingOnlineSearch.current
-          pendingOnlineSearch.current = null
+        // If the user just authenticated to open the lobby, open it now
+        if (pendingLobby.current) {
+          const pending = pendingLobby.current
+          pendingLobby.current = null
           setShowGuestLogin(false)
-          setShowFindMatch(true)
-          findMatch(pending.rules, pending.boardSize)
+          setLobbyDraft(pending)
+          setShowLobby(true)
         }
       }
     })
@@ -2421,14 +2491,13 @@ function App() {
           onCredits={() => setShowCredits(true)}
           onHowToPlay={() => setShowHowToPlay(true)}
           onLeaderboard={() => setShowLeaderboard(true)}
-          onOnlineMatch={(r, bs) => {
-            setSearchSettings({ rules: r, boardSize: bs })
+          onOnlineMatch={(r, bs, side) => {
             if (!userId) {
-              pendingOnlineSearch.current = { rules: r, boardSize: bs }
+              pendingLobby.current = { rules: r, boardSize: bs, side }
               setShowGuestLogin(true)
             } else {
-              setShowFindMatch(true)
-              findMatch(r, bs)
+              setLobbyDraft({ rules: r, boardSize: bs, side })
+              setShowLobby(true)
             }
           }}
         />
@@ -2533,20 +2602,29 @@ function App() {
       )}
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       {showUsernamePrompt && <AuthModal initialScreen="username" onClose={() => setShowUsernamePrompt(false)} />}
-      {showGuestLogin && pendingOnlineSearch.current && (
+      {showGuestLogin && (
         <GuestLoginModal
           onLogin={() => { setShowGuestLogin(false); setShowAuth(true) }}
-          onClose={() => { setShowGuestLogin(false); pendingOnlineSearch.current = null }}
+          onClose={() => { setShowGuestLogin(false); pendingLobby.current = null }}
         />
       )}
-      {showFindMatch && (
-        <FindMatchModal
-          status={onlineStatus}
-          searchRules={searchSettings?.rules}
-          searchBoardSize={searchSettings?.boardSize}
-          onCancel={() => { cancelSearch(); setShowFindMatch(false); setOnlineStatus({ type: 'idle' }) }}
-          onClose={() => { cancelSearch(); setShowFindMatch(false); setOnlineStatus({ type: 'idle' }) }}
+      {showLobby && lobbyDraft && (
+        <LobbyPanel
+          challenges={challenges}
+          myChallenge={myChallenge}
+          draftRules={lobbyDraft.rules}
+          draftBoardSize={lobbyDraft.boardSize}
+          draftSide={lobbyDraft.side}
+          onHost={() => hostChallenge(lobbyDraft.rules, lobbyDraft.boardSize, lobbyDraft.side)}
+          onCancel={() => cancelChallenge()}
+          onAccept={acceptChallenge}
+          onClose={() => { cancelChallenge(); setShowLobby(false) }}
         />
+      )}
+      {onlineStatus.type === 'opponent_disconnected' && (
+        <div className="disconnect-banner">
+          Opponent disconnected — waiting {onlineStatus.secondsLeft}s…
+        </div>
       )}
     </div>
   )

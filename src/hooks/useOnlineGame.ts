@@ -5,19 +5,16 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export type OnlineStatus =
   | { type: 'idle' }
-  | { type: 'searching' }
   | { type: 'matched'; gameId: string; opponentName: string }
   | { type: 'opponent_disconnected'; secondsLeft: number }
   | { type: 'ended' }
 
 type MoveEvent = { type: 'move'; seq: number; pieceId: string; toRow: number; toCol: number }
 
-
 interface OnlineGameState {
   gameId: string | null
   mySide: 'attacker' | 'defender' | null
   seq: number
-  pollInterval: ReturnType<typeof setInterval> | null
   disconnectTimer: ReturnType<typeof setTimeout> | null
   channel: RealtimeChannel | null
 }
@@ -25,20 +22,17 @@ interface OnlineGameState {
 export function useOnlineGame(
   onStatusChange: (status: OnlineStatus) => void,
 ) {
-  const { machineMove, setPlayerMode, resetGame, setSetting, pieces, userId, username } = useGameStore()
+  const { machineMove, pieces, userId, username } = useGameStore()
   const state = useRef<OnlineGameState>({
     gameId: null,
     mySide: null,
     seq: 0,
-    pollInterval: null,
     disconnectTimer: null,
     channel: null,
   })
 
   const cleanup = useCallback(() => {
-    if (state.current.pollInterval) clearInterval(state.current.pollInterval)
     if (state.current.disconnectTimer) clearTimeout(state.current.disconnectTimer)
-    state.current.pollInterval = null
     state.current.disconnectTimer = null
     if (state.current.channel) {
       supabase.removeChannel(state.current.channel)
@@ -90,13 +84,11 @@ export function useOnlineGame(
         }, 1000) as unknown as ReturnType<typeof setTimeout>
       })
       .on('presence', { event: 'join' }, () => {
-        // Opponent reconnected
         if (state.current.disconnectTimer) {
           clearInterval(state.current.disconnectTimer)
           state.current.disconnectTimer = null
         }
         onStatusChange({ type: 'matched', gameId, opponentName: '' })
-        // Announce name again
         channel.send({ type: 'broadcast', event: 'opponent_name', payload: { type: 'opponent_name', name: username ?? 'Unknown' } })
       })
       .subscribe(async (status) => {
@@ -107,87 +99,10 @@ export function useOnlineGame(
       })
   }, [machineMove, onStatusChange, pieces, userId, username])
 
-  const findMatch = useCallback(async (matchRules: string, matchBoardSize: number) => {
-    onStatusChange({ type: 'searching' })
-
-    const { data: { session } } = await supabase.auth.getSession()
-    const token = session?.access_token
-    if (!token) { onStatusChange({ type: 'idle' }); return }
-
-    const handleMatched = (gameId: string, side: 'attacker' | 'defender') => {
-      if (state.current.pollInterval) clearInterval(state.current.pollInterval)
-      state.current.pollInterval = null
-      // Apply settings and reset board only now that a match is confirmed
-      setSetting('rules', matchRules as never)
-      setSetting('boardSize', matchBoardSize as never)
-      setPlayerMode(side)
-      resetGame()
-      joinGameChannel(gameId, side)
-      onStatusChange({ type: 'matched', gameId, opponentName: '' })
-    }
-
-    const poll = async () => {
-      // Stop polling if user already cancelled
-      if (!state.current.pollInterval) return
-      try {
-        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/matchmaking`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rules: matchRules, board_size: matchBoardSize }),
-        })
-        const data = await res.json()
-        if (data.status === 'matched') handleMatched(data.game_id, data.side)
-        else if (data.status !== 'waiting') {
-          // Unexpected status — stop polling and surface the error
-          clearInterval(state.current.pollInterval!)
-          state.current.pollInterval = null
-          onStatusChange({ type: 'idle' })
-        }
-      } catch {
-        // Network error — keep polling, it may recover
-      }
-    }
-
-    // Initial call
-    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/matchmaking`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rules: matchRules, board_size: matchBoardSize }),
-    })
-    const data = await res.json()
-
-    if (data.status === 'matched') {
-      handleMatched(data.game_id, data.side)
-    } else if (data.status === 'waiting') {
-      state.current.pollInterval = setInterval(poll, 3000)
-      // Auto-cancel after 5 minutes
-      setTimeout(() => {
-        if (state.current.pollInterval) {
-          clearInterval(state.current.pollInterval)
-          state.current.pollInterval = null
-          cancelSearch()
-          onStatusChange({ type: 'idle' })
-        }
-      }, 5 * 60 * 1000)
-    }
-  }, [setSetting, setPlayerMode, resetGame, joinGameChannel, onStatusChange])
-
-  const cancelSearch = useCallback(async () => {
-    if (state.current.pollInterval) {
-      clearInterval(state.current.pollInterval)
-      state.current.pollInterval = null
-    }
-    const { data: { session } } = await supabase.auth.getSession()
-    const token = session?.access_token
-    if (token) {
-      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/matchmaking`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'cancel' }),
-      })
-    }
-    onStatusChange({ type: 'idle' })
-  }, [onStatusChange])
+  const startGame = useCallback((gameId: string, mySide: 'attacker' | 'defender') => {
+    joinGameChannel(gameId, mySide)
+    onStatusChange({ type: 'matched', gameId, opponentName: '' })
+  }, [joinGameChannel, onStatusChange])
 
   const sendMove = useCallback((pieceId: string, toRow: number, toCol: number) => {
     if (!state.current.channel) return
@@ -212,5 +127,5 @@ export function useOnlineGame(
 
   useEffect(() => () => cleanup(), [cleanup])
 
-  return { findMatch, cancelSearch, sendMove, endGame }
+  return { startGame, sendMove, endGame }
 }
