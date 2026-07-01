@@ -2074,7 +2074,7 @@ function PieceIcon({ side }: { side: PlayerSide }) {
   )
 }
 
-function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number; isActive: boolean }) {
+function ScorePanel({ side, score, isActive, name }: { side: PlayerSide; score: number; isActive: boolean; name?: string }) {
   const isAttacker = side === 'attacker'
   const prevScore = useRef(score)
   const [flashing, setFlashing] = useState(false)
@@ -2088,6 +2088,8 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
   }, [score])
 
   return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: isAttacker ? 'flex-end' : 'flex-start', gap: 3 }}>
+      {name && <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: '#706050', paddingLeft: isAttacker ? 0 : 4, paddingRight: isAttacker ? 4 : 0 }}>{name}</span>}
     <div className={`score-panel score-panel--${side}${isActive ? ' score-panel--active' : ''}`} style={{
       padding: 3,
       borderRadius: 8,
@@ -2118,6 +2120,7 @@ function ScorePanel({ side, score, isActive }: { side: PlayerSide; score: number
           </span>
         </span>
       </div>
+    </div>
     </div>
   )
 }
@@ -2525,29 +2528,22 @@ function App() {
       </div>
 
       {/* Online match header */}
-      {onlineStatus.type === 'matched' && (
-        <div className="match-header">
-          <div className={`match-header__player${playerMode === 'attacker' ? ' match-header__player--active' : ''}`}>
-            <span className="match-header__name">{username ?? 'You'}</span>
-            <span className="match-header__side">Attacker</span>
-          </div>
-          <span className="match-header__turn">{currentTurn === playerMode ? 'Your turn' : 'Their turn'}</span>
-          <div className={`match-header__player${playerMode === 'defender' ? ' match-header__player--active' : ''}`}>
-            <span className="match-header__name">{onlineStatus.opponentName || '…'}</span>
-            <span className="match-header__side">Defender</span>
-          </div>
-        </div>
-      )}
-
       {/* Score panels */}
-      {introStarted && <>
-        <div className="score-panel-wrapper score-panel-wrapper--defender" style={{ position: 'absolute', bottom: 24, left: '10vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
-          <ScorePanel side="defender" score={scores.defender} isActive={currentTurn === 'defender'} />
-        </div>
-        <div className="score-panel-wrapper score-panel-wrapper--attacker" style={{ position: 'absolute', bottom: 24, right: '10vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
-          <ScorePanel side="attacker" score={scores.attacker} isActive={currentTurn === 'attacker'} />
-        </div>
-      </>}
+      {introStarted && (() => {
+        const isOnline = onlineStatus.type === 'matched'
+        const myName = username ?? 'You'
+        const opponentName = isOnline && onlineStatus.type === 'matched' ? (onlineStatus.opponentName || '…') : undefined
+        const defenderName = isOnline ? (playerMode === 'defender' ? myName : opponentName) : undefined
+        const attackerName = isOnline ? (playerMode === 'attacker' ? myName : opponentName) : undefined
+        return <>
+          <div className="score-panel-wrapper score-panel-wrapper--defender" style={{ position: 'absolute', bottom: 24, left: '10vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
+            <ScorePanel side="defender" score={scores.defender} isActive={currentTurn === 'defender'} name={defenderName} />
+          </div>
+          <div className="score-panel-wrapper score-panel-wrapper--attacker" style={{ position: 'absolute', bottom: 24, right: '10vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
+            <ScorePanel side="attacker" score={scores.attacker} isActive={currentTurn === 'attacker'} name={attackerName} />
+          </div>
+        </>
+      })()}
 
       <div className="absolute top-1 md:top-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
         <img src={`${import.meta.env.BASE_URL}logo.png`} alt="High Kings" className="h-32 w-auto select-none" />
