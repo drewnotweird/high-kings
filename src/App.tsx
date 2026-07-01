@@ -105,9 +105,9 @@ body, button, input, select {
 .profile-scroll__elo { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 6px 0 2px; }
 .profile-scroll__elo-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #a07840; }
 .profile-scroll__elo-value { font-size: 28px; color: #c8880a; letter-spacing: 1px; font-weight: 600; }
-.leaderboard__my-rank { text-align: center; font-size: 13px; color: #a07840; margin: 0 0 12px; letter-spacing: 0.5px; }
+.leaderboard__my-rank { text-align: left; font-size: 13px; color: #a07840; margin: 0 0 12px; letter-spacing: 0.5px; }
 .leaderboard__my-rank strong { color: #c8880a; }
-.leaderboard__table { display: flex; flex-direction: column; gap: 0; width: 100%; }
+.leaderboard__table { display: flex; flex-direction: column; gap: 0; width: 100%; text-align: left; }
 .leaderboard__header { display: flex; padding: 6px 10px; border-bottom: 1px solid rgba(100,60,10,0.25); margin-bottom: 4px; }
 .leaderboard__header .leaderboard__col { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #a07840; }
 .leaderboard__row { display: flex; align-items: center; padding: 8px 10px; border-radius: 4px; transition: background 0.15s; }
