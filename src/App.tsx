@@ -2428,18 +2428,30 @@ function App() {
   }, [winner])
   const setupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Record game result when a winner is decided
+  // Record vs-machine game result
   useEffect(() => {
     if (!winner || !userId || playerMode === '2player' || onlineStatus.type === 'matched') return
-    const userSide = playerMode // 'attacker' or 'defender'
-    const result = winner === userSide ? 'win' : 'loss'
+    const result = winner === playerMode ? 'win' : 'loss'
     supabase.from('game_results').insert({
       user_id: userId,
       opponent_type: 'machine',
       result,
       rules,
       board_size: boardSize,
-    }).then(({ error }) => { if (error) console.error('game_results insert:', error.message) })
+    }).then(({ error }) => { if (error) console.error('game_results insert (machine):', error.message) })
+  }, [winner, userId, playerMode, rules, boardSize, onlineStatus.type])
+
+  // Record online game result
+  useEffect(() => {
+    if (!winner || !userId || onlineStatus.type !== 'matched') return
+    const result = winner === playerMode ? 'win' : 'loss'
+    supabase.from('game_results').insert({
+      user_id: userId,
+      opponent_type: 'human',
+      result,
+      rules,
+      board_size: boardSize,
+    }).then(({ error }) => { if (error) console.error('game_results insert (human):', error.message) })
   }, [winner, userId, playerMode, rules, boardSize, onlineStatus.type])
 
   // Broadcast moves in online games
