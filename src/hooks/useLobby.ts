@@ -81,6 +81,12 @@ export function useLobby(
     const attackerId = challenge.host_side === 'attacker' ? challenge.host_id : userId
     const defenderId = challenge.host_side === 'defender' ? challenge.host_id : userId
 
+    // Atomically claim the challenge by deleting it first.
+    // Only one concurrent acceptor will get a row back — the other gets nothing and bails.
+    const { data: claimed } = await supabase
+      .from('challenges').delete().eq('id', challenge.id).select().single()
+    if (!claimed) return // Another player got there first
+
     const { data: game, error } = await supabase.from('games').insert({
       attacker_id: attackerId,
       defender_id: defenderId,
@@ -90,9 +96,6 @@ export function useLobby(
     }).select().single()
 
     if (error || !game) { console.error('Failed to create game', error); return }
-
-    // Deleting the challenge triggers the host's Realtime subscription
-    await supabase.from('challenges').delete().eq('id', challenge.id)
 
     onGameStartRef.current(game.id, mySide, challenge.rules, challenge.board_size)
   }, [userId])

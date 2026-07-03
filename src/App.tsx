@@ -839,8 +839,8 @@ body, button, input, select {
 .lobby-panel__accept-btn:disabled { opacity: 0.3; cursor: default; }
 .lobby-panel__empty { margin: 0; font-size: 11px; color: #504030; text-align: center; padding: 8px 0; letter-spacing: 0.5px; }
 .challenge-invites {
-  position: fixed; bottom: 20px; right: 16px; z-index: 105;
-  display: flex; flex-direction: column; gap: 8px; max-width: 260px;
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 105;
+  display: flex; flex-direction: column; gap: 8px; max-width: 260px; width: max-content;
 }
 .challenge-invite {
   background: rgba(20,10,2,0.97); border: 1px solid rgba(200,160,40,0.4);
