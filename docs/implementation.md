@@ -1,6 +1,6 @@
 # High Kings — Implementation Notes
 
-Last updated: 2026-07-03
+Last updated: 2026-07-03 (session 2)
 
 ---
 
@@ -155,7 +155,7 @@ The menu is a single settings panel. `MenuOverlay` renders directly with no sub-
 
 **Settings rows:**
 1. **Play** — `Online` | `Vs Machine` | `Take turns`
-2. **Side** — fades to opacity 0.25 when Play ≠ `Online`
+2. **Side** — fades to opacity 0.25 when Play = `Take turns`. Active for both `Online` and `Vs Machine`.
 3. **Difficulty** — fades to opacity 0.25 when Play ≠ `Vs Machine`
 4. **Board** — board size cycler
 5. **Rules** — filtered to sizes valid for current board
@@ -164,7 +164,6 @@ The menu is a single settings panel. `MenuOverlay` renders directly with no sub-
 8. Inline button row: **Resume** | **New Game**
 
 **Below the panel (outside it):**
-- Leaderboard button
 - Cancel button
 
 **Footer links (bottom of screen, always visible):**
@@ -176,13 +175,13 @@ The menu is a single settings panel. `MenuOverlay` renders directly with no sub-
 
 | Draft play value | `playerMode` stored |
 |---|---|
-| `Vs Machine` | `'defender'` (human plays defender by default) |
+| `Vs Machine` | `draft.side` — whichever side the player chose |
 | `Take turns` | `'2player'` |
-| `Online` | set later when game starts |
+| `Online` | set later when game starts (assigned side from lobby) |
 
 **Resume / New Game / Cancel:**
 - **Resume** — disabled when draft rules, boardSize, or play mode differ from store (requires a new game)
-- **New Game** — applies settings and calls `resetGame()`. If Play is `Online`, opens the lobby instead.
+- **New Game** — applies settings and calls `resetGame()` + `startSetupAnim()`. If Play is `Online`, opens the lobby instead. No role-select screen — side is always set from the Setup menu.
 - **Cancel** — resets draft to current store values, closes menu.
 
 ---
@@ -234,9 +233,11 @@ type OnlineStatus =
 
 `winner` set in store + `onlineStatus.type === 'matched'` → `endGame(winnerId)`:
 - `winnerId` = `userId` if local player won, else `opponentId` from `OnlineStatus`
-- Updates `games` table: `status: 'completed'`, `winner_id`, `ended_at`
+- Updates `games` table: `status: 'completed'`, `winner_id`, `ended_at` via `.then()` (must be chained — supabase-js v2 queries only execute when `.then()` or `await` is called)
 - ELO trigger fires automatically server-side
 - Both clients unsubscribe from the channel
+
+**Important:** Hint and Undo buttons are hidden during online matches.
 
 ### `useOnlineGame` hook
 
@@ -485,4 +486,8 @@ Live: https://drewnotweird.co.uk/highkings
 - **PostgREST aggregates not enabled** — don't use `count:id.count()` in Supabase JS client queries. Group client-side instead.
 - **Online: DB fetch is source of truth for names/ELO** — broadcast/presence events can fire with empty values. `handleOnlineStatusChange` merges `matched` updates to prevent broadcasts from overwriting DB-fetched data.
 - **endGame must pass real winner ID** — pass `userId` or `opponentId` (from `OnlineStatus`), never `null`. `null` is treated as a draw by the ELO trigger.
+- **supabase-js queries require `.then()` or `await`** — fire-and-forget calls like `supabase.from(...).update(...)` without chaining do not execute. Always chain `.then()` (or `await`) or the HTTP request never goes out.
+- **challenges table RLS** — two delete policies are needed: one for the host (cancel), one for any authenticated user (accept). A single `using (auth.uid() = host_id)` policy blocks acceptors. Migration: `004_challenges_table.sql`.
+- **games table needs an insert policy** — the acceptor creates the `games` row, not just the host. Without `with check (auth.uid() = attacker_id or auth.uid() = defender_id)` on insert, the acceptor's insert is silently blocked by RLS.
+- **vs-machine stat recorder fires in online games** — guard with `onlineStatus.type !== 'matched'` to prevent spurious `game_results` inserts during online games.
 - **Alea Evangelii AI** — 19×19 with 96 pieces, hard mode is slow on main thread. No web worker yet.

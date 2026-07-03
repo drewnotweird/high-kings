@@ -22,8 +22,8 @@ Hnefatafl is an asymmetric strategy game. The defender escorts the King to a cor
 - Shieldwall captures (Copenhagen & Tawlbwrdd)
 - AI opponent with easy / medium / hard difficulty
 - Play as defender, attacker, or 2-player local
-- Hint button — two-stage: first press selects the AI's suggested piece; second press executes the move
-- Undo button — fades in after the first move; triggers lightning bolt, screen flash, board tremble, and piece shake in 3D mode
+- Hint button — two-stage: first press selects the AI's suggested piece; second press executes the move (hidden in online matches)
+- Undo button — fades in after the first move; triggers lightning bolt, screen flash, board tremble, and piece shake in 3D mode (hidden in online matches)
 - Tile hover glow — valid move targets glow orange on hover
 - Smooth 3D piece movement with arc lift and custodial capture explosions
 - Spotlight follows the King; beam width scales with board size
@@ -40,7 +40,7 @@ Hnefatafl is an asymmetric strategy game. The defender escorts the King to a cor
 - Profile screen — username, ELO rating, win/loss record by variant, Play Online shortcut
 - Score panels — show player name and ELO when logged in; expand to fit content
 - Footer links — How to Play · Leaderboard · Credits
-- Game button (top right) — opens settings panel
+- Setup button (top right) — opens settings panel; side choice available for Vs Machine and Online
 
 ## Variants
 

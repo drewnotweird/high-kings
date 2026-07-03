@@ -1,6 +1,6 @@
 # High Kings — Multiplayer & Social Features
 
-Last updated: 2026-07-03
+Last updated: 2026-07-03 (session 2)
 
 ---
 
@@ -85,8 +85,9 @@ Two logged-in players find each other via a lobby and play in real time. No serv
 **Game end:**
 - App.tsx detects `winner !== null` while `onlineStatus.type === 'matched'`.
 - Calls `endGame(winnerId)` — `winnerId` is the actual user ID of the winner (derived from `opponentId` stored in `OnlineStatus`).
-- Updates `games` table with `status: 'completed'`, `winner_id`, `ended_at`.
+- Updates `games` table with `status: 'completed'`, `winner_id`, `ended_at` — chained with `.then()` so supabase-js actually executes the HTTP request.
 - ELO trigger fires server-side.
+- Hint and Undo buttons are hidden while an online match is active.
 
 ### DB Schema
 
@@ -115,6 +116,17 @@ create table games (
 ```
 
 Realtime enabled on both tables.
+
+### RLS policies required
+
+`challenges` table needs **two** delete policies:
+- `challenges_delete_host` — `using (auth.uid() = host_id)` for cancel
+- `challenges_delete_accept` — `using (auth.role() = 'authenticated')` so any logged-in user can atomically claim a challenge by deleting it
+
+`games` table needs an insert policy:
+- `using (auth.uid() = attacker_id or auth.uid() = defender_id)` — the acceptor creates the games row, not just the host
+
+Migration: `supabase/migrations/004_challenges_table.sql`
 
 ### Key files
 
