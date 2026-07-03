@@ -2108,7 +2108,7 @@ function ScorePanel({ side, isActive, name, elo }: { side: PlayerSide; isActive:
       }}>
         <PieceIcon side={side} />
         {(name || elo !== undefined) && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: isAttacker ? 'flex-end' : 'flex-start', gap: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: isAttacker ? 'flex-end' : 'flex-start', gap: 4 }}>
             {name && <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: '#706050', lineHeight: 1 }}>{name}</span>}
             {elo !== undefined && <span style={{ color: '#e8d8b8', fontSize: 16, fontWeight: 600, letterSpacing: 1, lineHeight: 1 }}>{elo}</span>}
           </div>
