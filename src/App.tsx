@@ -1123,7 +1123,7 @@ function MenuButton({ onClick, isOpen }: { onClick: () => void; isOpen: boolean 
   return (
     <button className="ui-button ui-button--menu" onClick={onClick}>
       <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/${isOpen ? 'close' : 'menu'}.svg`} alt="" />
-      <span className="ui-button__label">{isOpen ? 'Close' : 'Game'}</span>
+      <span className="ui-button__label">{isOpen ? 'Close' : 'Setup'}</span>
     </button>
   )
 }
@@ -1956,7 +1956,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onOnlineMatch }: 
   isOpen: boolean
   isVisible: boolean
   onResume: () => void
-  onNewGame: (play: 'Vs Machine' | 'Take turns') => void
+  onNewGame: () => void
   onOnlineMatch: (rules: Rules, boardSize: number, side: 'attacker' | 'defender') => void
 }) {
   const { cameraLocked, difficulty, rules, boardSize, powerSaving, playerMode, setSetting } = useGameStore()
@@ -1966,7 +1966,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onOnlineMatch }: 
   const playToMode = (p: 'Online' | 'Vs Machine' | 'Take turns'): GameMode =>
     p === 'Take turns' ? '2player' : 'defender'
 
-  const [draft, setDraft] = useState({ powerSaving, cameraLocked, difficulty, rules, boardSize, play: modeToPlay(playerMode) as 'Online' | 'Vs Machine' | 'Take turns', side: 'attacker' as 'attacker' | 'defender' })
+  const [draft, setDraft] = useState({ powerSaving, cameraLocked, difficulty, rules, boardSize, play: modeToPlay(playerMode) as 'Online' | 'Vs Machine' | 'Take turns', side: (playerMode === '2player' ? 'attacker' : playerMode) as 'attacker' | 'defender' })
 
   const validRulesForSize = BOARD_SIZE_RULES[draft.boardSize] ?? []
   const restartValid = validRulesForSize.includes(draft.rules)
@@ -1974,7 +1974,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onOnlineMatch }: 
 
   // Reset draft when menu opens
   useEffect(() => {
-    if (isOpen) setDraft(d => ({ ...d, powerSaving, cameraLocked, difficulty, rules, boardSize, play: modeToPlay(playerMode) }))
+    if (isOpen) setDraft(d => ({ ...d, powerSaving, cameraLocked, difficulty, rules, boardSize, play: modeToPlay(playerMode), side: playerMode === '2player' ? d.side : playerMode }))
   }, [isOpen])
 
   const applyDisplaySettings = () => {
@@ -1993,8 +1993,8 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onOnlineMatch }: 
     setSetting('difficulty', draft.difficulty)
     setSetting('boardSize', draft.boardSize)
     setSetting('rules', draft.rules)
-    setSetting('playerMode', playToMode(draft.play))
-    onNewGame(draft.play as 'Vs Machine' | 'Take turns')
+    setSetting('playerMode', draft.play === 'Vs Machine' ? draft.side : playToMode(draft.play))
+    onNewGame()
   }
 
   const handleCancel = () => {
@@ -2018,7 +2018,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onOnlineMatch }: 
                 onChange={v => setDraft(d => ({ ...d, play: v }))}
               />
             </div>
-            <div className="settings-row" style={{ opacity: draft.play === 'Online' ? 1 : 0.25, pointerEvents: draft.play === 'Online' ? undefined : 'none', transition: 'opacity 0.2s ease' }}>
+            <div className="settings-row" style={{ opacity: draft.play === 'Take turns' ? 0.25 : 1, pointerEvents: draft.play === 'Take turns' ? 'none' : undefined, transition: 'opacity 0.2s ease' }}>
               <span className="settings-row__label">Side</span>
               <Cycler<'attacker' | 'defender'>
                 options={['attacker', 'defender']}
@@ -2600,14 +2600,10 @@ function App() {
           isOpen={menuOpen}
           isVisible={menuVisible}
           onResume={() => setMenuOpen(false)}
-          onNewGame={(play) => {
+          onNewGame={() => {
             setMenuOpen(false)
-            if (play === 'Take turns') {
-              resetGame()
-              startSetupAnim()
-            } else {
-              setRoleSelectOpen(true)
-            }
+            resetGame()
+            startSetupAnim()
           }}
           onOnlineMatch={(r, bs, side) => {
             if (!userId) {
@@ -2700,7 +2696,7 @@ function App() {
           winner={displayWinner as 'attacker' | 'defender'}
           playerMode={playerMode}
           powerSaving={powerSaving}
-          onNewGame={() => { setRoleSelectOpen(true) }}
+          onNewGame={() => { resetGame(); startSetupAnim() }}
           onDismiss={() => setWinnerDismissed(true)}
         />
       )}
