@@ -119,6 +119,7 @@ body, button, input, select {
 .leaderboard__col--rank { width: 36px; flex-shrink: 0; color: #a07840; font-size: 12px; }
 .leaderboard__col--name { flex: 1; }
 .leaderboard__col--elo { width: 52px; text-align: right; flex-shrink: 0; font-weight: 600; color: #c8880a; font-size: 14px; }
+.profile-scroll__elo-info { font-size: 10px; letter-spacing: 1px; color: #7a5228; text-align: center; margin-top: 24px; opacity: 0.7; }
 .profile-scroll__summary { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 12px 0 4px; }
 .profile-scroll__summary-wins { font-size: clamp(26px, 5vw, 38px); color: #3a7a3a; letter-spacing: 1px; }
 .profile-scroll__summary-sep { font-size: clamp(18px, 3vw, 26px); color: #7a5228; }
@@ -1405,6 +1406,7 @@ function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: (
             ))
           })()}
           <button className="credits-page__close-btn" onClick={handleSignOut}>Log Out</button>
+          <p className="profile-scroll__elo-info">ELO: K=40 first 30 games · K=32 standard · K=16 above 2000 · repeat opponents capped at K=20</p>
         </>
       ) : (
         <>
