@@ -2430,7 +2430,7 @@ function App() {
 
   // Record game result when a winner is decided
   useEffect(() => {
-    if (!winner || !userId || playerMode === '2player') return
+    if (!winner || !userId || playerMode === '2player' || onlineStatus.type === 'matched') return
     const userSide = playerMode // 'attacker' or 'defender'
     const result = winner === userSide ? 'win' : 'loss'
     supabase.from('game_results').insert({

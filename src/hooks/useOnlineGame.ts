@@ -122,6 +122,7 @@ export function useOnlineGame(
       winner_id: winnerId,
       ended_at: new Date().toISOString(),
     }).eq('id', state.current.gameId).eq('status', 'active')
+      .then(({ error }) => { if (error) console.error('endGame update failed:', error.message) })
     cleanup()
     onStatusChange({ type: 'ended' })
   }, [cleanup, onStatusChange])
