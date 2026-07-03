@@ -139,7 +139,7 @@ body, button, input, select {
 .leaderboard__col--rank-3 { color: #a07040; }
 .leaderboard__col--name { flex: 1; }
 .leaderboard__col--elo { width: 60px; text-align: right; flex-shrink: 0; font-weight: 700; color: #c8880a; font-size: 15px; }
-.footer-link { position: absolute; bottom: 3vw; background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; cursor: pointer; padding: 4px 0; z-index: 10; transition: opacity 0.2s; }
+.footer-link { position: absolute; bottom: 3vw; background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; cursor: pointer; padding: 4px; z-index: 10; transition: opacity 0.2s; }
 .footer-link:hover { opacity: 0.7; }
 .footer-link--left { left: 3vw; }
 .footer-link--left-2 { left: calc(3vw + 100px); }
