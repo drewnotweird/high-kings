@@ -2321,7 +2321,22 @@ function App() {
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({ type: 'idle' })
   const pendingLobby = useRef<{ rules: Rules; boardSize: number; side: 'attacker' | 'defender' } | null>(null)
   const { currentTurn, resetGame, powerSaving, setSetting, pieces, dyingPieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, elo, setElo, setAuth, setAuthReady, lastMove } = useGameStore()
-  const { startGame, sendMove, endGame } = useOnlineGame(setOnlineStatus)
+
+  // Merge matched status instead of replacing — prevents broadcasts overwriting DB-fetched names/ELOs
+  const handleOnlineStatusChange = useCallback((status: OnlineStatus) => {
+    if (status.type === 'matched') {
+      setOnlineStatus(prev => ({
+        ...status,
+        opponentName: status.opponentName || (prev.type === 'matched' ? prev.opponentName : ''),
+        opponentElo: status.opponentElo ?? (prev.type === 'matched' ? prev.opponentElo : null),
+        opponentId: status.opponentId ?? (prev.type === 'matched' ? prev.opponentId : null),
+      }))
+    } else {
+      setOnlineStatus(status)
+    }
+  }, [])
+
+  const { startGame, sendMove, endGame } = useOnlineGame(handleOnlineStatusChange)
 
   const handleGameStart = useCallback(async (gameId: string, mySide: 'attacker' | 'defender', gameRules: string, gameBoardSize: number) => {
     setSetting('rules', gameRules as Rules)
@@ -2334,14 +2349,15 @@ function App() {
     // Fetch both players' names + ELOs directly from DB — avoids broadcast timing issues
     const { data } = await supabase
       .from('games')
-      .select('attacker:attacker_id(username, elo), defender:defender_id(username, elo)')
+      .select('attacker_id, defender_id, attacker:attacker_id(username, elo), defender:defender_id(username, elo)')
       .eq('id', gameId)
       .single()
     if (data) {
       const me = mySide === 'attacker' ? (data.attacker as any) : (data.defender as any)
       const opp = mySide === 'attacker' ? (data.defender as any) : (data.attacker as any)
+      const oppId = mySide === 'attacker' ? (data as any).defender_id : (data as any).attacker_id
       if (me?.elo != null) setElo(me.elo)
-      setOnlineStatus({ type: 'matched', gameId, opponentName: opp?.username ?? '…', opponentElo: opp?.elo ?? null })
+      setOnlineStatus({ type: 'matched', gameId, opponentName: opp?.username ?? '…', opponentElo: opp?.elo ?? null, opponentId: oppId ?? null })
     }
   }, [setSetting, setPlayerMode, resetGame, startGame, setElo, setOnlineStatus])
 
@@ -2432,7 +2448,8 @@ function App() {
   // End online game when winner decided
   useEffect(() => {
     if (!winner || onlineStatus.type !== 'matched') return
-    const winnerId = winner === playerMode ? userId : null
+    const opponentId = onlineStatus.opponentId
+    const winnerId = winner === playerMode ? userId : opponentId
     endGame(winnerId)
   }, [winner])
 

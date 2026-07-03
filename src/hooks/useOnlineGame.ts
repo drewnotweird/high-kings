@@ -5,7 +5,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export type OnlineStatus =
   | { type: 'idle' }
-  | { type: 'matched'; gameId: string; opponentName: string; opponentElo: number | null }
+  | { type: 'matched'; gameId: string; opponentName: string; opponentElo: number | null; opponentId: string | null }
   | { type: 'opponent_disconnected'; secondsLeft: number }
   | { type: 'ended' }
 
@@ -67,7 +67,7 @@ export function useOnlineGame(
         })
       })
       .on('broadcast', { event: 'opponent_name' }, ({ payload }: { payload: NameEvent }) => {
-        onStatusChange({ type: 'matched', gameId, opponentName: payload.name, opponentElo: payload.elo ?? null })
+        onStatusChange({ type: 'matched', gameId, opponentName: payload.name, opponentElo: payload.elo ?? null, opponentId: null })
       })
       .on('presence', { event: 'leave' }, () => {
         let secondsLeft = 30
@@ -89,7 +89,7 @@ export function useOnlineGame(
           clearInterval(state.current.disconnectTimer)
           state.current.disconnectTimer = null
         }
-        onStatusChange({ type: 'matched', gameId, opponentName: '', opponentElo: null })
+        onStatusChange({ type: 'matched', gameId, opponentName: '', opponentElo: null, opponentId: null })
         channel.send({ type: 'broadcast', event: 'opponent_name', payload: { type: 'opponent_name', name: username ?? 'Unknown', elo: elo ?? null } })
       })
       .subscribe(async (status) => {
