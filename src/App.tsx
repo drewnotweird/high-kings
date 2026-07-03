@@ -1123,7 +1123,7 @@ function MenuButton({ onClick, isOpen }: { onClick: () => void; isOpen: boolean 
   return (
     <button className="ui-button ui-button--menu" onClick={onClick}>
       <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/${isOpen ? 'close' : 'menu'}.svg`} alt="" />
-      <span className="ui-button__label">{isOpen ? 'Close' : 'Menu'}</span>
+      <span className="ui-button__label">{isOpen ? 'Close' : 'Game'}</span>
     </button>
   )
 }
