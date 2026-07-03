@@ -83,9 +83,10 @@ export function useLobby(
 
     // Atomically claim the challenge by deleting it first.
     // Only one concurrent acceptor will get a row back — the other gets nothing and bails.
-    const { data: claimed } = await supabase
+    const { data: claimed, error: claimError } = await supabase
       .from('challenges').delete().eq('id', challenge.id).select().single()
-    if (!claimed) return // Another player got there first
+    if (claimError) console.error('acceptChallenge: delete failed', claimError)
+    if (!claimed) return // Another player got there first (or RLS blocked the delete)
 
     const { data: game, error } = await supabase.from('games').insert({
       attacker_id: attackerId,
