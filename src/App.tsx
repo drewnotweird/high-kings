@@ -142,7 +142,7 @@ body, button, input, select {
 .footer-link { position: absolute; bottom: 3vw; background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; cursor: pointer; padding: 4px 0; z-index: 10; transition: opacity 0.2s; }
 .footer-link:hover { opacity: 0.7; }
 .footer-link--left { left: 3vw; }
-.footer-link--center { left: 50%; transform: translateX(-50%); }
+.footer-link--left-2 { left: calc(3vw + 100px); }
 .footer-link--right { right: 3vw; }
 .profile-scroll__play-online-btn { background: linear-gradient(135deg, #c8880a, #a06808); border: none; color: #fff8e8; font-family: inherit; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; padding: 10px 28px; cursor: pointer; border-radius: 4px; margin: 16px auto 8px; display: block; transition: opacity 0.2s; }
 .profile-scroll__play-online-btn:hover { opacity: 0.85; }
@@ -2678,7 +2678,7 @@ function App() {
           </div>
         </div>
         <button className="footer-link footer-link--left" style={{ opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }} onClick={() => setShowHowToPlay(true)}>How to Play</button>
-        <button className="footer-link footer-link--center" style={{ opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }} onClick={() => setShowLeaderboard(true)}>Leaderboard</button>
+        <button className="footer-link footer-link--left-2" style={{ opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }} onClick={() => setShowLeaderboard(true)}>Leaderboard</button>
         <button className="footer-link footer-link--right" style={{ opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }} onClick={() => setShowCredits(true)}>Credits</button>
         <div style={{ position: 'absolute', top: '3vw', right: '3vw', zIndex: 15, display: 'flex', gap: '1vw', opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
           <div className="ui-button-wrapper ui-button-wrapper--profile">
