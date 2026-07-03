@@ -119,8 +119,8 @@ body, button, input, select {
 .leaderboard__col--rank { width: 36px; flex-shrink: 0; color: #a07840; font-size: 12px; }
 .leaderboard__col--name { flex: 1; }
 .leaderboard__col--elo { width: 52px; text-align: right; flex-shrink: 0; font-weight: 600; color: #c8880a; font-size: 14px; }
-.footer-link { position: absolute; bottom: 3vw; background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(232,216,184,0.35); cursor: pointer; padding: 4px 0; z-index: 10; transition: color 0.2s; }
-.footer-link:hover { color: rgba(232,216,184,0.7); }
+.footer-link { position: absolute; bottom: 3vw; background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; cursor: pointer; padding: 4px 0; z-index: 10; transition: opacity 0.2s; }
+.footer-link:hover { opacity: 0.7; }
 .footer-link--left { left: 3vw; }
 .footer-link--right { right: 3vw; }
 .profile-scroll__play-online-btn { background: linear-gradient(135deg, #c8880a, #a06808); border: none; color: #fff8e8; font-family: inherit; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; padding: 10px 28px; cursor: pointer; border-radius: 4px; margin: 16px auto 8px; display: block; transition: opacity 0.2s; }
