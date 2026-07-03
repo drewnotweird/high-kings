@@ -88,37 +88,57 @@ body, button, input, select {
 .ui-button__icon { width: 22px; height: 22px; flex-shrink: 0; }
 .ui-button__label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; }
 .ui-button__profile-dot { position: absolute; top: 8px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: #5dba85; border: 1.5px solid rgba(0,0,0,0.6); }
-.profile-scroll__name { font-size: clamp(20px, 4vw, 30px); letter-spacing: 3px; text-transform: uppercase; color: #2e1606; margin: 8px 0; }
-.profile-scroll__name-row { display: flex; align-items: center; gap: 12px; justify-content: center; margin: 8px 0; }
-.profile-scroll__edit-btn { background: none; border: 1px solid #a07840; color: #a07840; font-family: inherit; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 10px; cursor: pointer; border-radius: 3px; transition: opacity 0.2s; }
-.profile-scroll__edit-btn:hover { opacity: 0.7; }
+/* Profile scroll */
+.profile-scroll__hero { text-align: center; padding: 4px 0 16px; }
+.profile-scroll__name { font-size: clamp(22px, 5vw, 32px); letter-spacing: 2px; text-transform: uppercase; color: #2e1606; margin: 0 0 4px; }
+.profile-scroll__name-row { display: flex; align-items: center; gap: 10px; justify-content: center; }
+.profile-scroll__edit-btn { background: none; border: none; color: #a07840; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; padding: 2px 0; cursor: pointer; transition: opacity 0.2s; text-decoration: underline; text-underline-offset: 3px; }
+.profile-scroll__edit-btn:hover { opacity: 0.6; }
 .profile-scroll__edit-name { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 8px 0; }
 .auth-modal__input.profile-scroll__name-input { max-width: 220px; text-align: center; color: #2e1606; background: rgba(255,255,255,0.7); border-color: rgba(100,60,10,0.3); }
 .profile-scroll__name-actions { display: flex; gap: 8px; justify-content: center; }
-.profile-scroll__stat-block { margin: 10px 0; text-align: center; }
-.profile-scroll__stat-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #2e1606; margin-bottom: 4px; }
-.profile-scroll__stat-row { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: clamp(14px, 2.5vw, 20px); letter-spacing: 1px; margin: 2px 0; }
-.profile-scroll__stat-type { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #7a5228; width: 80px; text-align: right; }
-.profile-scroll__stat-win { color: #3a7a3a; }
-.profile-scroll__stat-sep { color: #7a5228; }
-.profile-scroll__stat-loss { color: #7a2020; }
-.profile-scroll__elo { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 6px 0 2px; }
-.profile-scroll__elo-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #a07840; }
-.profile-scroll__elo-value { font-size: 28px; color: #c8880a; letter-spacing: 1px; font-weight: 600; }
-.leaderboard__my-rank { text-align: left; font-size: 13px; color: #a07840; margin: 0 0 12px; letter-spacing: 0.5px; }
-.leaderboard__my-rank strong { color: #c8880a; }
-.leaderboard__table { display: flex; flex-direction: column; gap: 0; width: 100%; text-align: left; }
-.leaderboard__header { display: flex; padding: 6px 10px; border-bottom: 1px solid rgba(100,60,10,0.25); margin-bottom: 4px; }
+.profile-scroll__elo { margin: 10px 0 0; }
+.profile-scroll__elo-label { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: #a07840; display: block; margin-bottom: 2px; }
+.profile-scroll__elo-value { font-size: clamp(32px, 7vw, 44px); color: #c8880a; letter-spacing: 1px; font-weight: 700; line-height: 1; }
+.profile-scroll__section { margin: 0 0 16px; }
+.profile-scroll__section-title { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: #a07840; border-bottom: 1px solid rgba(100,60,10,0.2); padding-bottom: 6px; margin-bottom: 10px; }
+.profile-scroll__summary { display: flex; align-items: baseline; gap: 6px; margin-bottom: 10px; }
+.profile-scroll__summary-wins { font-size: clamp(24px, 5vw, 34px); color: #3a7a3a; font-weight: 600; }
+.profile-scroll__summary-sep { font-size: clamp(16px, 3vw, 22px); color: #7a5228; }
+.profile-scroll__summary-losses { font-size: clamp(24px, 5vw, 34px); color: #7a2020; font-weight: 600; }
+.profile-scroll__summary-rate { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #7a5228; align-self: center; }
+.profile-scroll__stat-block { margin: 0 0 12px; }
+.profile-scroll__stat-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #7a5228; margin-bottom: 4px; }
+.profile-scroll__stat-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(100,60,10,0.1); }
+.profile-scroll__stat-type { font-size: 12px; letter-spacing: 0.5px; color: #3a1e06; }
+.profile-scroll__stat-scores { font-size: 14px; letter-spacing: 0.5px; }
+.profile-scroll__stat-win { color: #3a7a3a; font-weight: 600; }
+.profile-scroll__stat-sep { color: #a07840; margin: 0 2px; }
+.profile-scroll__stat-loss { color: #7a2020; font-weight: 600; }
+.profile-scroll__actions { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.profile-scroll__btn { border: none; font-family: inherit; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; padding: 11px 24px; cursor: pointer; border-radius: 4px; transition: opacity 0.2s; width: 100%; }
+.profile-scroll__btn:hover { opacity: 0.85; }
+.profile-scroll__btn--primary { background: linear-gradient(135deg, #c8880a, #a06808); color: #fff8e8; }
+.profile-scroll__btn--ghost { background: none; border: 1px solid rgba(100,60,10,0.3); color: #7a5228; }
+/* Leaderboard */
+.leaderboard__my-rank { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #a07840; margin: 0 0 16px; padding: 10px 12px; background: rgba(200,136,10,0.1); border-radius: 4px; border-left: 3px solid #c8880a; }
+.leaderboard__my-rank strong { color: #c8880a; font-size: 15px; }
+.leaderboard__table { display: flex; flex-direction: column; width: 100%; }
+.leaderboard__header { display: flex; align-items: center; padding: 0 12px 8px; border-bottom: 1px solid rgba(100,60,10,0.3); margin-bottom: 4px; }
 .leaderboard__header .leaderboard__col { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #a07840; }
-.leaderboard__row { display: flex; align-items: center; padding: 8px 10px; border-radius: 4px; transition: background 0.15s; }
-.leaderboard__row:hover { background: rgba(100,60,10,0.08); }
-.leaderboard__row--me { background: rgba(200,136,10,0.12); border-radius: 4px; }
+.leaderboard__row { display: flex; align-items: center; padding: 10px 12px; border-bottom: 1px solid rgba(100,60,10,0.1); transition: background 0.15s; }
+.leaderboard__row:last-child { border-bottom: none; }
+.leaderboard__row:hover { background: rgba(100,60,10,0.07); }
+.leaderboard__row--me { background: rgba(200,136,10,0.1); }
+.leaderboard__row--me:hover { background: rgba(200,136,10,0.15); }
 .leaderboard__row--me .leaderboard__col--name { color: #c8880a; font-weight: 600; }
-.leaderboard__col { font-size: 16px; color: #3a1e06; }
-@media (min-width: 768px) { .leaderboard__col { font-size: 24px; } }
-.leaderboard__col--rank { width: 36px; flex-shrink: 0; color: #a07840; font-size: 12px; }
+.leaderboard__col { font-size: 15px; color: #3a1e06; }
+.leaderboard__col--rank { width: 44px; flex-shrink: 0; font-size: 12px; font-weight: 700; color: #a07840; }
+.leaderboard__col--rank-1 { color: #c8880a; }
+.leaderboard__col--rank-2 { color: #888; }
+.leaderboard__col--rank-3 { color: #a07040; }
 .leaderboard__col--name { flex: 1; }
-.leaderboard__col--elo { width: 52px; text-align: right; flex-shrink: 0; font-weight: 600; color: #c8880a; font-size: 14px; }
+.leaderboard__col--elo { width: 60px; text-align: right; flex-shrink: 0; font-weight: 700; color: #c8880a; font-size: 15px; }
 .footer-link { position: absolute; bottom: 3vw; background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; cursor: pointer; padding: 4px 0; z-index: 10; transition: opacity 0.2s; }
 .footer-link:hover { opacity: 0.7; }
 .footer-link--left { left: 3vw; }
@@ -1319,89 +1339,90 @@ function ProfileScroll({ onClose, onSignIn, onPlayOnline }: { onClose: () => voi
     <ScrollPage title="Profile" onClose={onClose}>
       {userId ? (
         <>
-          {editingName ? (
-            <div className="profile-scroll__edit-name">
-              <input
-                className="auth-modal__input profile-scroll__name-input"
-                type="text"
-                value={nameInput}
-                onChange={e => { setNameInput(e.target.value); setNameError(null) }}
-                onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false) }}
-                maxLength={20}
-                autoFocus
-              />
-              {nameError && <p className="auth-modal__error">{nameError}</p>}
-              <div className="profile-scroll__name-actions">
-                <button className="credits-page__close-btn" onClick={handleSaveName} disabled={nameSaving}>
-                  {nameSaving ? 'Saving…' : 'Save'}
-                </button>
-                <button className="credits-page__close-btn" onClick={() => setEditingName(false)}>Cancel</button>
+          <div className="profile-scroll__hero">
+            {editingName ? (
+              <div className="profile-scroll__edit-name">
+                <input
+                  className="auth-modal__input profile-scroll__name-input"
+                  type="text"
+                  value={nameInput}
+                  onChange={e => { setNameInput(e.target.value); setNameError(null) }}
+                  onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false) }}
+                  maxLength={20}
+                  autoFocus
+                />
+                {nameError && <p className="auth-modal__error">{nameError}</p>}
+                <div className="profile-scroll__name-actions">
+                  <button className="profile-scroll__btn profile-scroll__btn--primary" onClick={handleSaveName} disabled={nameSaving}>
+                    {nameSaving ? 'Saving…' : 'Save'}
+                  </button>
+                  <button className="profile-scroll__btn profile-scroll__btn--ghost" onClick={() => setEditingName(false)}>Cancel</button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <>
+            ) : (
               <div className="profile-scroll__name-row">
                 <span className="profile-scroll__name">{username ?? 'Anonymous'}</span>
                 <button className="profile-scroll__edit-btn" onClick={handleStartEdit}>Edit</button>
               </div>
-              {elo !== null && (
-                <div className="profile-scroll__elo">
-                  <span className="profile-scroll__elo-label">ELO</span>
-                  <span className="profile-scroll__elo-value">{elo}</span>
-                </div>
-              )}
-            </>
-          )}
+            )}
+            {elo !== null && (
+              <div className="profile-scroll__elo">
+                <span className="profile-scroll__elo-label">ELO Rating</span>
+                <span className="profile-scroll__elo-value">{elo}</span>
+              </div>
+            )}
+          </div>
           <hr className="credits-page__rule" />
           {(() => {
             const totalW = stats.filter(s => s.result === 'win').reduce((a, s) => a + s.count, 0)
             const totalL = stats.filter(s => s.result === 'loss').reduce((a, s) => a + s.count, 0)
             const total = totalW + totalL
             const rate = total > 0 ? Math.round((totalW / total) * 100) : null
-            if (total === 0) return null
-            return (
-              <div className="profile-scroll__summary">
-                <span className="profile-scroll__summary-wins">{totalW}W</span>
-                <span className="profile-scroll__summary-sep">/</span>
-                <span className="profile-scroll__summary-losses">{totalL}L</span>
-                {rate !== null && <span className="profile-scroll__summary-rate">{rate}% win rate</span>}
-              </div>
-            )
-          })()}
-          <h2>Stats by Variant</h2>
-          {(() => {
             const variants = [...new Map(stats.map(s => [`${s.rules}|${s.board_size}`, { rules: s.rules, board_size: s.board_size }])).values()]
               .sort((a, b) => a.rules.localeCompare(b.rules) || a.board_size - b.board_size)
-            if (variants.length === 0) return (
-              <p style={{ color: '#7a5228', fontStyle: 'italic', fontSize: '0.85em' }}>No games recorded yet.</p>
-            )
-            return variants.map(({ rules: v, board_size: bs }) => (
-              <div key={`${v}|${bs}`} className="profile-scroll__stat-block">
-                <div className="profile-scroll__stat-label">{v} — {bs}×{bs}</div>
-                {(['machine', 'human'] as const).map(type => {
-                  const w = stats.find(s => s.rules === v && s.board_size === bs && s.opponent_type === type && s.result === 'win')?.count ?? 0
-                  const l = stats.find(s => s.rules === v && s.board_size === bs && s.opponent_type === type && s.result === 'loss')?.count ?? 0
-                  if (w === 0 && l === 0) return null
-                  return (
-                    <div key={type} className="profile-scroll__stat-row">
-                      <span className="profile-scroll__stat-type">{type === 'machine' ? 'vs Machine' : 'vs Players'}</span>
-                      <span className="profile-scroll__stat-win">{w}W</span>
-                      <span className="profile-scroll__stat-sep">/</span>
-                      <span className="profile-scroll__stat-loss">{l}L</span>
-                    </div>
-                  )
-                })}
+            if (total === 0) return <p style={{ color: '#7a5228', fontStyle: 'italic', fontSize: '0.85em', margin: '8px 0' }}>No games recorded yet.</p>
+            return (
+              <div className="profile-scroll__section">
+                <div className="profile-scroll__section-title">Record</div>
+                <div className="profile-scroll__summary">
+                  <span className="profile-scroll__summary-wins">{totalW}W</span>
+                  <span className="profile-scroll__summary-sep">/</span>
+                  <span className="profile-scroll__summary-losses">{totalL}L</span>
+                  {rate !== null && <span className="profile-scroll__summary-rate">{rate}% win rate</span>}
+                </div>
+                {variants.map(({ rules: v, board_size: bs }) => (
+                  <div key={`${v}|${bs}`} className="profile-scroll__stat-block">
+                    <div className="profile-scroll__stat-label">{v} · {bs}×{bs}</div>
+                    {(['machine', 'human'] as const).map(type => {
+                      const w = stats.find(s => s.rules === v && s.board_size === bs && s.opponent_type === type && s.result === 'win')?.count ?? 0
+                      const l = stats.find(s => s.rules === v && s.board_size === bs && s.opponent_type === type && s.result === 'loss')?.count ?? 0
+                      if (w === 0 && l === 0) return null
+                      return (
+                        <div key={type} className="profile-scroll__stat-row">
+                          <span className="profile-scroll__stat-type">{type === 'machine' ? 'vs Machine' : 'vs Players'}</span>
+                          <span className="profile-scroll__stat-scores">
+                            <span className="profile-scroll__stat-win">{w}W</span>
+                            <span className="profile-scroll__stat-sep"> / </span>
+                            <span className="profile-scroll__stat-loss">{l}L</span>
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))}
               </div>
-            ))
+            )
           })()}
-          <button className="profile-scroll__play-online-btn" onClick={onPlayOnline}>Play Online</button>
-          <button className="credits-page__close-btn" onClick={handleSignOut}>Log Out</button>
+          <div className="profile-scroll__actions">
+            <button className="profile-scroll__btn profile-scroll__btn--primary" onClick={onPlayOnline}>Play Online</button>
+            <button className="profile-scroll__btn profile-scroll__btn--ghost" onClick={handleSignOut}>Log Out</button>
+          </div>
           <p className="profile-scroll__elo-info">ELO: K=40 first 30 games · K=32 standard · K=16 above 2000 · repeat opponents capped at K=20</p>
         </>
       ) : (
         <>
           <p>Log in to track your wins, losses and rank on the leaderboard.</p>
-          <button className="credits-page__close-btn" onClick={onSignIn}>Log In / Register</button>
+          <button className="profile-scroll__btn profile-scroll__btn--primary" onClick={onSignIn}>Log In / Register</button>
         </>
       )}
     </ScrollPage>
@@ -2240,7 +2261,7 @@ function LeaderboardScroll({ onClose }: { onClose: () => void }) {
       ) : (
         <>
           {myRank !== null && (
-            <p className="leaderboard__my-rank">You are ranked <strong>#{myRank}</strong></p>
+            <p className="leaderboard__my-rank">Your rank <strong>#{myRank}</strong></p>
           )}
           <div className="leaderboard__table">
             <div className="leaderboard__header">
@@ -2250,10 +2271,8 @@ function LeaderboardScroll({ onClose }: { onClose: () => void }) {
             </div>
             {rows.map(r => (
               <div key={r.id} className={`leaderboard__row${r.id === userId ? ' leaderboard__row--me' : ''}`}>
-                <span className="leaderboard__col leaderboard__col--rank">
-                  {r.rank <= 3
-                    ? ['🥇', '🥈', '🥉'][r.rank - 1]
-                    : r.rank}
+                <span className={`leaderboard__col leaderboard__col--rank${r.rank <= 3 ? ` leaderboard__col--rank-${r.rank}` : ''}`}>
+                  {r.rank}
                 </span>
                 <span className="leaderboard__col leaderboard__col--name">{r.username}</span>
                 <span className="leaderboard__col leaderboard__col--elo">{r.elo}</span>
