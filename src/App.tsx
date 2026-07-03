@@ -65,7 +65,7 @@ body, button, input, select {
   100% { transform: translate(var(--dx2),var(--rise))            rotate(var(--a2)); opacity:0;  }
 }
 .score-panel__inner {
-  width: 110px;
+  width: fit-content;
   box-sizing: border-box;
   padding: 14px !important;
 }
