@@ -573,23 +573,6 @@ body, button, input, select {
   min-width: 80px;
   text-align: center;
 }
-@media (min-width: 1024px) {
-  .score-panel__inner {
-    flex-direction: column !important;
-    align-items: center;
-    gap: 4px;
-  }
-  .score-panel-wrapper--defender {
-    left: 6vw !important;
-    right: auto !important;
-    bottom: calc(50vh - 45px) !important;
-  }
-  .score-panel-wrapper--attacker {
-    right: 6vw !important;
-    left: auto !important;
-    bottom: calc(50vh - 45px) !important;
-  }
-}
 .winner-overlay {
   position: fixed;
   inset: 0;
@@ -2634,7 +2617,7 @@ function App() {
         const defenderElo = isOnline ? (playerMode === 'defender' ? myElo : opponentElo) : undefined
         const attackerElo = isOnline ? (playerMode === 'attacker' ? myElo : opponentElo) : undefined
         return <>
-          <div className="score-panel-wrapper score-panel-wrapper--defender" style={{ position: 'absolute', bottom: '3vw', left: '3vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
+          <div className="score-panel-wrapper score-panel-wrapper--defender" style={{ position: 'absolute', bottom: '10vw', left: '3vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
             <ScorePanel side="defender" isActive={currentTurn === 'defender'} name={defenderName} elo={defenderElo} />
           </div>
           <div className="score-panel-wrapper score-panel-wrapper--attacker" style={{ position: 'absolute', bottom: '3vw', right: '3vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
