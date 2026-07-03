@@ -119,6 +119,10 @@ body, button, input, select {
 .leaderboard__col--rank { width: 36px; flex-shrink: 0; color: #a07840; font-size: 12px; }
 .leaderboard__col--name { flex: 1; }
 .leaderboard__col--elo { width: 52px; text-align: right; flex-shrink: 0; font-weight: 600; color: #c8880a; font-size: 14px; }
+.footer-link { position: absolute; bottom: 3vw; background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(232,216,184,0.35); cursor: pointer; padding: 4px 0; z-index: 10; transition: color 0.2s; }
+.footer-link:hover { color: rgba(232,216,184,0.7); }
+.footer-link--left { left: 3vw; }
+.footer-link--right { right: 3vw; }
 .profile-scroll__play-online-btn { background: linear-gradient(135deg, #c8880a, #a06808); border: none; color: #fff8e8; font-family: inherit; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; padding: 10px 28px; cursor: pointer; border-radius: 4px; margin: 16px auto 8px; display: block; transition: opacity 0.2s; }
 .profile-scroll__play-online-btn:hover { opacity: 0.85; }
 .profile-scroll__elo-info { font-size: 10px; letter-spacing: 1px; color: #7a5228; text-align: center; margin-top: 24px; opacity: 0.7; }
@@ -1943,13 +1947,11 @@ function HowToPlayScroll({ onClose }: { onClose: () => void }) {
   )
 }
 
-function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowToPlay, onLeaderboard, onOnlineMatch }: {
+function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onLeaderboard, onOnlineMatch }: {
   isOpen: boolean
   isVisible: boolean
   onResume: () => void
   onNewGame: (play: 'Vs Machine' | 'Take turns') => void
-  onCredits: () => void
-  onHowToPlay: () => void
   onLeaderboard: () => void
   onOnlineMatch: (rules: Rules, boardSize: number, side: 'attacker' | 'defender') => void
 }) {
@@ -2079,11 +2081,6 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onCredits, onHowT
           <div className="menu-overlay__row" style={{ marginTop: 8 }}>
             <button className="menu-overlay__item" onClick={onLeaderboard}>Leaderboard</button>
           </div>
-          <div className="menu-overlay__row" style={{ marginTop: 8 }}>
-            <button className="menu-overlay__item menu-overlay__item--half" onClick={onHowToPlay}>How To</button>
-            <button className="menu-overlay__item menu-overlay__item--half" onClick={onCredits}>Credits</button>
-          </div>
-
           <button className="ui-button ui-button--menu" onClick={handleCancel} style={{ marginTop: 8 }}>
             <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/close.svg`} alt="" />
             <span className="ui-button__label">Cancel</span>
@@ -2611,8 +2608,6 @@ function App() {
               setRoleSelectOpen(true)
             }
           }}
-          onCredits={() => setShowCredits(true)}
-          onHowToPlay={() => setShowHowToPlay(true)}
           onLeaderboard={() => setShowLeaderboard(true)}
           onOnlineMatch={(r, bs, side) => {
             if (!userId) {
@@ -2682,6 +2677,8 @@ function App() {
             }} />
           </div>
         </div>
+        <button className="footer-link footer-link--left" style={{ opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }} onClick={() => setShowHowToPlay(true)}>How to Play</button>
+        <button className="footer-link footer-link--right" style={{ opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }} onClick={() => setShowCredits(true)}>Credits</button>
         <div style={{ position: 'absolute', top: '3vw', right: '3vw', zIndex: 15, display: 'flex', gap: '1vw', opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
           <div className="ui-button-wrapper ui-button-wrapper--profile">
             <ProfileButton loggedIn={!!userId} onClick={() => userId ? setShowProfile(true) : setShowAuth(true)} />
