@@ -2692,7 +2692,7 @@ function App() {
       </>}
 
       <ThemeSwitcher />
-      {showProfile && <ProfileScroll onClose={() => setShowProfile(false)} onSignIn={() => setShowAuth(true)} onPlayOnline={() => { setShowProfile(false); setMenuOpen(true); setShowLobby(true) }} />}
+      {showProfile && <ProfileScroll onClose={() => setShowProfile(false)} onSignIn={() => setShowAuth(true)} onPlayOnline={() => { setShowProfile(false); setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' }); setShowLobby(true) }} />}
       {showHowToPlay && <HowToPlayScroll onClose={() => setShowHowToPlay(false)} />}
       {showCredits && <CreditsScroll onClose={() => setShowCredits(false)} />}
       {showLeaderboard && <LeaderboardScroll onClose={() => setShowLeaderboard(false)} />}
