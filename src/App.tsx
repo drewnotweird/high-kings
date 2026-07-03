@@ -2430,7 +2430,7 @@ function App() {
 
   // Record vs-machine game result
   useEffect(() => {
-    if (!winner || !userId || playerMode === '2player' || onlineStatus.type === 'matched') return
+    if (!winner || !userId || playerMode === '2player' || onlineStatus.type === 'matched' || difficulty === 'easy') return
     const result = winner === playerMode ? 'win' : 'loss'
     supabase.from('game_results').insert({
       user_id: userId,
