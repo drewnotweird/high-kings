@@ -2611,11 +2611,11 @@ function App() {
         const myName = username ?? 'You'
         const opponentName = isOnline ? (onlineStatus.opponentName || '…') : undefined
         const opponentElo = isOnline ? (onlineStatus.opponentElo ?? undefined) : undefined
-        const myElo = isOnline ? (elo ?? undefined) : undefined
+        const myElo = elo ?? undefined
         const defenderName = isOnline ? (playerMode === 'defender' ? myName : opponentName) : undefined
         const attackerName = isOnline ? (playerMode === 'attacker' ? myName : opponentName) : undefined
-        const defenderElo = isOnline ? (playerMode === 'defender' ? myElo : opponentElo) : undefined
-        const attackerElo = isOnline ? (playerMode === 'attacker' ? myElo : opponentElo) : undefined
+        const defenderElo = playerMode === 'defender' ? myElo : (isOnline ? opponentElo : undefined)
+        const attackerElo = playerMode === 'attacker' ? myElo : (isOnline ? opponentElo : undefined)
         return <>
           <div className="score-panel-wrapper score-panel-wrapper--defender" style={{ position: 'absolute', bottom: '12vw', left: '3vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
             <ScorePanel side="defender" isActive={currentTurn === 'defender'} name={defenderName} elo={defenderElo} />
