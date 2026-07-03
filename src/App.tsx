@@ -2087,32 +2087,32 @@ function PieceIcon({ side }: { side: PlayerSide }) {
 function ScorePanel({ side, isActive, name, elo }: { side: PlayerSide; isActive: boolean; name?: string; elo?: number }) {
   const isAttacker = side === 'attacker'
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: isAttacker ? 'flex-end' : 'flex-start', gap: 3 }}>
-      {name && <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: '#706050', paddingLeft: isAttacker ? 0 : 4, paddingRight: isAttacker ? 4 : 0 }}>{name}</span>}
-      <div className={`score-panel score-panel--${side}${isActive ? ' score-panel--active' : ''}`} style={{
-        padding: 3,
-        borderRadius: 8,
-        background: isActive
-          ? 'linear-gradient(135deg, #f5e070, #c8880a, #e8c040, #a06808)'
-          : 'transparent',
-        transition: 'background 0.6s ease',
+    <div className={`score-panel score-panel--${side}${isActive ? ' score-panel--active' : ''}`} style={{
+      padding: 3,
+      borderRadius: 8,
+      background: isActive
+        ? 'linear-gradient(135deg, #f5e070, #c8880a, #e8c040, #a06808)'
+        : 'transparent',
+      transition: 'background 0.6s ease',
+    }}>
+      <div className="score-panel__inner" style={{
+        display: 'flex',
+        alignItems: 'center',
+        flexDirection: isAttacker ? 'row-reverse' : 'row',
+        gap: 10,
+        background: 'rgba(0,0,0,0.85)',
+        borderRadius: 6,
+        padding: '8px 14px',
+        backdropFilter: 'blur(4px)',
+        minWidth: 60,
       }}>
-        <div className="score-panel__inner" style={{
-          display: 'flex',
-          alignItems: 'center',
-          flexDirection: isAttacker ? 'row-reverse' : 'row',
-          gap: elo !== undefined ? 8 : 0,
-          background: 'rgba(0,0,0,0.85)',
-          borderRadius: 6,
-          padding: '8px 14px',
-          backdropFilter: 'blur(4px)',
-          minWidth: 60,
-        }}>
-          <PieceIcon side={side} />
-          {elo !== undefined && (
-            <span style={{ color: '#e8d8b8', fontSize: 16, fontWeight: 600, letterSpacing: 1 }}>{elo}</span>
-          )}
-        </div>
+        <PieceIcon side={side} />
+        {(name || elo !== undefined) && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: isAttacker ? 'flex-end' : 'flex-start', gap: 1 }}>
+            {name && <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: '#706050', lineHeight: 1 }}>{name}</span>}
+            {elo !== undefined && <span style={{ color: '#e8d8b8', fontSize: 16, fontWeight: 600, letterSpacing: 1, lineHeight: 1 }}>{elo}</span>}
+          </div>
+        )}
       </div>
     </div>
   )
