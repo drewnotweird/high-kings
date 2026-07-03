@@ -2440,7 +2440,7 @@ function App() {
       rules,
       board_size: boardSize,
     }).then(({ error }) => { if (error) console.error('game_results insert:', error.message) })
-  }, [winner])
+  }, [winner, userId, playerMode, rules, boardSize, onlineStatus.type])
 
   // Broadcast moves in online games
   useEffect(() => {
