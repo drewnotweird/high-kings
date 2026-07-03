@@ -13,21 +13,50 @@ Hnefatafl is an asymmetric strategy game. The defender escorts the King to a cor
 - **Vite + React + TypeScript**
 - **React Three Fiber** — 3D board, pieces, lighting, animations
 - **Zustand** — game state
-- **Tailwind CSS v4**
+- **Supabase** — auth, database, realtime
 
 ## Features
 
-- Seven rule variants: Copenhagen (11×11), Tawlbwrdd (11×11 Welsh, edge escape), Linnaeus Tablut (9×9, weak king), Saami Tablut (9×9, wider defender diamond), Brandub (7×7 Irish, weak king), Ard Rí (7×7 Irish High King, strong king), Alea Evangelii (19×19, 72 attackers, 24 defenders, strong king)
-- Shieldwall captures (Copenhagen & Tawlbwrdd): a contiguous line of 2+ enemy pieces along an edge is captured in one move when both ends are flanked by a corner or a friendly piece; the king cannot be taken this way
+### Gameplay
+- 11 rule variants across board sizes 7×7 to 19×19 (see Variants below)
+- Shieldwall captures (Copenhagen & Tawlbwrdd)
 - AI opponent with easy / medium / hard difficulty
 - Play as defender, attacker, or 2-player local
-- Hint button — three-stage assist: first press selects the AI's suggested piece (deselecting any current selection if it differs); second press on the already-selected hint piece executes the move
-- Undo button — fades in after the first move; one undo per move; in 3D mode triggers a lightning bolt striking the last-moved square, a screen flash, board tremble, and all pieces shake
-- Tile hover glow — valid move targets glow orange when the cursor passes over the tile or its orb
+- Hint button — two-stage: first press selects the AI's suggested piece; second press executes the move
+- Undo button — fades in after the first move; triggers lightning bolt, screen flash, board tremble, and piece shake in 3D mode
+- Tile hover glow — valid move targets glow orange on hover
 - Smooth 3D piece movement with arc lift and custodial capture explosions
-- Spotlight follows the King across the board; beam width scales with board size
+- Spotlight follows the King; beam width scales with board size
 - Power-saving mode — switches to a lightweight 2D SVG board (no WebGL)
-- Settings: difficulty, rules variant, camera lock, power saving
+
+### Online multiplayer
+- Account-based (email/password) — guest play still works offline
+- Game lobby — host a challenge with your chosen rules, board size, and side; other players can see and accept open challenges in real time
+- ELO rating system — K=40 provisional (first 30 games), K=32 standard, K=16 master (2000+); grinding prevention caps K at 20 for repeat opponents
+- Leaderboard — all registered players ranked by ELO
+- Challenge invite notifications — logged-in players see incoming challenges while playing offline
+
+### UI
+- Profile screen — username, ELO rating, win/loss record by variant, Play Online shortcut
+- Score panels — show player name and ELO when logged in; expand to fit content
+- Footer links — How to Play · Leaderboard · Credits
+- Game button (top right) — opens settings panel
+
+## Variants
+
+| Variant | Board | King | Escape | Shieldwall |
+|---|---|---|---|---|
+| Copenhagen | 11×11 or 13×13 | Strong | Corners | Yes |
+| Fetlar | 11×11 or 13×13 | Strong | Corners | No |
+| Historical | 11×11 or 13×13 | Weak | Corners | No |
+| Tawlbwrdd | 11×11 | Strong | Edge | Yes |
+| Simple Tyr | 11×11 | Strong | Corners | No |
+| Linnaeus Tablut | 9×9 | Weak | Edge | No |
+| Saami Tablut | 9×9 | Weak | Edge | No |
+| Brandub | 7×7 | Weak | Corners | No |
+| Ard Rí | 7×7 | Strong | Corners | No |
+| Tyr | 15×15 | Strong | Corners | No |
+| Alea Evangelii | 19×19 | Strong | Corners | No |
 
 ## Development
 

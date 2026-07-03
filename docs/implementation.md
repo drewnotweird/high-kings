@@ -1,6 +1,6 @@
 # High Kings — Implementation Notes
 
-Last updated: 2026-06-27
+Last updated: 2026-07-03
 
 ---
 
@@ -15,7 +15,6 @@ Last updated: 2026-06-27
 | Three.js | three | ^0.184 |
 | R3F helpers | @react-three/drei | ^10 |
 | State | Zustand | ^5 |
-| CSS | Tailwind v4 | ^4 |
 | Backend / Auth / DB | Supabase | ^2 |
 | Hosting | Fasthosts (FTP via GitHub Actions) | — |
 
@@ -25,18 +24,19 @@ Last updated: 2026-06-27
 
 ```
 src/
-  App.tsx                      — root component; all overlay UI lives here
+  App.tsx                      — root component; all overlay UI and online orchestration
   main.tsx                     — React root mount
 
   game/
     hnefatafl.ts               — all game logic (rules, moves, captures, config)
-    ai.ts                      — minimax AI with alpha-beta pruning
+    ai.ts                      — single-ply AI with alpha-beta-style pruning
 
   store/
     gameStore.ts               — Zustand store; single source of truth
 
   hooks/
-    useOnlineGame.ts           — online match hook (find/cancel/send/receive)
+    useOnlineGame.ts           — online match hook (startGame, sendMove, endGame, disconnect)
+    useLobby.ts                — lobby state, Realtime subscriptions, host/cancel/accept
 
   components/
     board/
@@ -48,7 +48,7 @@ src/
       PiecesLayer.tsx          — InstancedMesh for all attacker/defender pieces
     ui/
       AuthModal.tsx            — sign in / sign up / username prompt modal
-      FindMatchModal.tsx       — online match search modal
+      LobbyPanel.tsx           — game lobby UI (host challenge, open challenges list)
       ThemeSwitcher.tsx        — theme switcher component
       DefeatFire.tsx           — fire effect on the losing side's score card
 
@@ -59,6 +59,12 @@ src/
 
   contexts/
     intro.ts                   — IntroStartContext (carries introStartMs for light timing)
+
+supabase/
+  migrations/
+    001_profiles.sql           — profiles table, RLS
+    002_online_matches.sql     — games, game_results tables, RLS, Realtime
+    003_elo_improvements.sql   — ELO trigger, side_bias table, improved K-factor
 ```
 
 ---
@@ -89,6 +95,7 @@ Single Zustand store. Key fields:
 | `difficulty` | `'easy' \| 'medium' \| 'hard'` | AI difficulty |
 | `userId` | `string \| null` | Supabase user ID if logged in |
 | `username` | `string \| null` | Display name if set |
+| `elo` | `number \| null` | Current ELO rating |
 | `authReady` | `boolean` | True once session restore attempt has completed |
 
 Key actions:
@@ -98,6 +105,8 @@ Key actions:
 - `clearDyingPieces()` — removes dying pieces from `pieces` after animation completes
 - `undoMove()` — restores last history entry
 - `resetGame()` — fresh board from current `rules` + `boardSize`
+- `setAuth(userId, username, elo?)` — sets all auth fields at once
+- `setElo(elo)` — updates ELO after a game
 - `setSetting(key, value)` — updates any of: `musicEnabled`, `cameraLocked`, `difficulty`, `rules`, `powerSaving`, `boardSize`, `playerMode`
 
 ### Game Logic (hnefatafl.ts)
@@ -114,143 +123,209 @@ Pure functions, no side effects.
 - `weakKing?` — king can be sandwiched like a normal piece once off throne
 - `noThrone?` — throne has no special properties (Tyr variants)
 
-**`getValidMoves(piece, pieces, boardSize, center, noThrone?)`** — returns `[row,col][]` of legal squares. Pieces cannot pass through other pieces, land on the throne (unless it is the king), or land on corners (unless the king).
+**`getValidMoves(piece, pieces, boardSize, center, noThrone?)`** — returns `[row,col][]` of legal squares.
 
-**`applyMove(pieces, id, row, col, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone)`** — moves piece, checks custodial captures, checks shieldwall captures, checks win conditions. Returns `{ pieces, capturedIds, winner }`.
+**`applyMove(pieces, id, row, col, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone)`** — moves piece, checks captures, checks win. Returns `{ pieces, capturedIds, winner }`.
 
 **Capture rules:**
 - **Custodial** — piece sandwiched between two enemies (or one enemy + hostile square) after a move. Hostile squares: corners, empty throne (if noThrone is false).
 - **Shieldwall** — 2+ enemy pieces against an edge, both ends flanked by a corner or friendly piece. King immune.
-- **King capture** — strong king needs all 4 sides sealed. Weak king (Historical, Linnaeus Tablut, Saami Tablut, Brandub) sandwiched like a normal piece once off the throne.
+- **King capture** — strong king needs all 4 sides sealed. Weak king sandwiched like a normal piece once off the throne.
 
 ### AI (ai.ts)
 
-Single-ply scoring (not minimax). Each candidate move is scored by:
+Single-ply scoring. Each candidate move scored by:
 - Custodian capture opportunities (+12 per potential capture)
-- King escape: +10000 if this move IS the escape; otherwise reward/penalise escape proximity
-- Attacker: block king escape routes (-60 per open route after move), move toward king (+10 per step closer), bonus for adjacency (+18), intercept corner paths (+80)
-- Defender: non-king pieces stay near king (+3 per step closer)
+- King escape: +10000 if this IS the escape; otherwise reward/penalise escape proximity
+- Attacker: block king escape routes (-60 per open route), move toward king, intercept corner paths
+- Defender: keep non-king pieces near king
 
 Difficulty:
 - **Easy** — grabs obvious captures if available, otherwise random
 - **Medium** — full evaluation + high noise (±20) → makes real strategic mistakes
-- **Hard** — near-optimal with tiny noise (±1.5) to avoid determinism
+- **Hard** — near-optimal with tiny noise (±1.5)
 
-The AI runs synchronously on the main thread. On 19×19 Alea Evangelii with 96 pieces, hard mode is noticeably slow. No web worker yet.
-
-**Important:** always filter `dyingPieces` out of `pieces` before calling `getBestMove` — dying pieces are still in the store's `pieces` array during their animation and will confuse the AI.
+**Important:** always filter `dyingPieces` out of `pieces` before calling `getBestMove` — dying pieces are still in the store's `pieces` array during their animation.
 
 ---
 
 ## Menu / Settings
 
-### Single-screen design
+The menu is a single settings panel. `MenuOverlay` renders directly with no sub-screens.
 
-The menu is a single settings panel — there is no two-screen main/settings flow. `MenuOverlay` renders one screen directly; there is no `menuScreen` state.
-
-**Settings panel rows (top to bottom):**
-1. **Play** — cycler: `Online` | `Vs Machine` | `Take turns`
-2. **Difficulty** — fades to opacity 0.25 and is non-interactive when Play ≠ `Vs Machine`
-3. **Board** — board size cycler
-4. **Rules** — rules cycler (options filtered to those valid for current board size)
-5. **Power Saving** — toggle
-6. **View** — camera lock toggle
-7. Inline button row: **Resume** | **Start**
+**Settings rows:**
+1. **Play** — `Online` | `Vs Machine` | `Take turns`
+2. **Side** — fades to opacity 0.25 when Play ≠ `Online`
+3. **Difficulty** — fades to opacity 0.25 when Play ≠ `Vs Machine`
+4. **Board** — board size cycler
+5. **Rules** — filtered to sizes valid for current board
+6. **Power Saving** — toggle
+7. **View** — fades to opacity 0.25 when Power Saving is on (forced to Top-down)
+8. Inline button row: **Resume** | **New Game**
 
 **Below the panel (outside it):**
-- How To | Credits row
+- Leaderboard button
 - Cancel button
 
-### Play mode mapping
+**Footer links (bottom of screen, always visible):**
+- How to Play (bottom left)
+- Leaderboard (bottom left, next to How to Play)
+- Credits (bottom right)
+
+**Play mode mapping:**
 
 | Draft play value | `playerMode` stored |
 |---|---|
-| `Vs Machine` | `'defender'` (human plays defender) |
+| `Vs Machine` | `'defender'` (human plays defender by default) |
 | `Take turns` | `'2player'` |
-| `Online` | set later by `useOnlineGame.handleMatched` |
+| `Online` | set later when game starts |
 
-### Resume / Start / Cancel
-
-- **Resume** — disabled (opacity 0.25) when `draft.rules`, `draft.boardSize`, or `draft.play` differ from current store values (these require a new game)
-- **Start** — applies settings and calls `resetGame()`. If Play is `Online`, triggers online flow instead (see below)
-- **Cancel** — resets draft to current store values, calls `onResume()`. No settings are applied.
-
-### Rules / board size constraint
-
-`BOARD_SIZE_RULES` in `App.tsx` maps each board size to its valid rulesets. The Board cycler drives the size; the Rules cycler shows only rules valid for that size.
+**Resume / New Game / Cancel:**
+- **Resume** — disabled when draft rules, boardSize, or play mode differ from store (requires a new game)
+- **New Game** — applies settings and calls `resetGame()`. If Play is `Online`, opens the lobby instead.
+- **Cancel** — resets draft to current store values, closes menu.
 
 ---
 
 ## Online Match Flow
 
-### Entry
+### Entry points
+- Game menu → Play: Online → New Game
+- Profile screen → Play Online button (opens lobby directly with current settings)
 
-1. User sets Play to **Online** in the settings panel and taps **Start**.
-2. `onOnlineMatch(rules, boardSize)` fires — stores search settings in `searchSettings` state, shows `FindMatchModal`, calls `findMatch(rules, boardSize)`.
-3. The search starts immediately. If not logged in, `AuthModal` opens first; `findMatch` is called after auth.
+### Lobby (`useLobby.ts`)
 
-### FindMatchModal
+`useLobby(userId, username, onGameStart)` returns: `{ challenges, myChallenge, hostChallenge, cancelChallenge, acceptChallenge }`
 
-- Receives `searchRules` / `searchBoardSize` as props (synced via `useEffect`).
-- While `status.type === 'idle'`: shows Board + Rules cyclers and a **Find Opponent** button.
-- While `status.type === 'searching'`: shows spinner + settings summary + **Cancel** button. Close button is hidden.
-- While `status.type === 'matched'`: shows "Match found!" + opponent name.
-- While `status.type === 'opponent_disconnected'`: shows countdown.
-- The modal props (`searchRules`, `searchBoardSize`) are NOT applied to the store until a match is confirmed.
+- **`hostChallenge(rules, boardSize, side)`** — deletes any existing challenge from this user, inserts new `challenges` row; sets `myChallenge` locally
+- **`cancelChallenge()`** — deletes own challenge row
+- **`acceptChallenge(challenge)`** — atomically deletes the challenge row first (only one concurrent acceptor gets the row back); winner inserts a `games` row and calls `onGameStart`
+- Realtime `postgres_changes` on `challenges` → `loadChallenges()` — keeps lobby list live for all users
+- Realtime `postgres_changes INSERT` on `games` filtered to `attacker_id=eq.{userId}` and `defender_id=eq.{userId}` — notifies the host when a game starts
 
-### On match confirmed
+### Game start (`handleGameStart` in App.tsx)
 
-`useOnlineGame.handleMatched(gameId, side)`:
-1. Clears poll interval
-2. `setSetting('rules', matchRules)` + `setSetting('boardSize', matchBoardSize)`
-3. `setPlayerMode(side)`
-4. `resetGame()`
-5. `joinGameChannel(gameId, side)`
-6. `onStatusChange({ type: 'matched', ... })`
+1. Apply `rules` + `boardSize` to store
+2. Set `playerMode` to assigned side
+3. `resetGame()`
+4. `startGame(gameId, mySide)` — joins the Realtime broadcast channel
+5. Close lobby and menu
+6. DB fetch: load both players' `username` and `elo` from the `games` row (joined to `profiles`) — this is the source of truth for names and ratings; broadcast values are merged without overwriting DB data
 
-In App.tsx: `onStatusChange('matched')` → closes `FindMatchModal`, closes menu.
+### OnlineStatus type
 
-### Cancel
+```ts
+type OnlineStatus =
+  | { type: 'idle' }
+  | { type: 'matched'; gameId: string; opponentName: string; opponentElo: number | null; opponentId: string | null }
+  | { type: 'opponent_disconnected'; secondsLeft: number }
+  | { type: 'ended' }
+```
 
-- Clears poll interval (`state.current.pollInterval = null`)
-- Calls matchmaking Edge Function with `{ action: 'cancel' }` to remove lobby row
-- `setShowFindMatch(false)` + `setOnlineStatus({ type: 'idle' })` → menu stays open, user back in settings
+`handleOnlineStatusChange` in App.tsx merges `matched` updates — broadcast/presence values cannot overwrite DB-fetched `opponentName`, `opponentElo`, or `opponentId` once set.
 
-### Move broadcast
+### Playing
 
-After each local `movePiece()`, App.tsx watches `lastMove` and calls `sendMove(pieceId, toRow, toCol)` when online.
+- Local `movePiece()` → App.tsx watches `lastMove` → `sendMove(pieceId, toRow, toCol)`
+- Opponent broadcast → `machineMove(pieceId, toRow, toCol)`
+- Seq validation: gap → `resync_request` → full `pieces` + seq reply
 
-### Receiving opponent moves
+### Game end
 
-Broadcast `move` events → `machineMove(pieceId, toRow, toCol)` — reuses the same store action as AI moves.
+`winner` set in store + `onlineStatus.type === 'matched'` → `endGame(winnerId)`:
+- `winnerId` = `userId` if local player won, else `opponentId` from `OnlineStatus`
+- Updates `games` table: `status: 'completed'`, `winner_id`, `ended_at`
+- ELO trigger fires automatically server-side
+- Both clients unsubscribe from the channel
 
-Seq validation: if received `seq !== expected`, sends `resync_request`. Opponent replies with full `pieces` + seq.
+### `useOnlineGame` hook
 
-### Disconnect
+`useOnlineGame(onStatusChange)` returns: `{ startGame, sendMove, endGame }`
 
-Realtime presence `leave` event → 30-second countdown → `opponent_disconnected` status with `secondsLeft`. On reconnect (`join` event), game resumes. After timeout, the waiting player wins by abandonment and the `games` row is updated.
-
-### Match header
-
-Shown when `onlineStatus.type === 'matched'`. Displays both players' names with the active side highlighted and a "Your turn / Their turn" indicator.
+Internal state held in `useRef<OnlineGameState>` (not React state):
+```ts
+{ gameId, mySide, seq, disconnectTimer, channel }
+```
 
 ---
 
-## useOnlineGame hook
+## ELO System
 
-`useOnlineGame(onStatusChange)` returns: `{ findMatch, cancelSearch, sendMove, endGame }`
+Calculated server-side via Postgres trigger `update_elo` on `games` AFTER UPDATE (when `status` changes to `'completed'`).
 
-- **`findMatch(matchRules, matchBoardSize)`** — calls matchmaking Edge Function; if `waiting`, starts 3s poll interval with 5-minute auto-cancel; does NOT touch the store until match is confirmed
-- **`cancelSearch()`** — clears poll interval, calls cancel endpoint, fires `onStatusChange({ type: 'idle' })`
-- **`sendMove(pieceId, toRow, toCol)`** — broadcasts on Realtime channel with incrementing seq
-- **`endGame(winnerId)`** — updates `games` table, cleans up channel, fires `onStatusChange({ type: 'ended' })`
+**K-factor:**
+| Condition | K |
+|---|---|
+| Provisional (< 30 completed games) | 40 |
+| Standard (< 2000 ELO) | 32 |
+| Master (≥ 2000 ELO) | 16 |
+| Repeat opponent in last 5 games | capped at 20 |
 
-Internal state is held in a `useRef<OnlineGameState>` (not React state) to avoid re-render loops:
-```ts
-{ gameId, mySide, seq, pollInterval, disconnectTimer, channel }
+**Formula:** `E = 1 / (1 + 10^((opp_elo - my_elo) / 400))`, `R' = max(100, R + round(K * (S - E)))`
+
+**Side bias:** `side_bias` table allows per-variant bias adjustments (attacker_bias column, default 0).
+
+Migration: `supabase/migrations/003_elo_improvements.sql`
+
+---
+
+## Auth & Backend (Supabase)
+
+Auth is opt-in — guest play works without an account.
+
+**Session flow:**
+1. On mount, `supabase.auth.getSession()` restores session → `setAuth(userId, username, elo)` + `setAuthReady(true)`
+2. `supabase.auth.onAuthStateChange` keeps store in sync — fetches both `username` and `elo` on every auth event
+3. Login/signup via `AuthModal.tsx`
+4. Username set in `profiles` table via upsert after first login
+
+**Tables:**
+
+`profiles`:
+```sql
+id uuid, username text unique, elo int default 1000, created_at timestamptz
 ```
 
-Poll guard: `handleMatched` checks `state.current.pollInterval` before applying the match result — prevents a stale poll from firing after the user has cancelled.
+`game_results`:
+```sql
+id uuid, user_id uuid → profiles, opponent_type text, result text,
+rules text, board_size int, created_at timestamptz
+```
+
+`games`:
+```sql
+id uuid, attacker_id uuid → profiles (on delete cascade),
+defender_id uuid → profiles (on delete cascade),
+rules text, board_size int, status text,
+winner_id uuid → profiles (on delete set null),
+started_at timestamptz, ended_at timestamptz
+```
+
+`challenges`:
+```sql
+id uuid, host_id uuid → profiles (on delete cascade),
+host_name text, host_side text, rules text, board_size int, created_at timestamptz
+```
+
+`side_bias`:
+```sql
+rules text primary key, attacker_bias float default 0
+```
+
+Realtime enabled on `challenges` and `games`.
+
+---
+
+## Score Panels
+
+Two score panels sit at `bottom: 12vw` (left: defender, right: attacker). Width is content-sized (`fit-content`).
+
+When logged in (any mode):
+- Player's own name and ELO shown on their side's panel
+- Name displayed above ELO in gold
+
+Online games:
+- Both players' names and ELOs shown (fetched from DB on game start)
 
 ---
 
@@ -258,7 +333,7 @@ Poll guard: `handleMatched` checks `state.current.pollInterval` before applying 
 
 ### Scene.tsx
 
-Hosts the R3F Canvas and all lighting. Manages the `menuPhase` state machine. The `environment preset="night"` (drei) is **not used** — it was removed because the HDR map caused WebGL canvas crashes.
+Hosts the R3F Canvas and all lighting. Manages the `menuPhase` state machine.
 
 **Lighting:**
 
@@ -271,8 +346,6 @@ Hosts the R3F Canvas and all lighting. Manages the `menuPhase` state machine. Th
 | PointLight (bounce) | Warm bounce under the board |
 | PointLight (back) | Rim from behind |
 
-All lights animate in during the intro via an eased ramp keyed to `introStartMs`. `menuScale` ref lerps 0→1 on menu open to dim gameplay lights.
-
 **menuPhase state machine:**
 ```
 idle → hiding → hidden → (board flips open)
@@ -282,15 +355,9 @@ Transitions use `setTimeout` keyed to `HIDE_MS = 410ms`.
 
 ### Board.tsx
 
-Renders the tile grid as individual `<mesh>` elements. Each tile:
-- Has a randomly assigned texture variant + one of four UV rotations (0°/90°/180°/270°) for visual variety — UV rotation, not geometry rotation
-- Highlights orange when it's a valid move target
-- Shows a `ValidMoveMarker` orb when a piece is selected
-- Handles piece selection via tile click (primary selection path — see below)
+Tile grid rendered as individual `<mesh>` elements. Each tile has a randomly assigned texture variant + UV rotation. Valid move targets glow orange. `ValidMoveMarker` orbs animate in/out with a ripple effect (`leavingMarkers`).
 
-**`leavingMarkers`** — when valid moves change (piece deselected or moved), the previous orbs animate out in reverse distance order, creating a retraction ripple effect.
-
-**Tile click — primary piece selection path:**
+**Tile click — piece selection:**
 ```tsx
 onClick = () => {
   if (validTarget) movePiece(row, col)
@@ -305,52 +372,35 @@ This is the correct approach for InstancedMesh — R3F v9's `instanceId` on poin
 
 ### PiecesLayer.tsx
 
-All attacker and defender pieces (not the king) are two `InstancedMesh` objects — one per side. Reduces ~48 draw calls to 2.
+All attacker and defender pieces (not king) rendered as two `InstancedMesh` objects.
 
-**Slot management:**
-- `MAX_ATTACKERS = 72`, `MAX_DEFENDERS = 24` — sized for the largest variants
-- `attackerSlots` / `defenderSlots` — fixed arrays mapping instance index → piece id (null = free)
-- `animMap` — `Map<id, PieceAnim>` holding all per-piece animation state
+- `MAX_ATTACKERS = 72`, `MAX_DEFENDERS = 24` — sized for largest variants
 - Unused slots set to zero-scale `Matrix4.makeScale(0,0,0)` each frame to prevent origin ghosts
-
-**Menu fade:**
-InstancedMesh opacity lerps to 0 on menu open. When `menuPhase === 'hidden'`, opacity snaps immediately to 0. `depthWrite={false}` is required — without it, semi-transparent instances write to the depth buffer and leave a dark silhouette ghost over the board (per-instance depth sorting doesn't exist for InstancedMesh).
-
-**Halo ring:** a single `<mesh>` (not instanced) repositioned each frame to follow the selected non-king piece. Pulses opacity for selection glow.
+- `depthWrite={false}` required — prevents semi-transparent instances from leaving dark silhouette ghosts over the board during fade animations
+- Halo ring: a single `<mesh>` repositioned each frame to follow the selected non-king piece
 
 ### Piece.tsx (King only)
 
-The King uses an individual `Mesh` — unique geometry (taller lathe profile), gold colour, celebration/hover behaviour. Same menuPhase opacity fade as PiecesLayer, but uses a lerp rather than a snap (individual meshes are depth-sorted correctly so the ghost problem doesn't apply).
+Individual `Mesh` — unique geometry, gold colour, celebration/hover behaviour.
 
 ---
 
 ## Animations
 
 ### Intro drop
-Pieces fall from above with a parabolic arc. Board arrives first (`BOARD_ARRIVE = 1.2s`), then pieces stagger (`PIECE_STAGGER = 0.035s` per piece, ordered king → defenders → attackers). `getIntroDurationMs(numPieces)` returns the total intro duration.
+Pieces fall from above. Board arrives first, then pieces stagger (king → defenders → attackers, 35ms apart).
 
 ### Piece movement
-Cubic ease-in-out lerp with parabolic arc height proportional to distance (`min(dist * 0.22, 0.55)`). Duration: `max(0.5, dist * 0.28)` seconds. `captureDelayMs` for the capture animation is `max(500, moveDist * 280) + 80ms`.
+Cubic ease-in-out lerp with parabolic arc. Duration: `max(0.5, dist * 0.28)` seconds.
 
 ### Capture explosion (DustCloud)
-36 particles spawned at the captured piece's position: 18 debris shards (gold octahedra), 10 flames (red/orange tetrahedra), 8 smoke spheres. All driven imperatively in `useFrame`.
+36 particles: 18 debris shards, 10 flames, 8 smoke spheres. Imperatively driven in `useFrame`.
 
 ### Undo (lightning + shake)
-1. Jagged lightning bolt (fractal midpoint displacement, R3F `Line`) strikes the last-moved square
-2. White flash CSS overlay
-3. Board trembles (sinusoidal Y decay over 0.6s)
-4. All pieces shake (sinusoidal X/Z per-piece over 0.65s)
-
-`undoTrigger` increments in the store; Scene and pieces both watch it via `useEffect`.
-
-### Celebrate (captor pieces)
-Capturing pieces do a small jump-and-spin after arriving at their destination. Fires once `visualPosition ≈ targetPosition` AND `Date.now() >= celebrateReadyTime` (450ms minimum).
+Lightning bolt → white flash CSS overlay → board trembles → all pieces shake.
 
 ### Spotlight tracking
-SpotLight target mesh lerps toward the King's position each frame. `angle = 0.18 + boardSize * 0.025` radians.
-
-### Orb hover
-Hovered valid-move orb descends and brightens; all others dim and shrink. `onPointerEnter`/`onPointerLeave` per orb, state lifted into Board.
+SpotLight target mesh lerps toward King's position each frame. `angle = 0.18 + boardSize * 0.025`.
 
 ---
 
@@ -358,9 +408,9 @@ Hovered valid-move orb descends and brightens; all others dim and shrink. `onPoi
 
 | Variant | Board | King | Escape | Shieldwall |
 |---|---|---|---|---|
-| Copenhagen | 11×11 or 13×13 | Strong (4 sides) | Corners | Yes |
+| Copenhagen | 11×11 or 13×13 | Strong | Corners | Yes |
 | Fetlar | 11×11 or 13×13 | Strong | Corners | No |
-| Historical | 11×11 or 13×13 | Weak (off-throne sandwich) | Corners | No |
+| Historical | 11×11 or 13×13 | Weak | Corners | No |
 | Tawlbwrdd | 11×11 | Strong | Edge | Yes |
 | Simple Tyr | 11×11 | Strong | Corners | No |
 | Linnaeus Tablut | 9×9 | Weak | Edge | No |
@@ -370,70 +420,18 @@ Hovered valid-move orb descends and brightens; all others dim and shrink. `onPoi
 | Tyr | 15×15 | Strong | Corners | No |
 | Alea Evangelii | 19×19 | Strong | Corners | No |
 
-Copenhagen, Fetlar, and Historical each have **two distinct starting layouts** per board size. The 13×13 layout (Parlett reconstruction) has 32 attackers + 16 defenders in a diamond/cross pattern. Selecting a board size constrains which rules are shown; switching rules within a board size never forces a board size change.
+Copenhagen, Fetlar, and Historical each have two distinct starting layouts per board size. The 13×13 layout (Parlett reconstruction) has 32 attackers + 16 defenders.
 
-In Settings: the Board cycler drives the size; the Rules cycler shows only rules valid for that size. `BOARD_SIZE_RULES` and `ALL_RULES` in App.tsx control this.
-
----
-
-## Auth & Backend (Supabase)
-
-Auth is opt-in — guest play works without an account.
-
-**Session flow:**
-1. On mount, `supabase.auth.getSession()` restores any existing session → `setAuth(userId, username)` + `setAuthReady(true)`
-2. `supabase.auth.onAuthStateChange` keeps store in sync across tabs/sessions
-3. Login/signup handled in `AuthModal.tsx` — screens: login, signup, email-confirm, username-setup, forgot-password
-4. Username is set in the `profiles` table (`upsert`) after first login
-
-**Tables:**
-
-`profiles` — one row per user, created by Supabase trigger on `auth.users` insert:
-```sql
-id uuid, username text unique, avatar_url text, created_at timestamptz
-```
-
-`game_results` — one row per finished vs-machine game for a logged-in player:
-```sql
-id uuid, user_id uuid → profiles, opponent_type text, result text, rules text, board_size int, created_at timestamptz
-```
-RLS: users can only insert/select their own rows.
-
-`games` — one row per online match:
-```sql
-id uuid, attacker_id uuid → profiles, defender_id uuid → profiles,
-rules text, board_size int, status text ('active'|'completed'|'abandoned'),
-winner_id uuid → profiles, started_at timestamptz, ended_at timestamptz
-```
-
-`moves` — one row per move in an online match:
-```sql
-id uuid, game_id uuid → games, player_id uuid → profiles,
-piece_id text, from_row int, from_col int, to_row int, to_col int,
-seq int, created_at timestamptz, unique(game_id, seq)
-```
-
-`lobby` — one row per player waiting for a match:
-```sql
-id uuid, player_id uuid → profiles unique, rules text, board_size int, queued_at timestamptz
-```
-
-Realtime enabled on `games` and `lobby` tables.
-
-**Stats display (ProfileScroll in App.tsx):**
-Loads on profile open. Fetches all `game_results` for `userId`, groups client-side by `(rules, board_size, opponent_type, result)`, displays W/L per variant per opponent type. Note: do not use PostgREST aggregate syntax (`count:id.count()`) — it is not enabled on this Supabase project.
-
-**Stats recording:**
-`useEffect([winner])` in `App` component inserts to `game_results` when a game ends. Only fires when `winner` is set, `userId` is non-null, and `playerMode !== '2player'`.
+`BOARD_SIZE_RULES` in `App.tsx` maps each board size to its valid rulesets.
 
 ---
 
 ## Power-saving Mode
 
-Toggled in Settings. When active:
+When active:
 - R3F Canvas replaced with `Board2D.tsx` — pure SVG
-- All `useFrame` loops skip animations; pieces snap to position
 - No shadows, particles, or lighting
+- View option in menu disabled (forced to top-down)
 
 Game state (Zustand) is shared — switching mid-game preserves all piece positions.
 
@@ -446,46 +444,45 @@ All textures in `public/textures/` are **hand-edited source files**. **Never run
 - `piece-dark.png` / `piece-dark-roughness.png` — attacker
 - `piece-light.png` / `piece-light-roughness.png` — defender
 - `piece-king.png` / `piece-king-roughness.png` — king
-- `tile-1.png` … `tile-10.png` — board tile variants (randomly assigned per tile)
+- `tile-1.png` … `tile-10.png` — board tile variants
 - `tile-11.png` — corner / throne tile
 - `tile-corner.png`, `tile-throne.png`, `tile-defender.png`, `tile-attacker.png` — overlay markers
 - `board-edge.png` — board base texture
 
-Tile texture rotation: `mulberry32(seed)` PRNG assigns each tile a stable random rotation index (0–3). Applied as `texture.rotation` with `texture.center.set(0.5, 0.5)` — UV rotation, not geometry.
+Tile texture rotation: `mulberry32(seed)` PRNG assigns stable random rotation per tile (0–3). Applied as `texture.rotation` with `texture.center.set(0.5, 0.5)`.
 
 ---
 
 ## Hint System
 
-Two-stage assist:
-1. First press — AI evaluates best move for the human side (using alive pieces only), calls `selectPiece` to highlight the piece, and stores the full move in `hintMove.current`.
-2. Second press — executes the stored move via `selectPiece` + sets `hintTarget` for the target highlight.
+Two-stage:
+1. First press — AI evaluates best move for human side (alive pieces only), calls `selectPiece`, stores full move in `hintMove.current`
+2. Second press — executes stored move
 
-`hintMove.current` is cleared on every turn change or game reset. Always filter `dyingPieces` before calling `getBestMove` for hints — identical to what the machine move effect does.
+`hintMove.current` cleared on every turn change or game reset. Always filter `dyingPieces` before calling `getBestMove`.
 
 ---
 
 ## Deploy
 
-GitHub Actions on push to `main`. Builds with Vite, uploads via FTP to Fasthosts shared hosting.
+GitHub Actions on push to `main`. Builds with Vite, uploads via FTP to Fasthosts.
 
-Base URL: `/highkings/` (set in `vite.config.ts` as `base: '/highkings/'`).
+Base URL: `/highkings/` (set in `vite.config.ts`).
 
 Live: https://drewnotweird.co.uk/highkings
-
-Separate workflows per section exist for targeted deploys.
 
 ---
 
 ## Known Gotchas
 
 - **Never run `npm run gen-textures`** — overwrites hand-edited textures.
-- **No HDR environment map** — `environment preset="night"` was removed. It caused the Supabase CDN to return 400 for the `.hdr` file, crashing the WebGL canvas. Do not re-add it.
+- **No HDR environment map** — `environment preset="night"` was removed; caused the Supabase CDN to return 400 for the `.hdr` file, crashing the WebGL canvas.
 - **InstancedMesh + transparent materials** — must use `depthWrite={false}`. Without it, semi-transparent instances block geometry behind them during fade animations.
-- **Piece selection via tile click** — R3F v9 `instanceId` on pointer events is unreliable. All piece selection goes through `Board.tsx` tile `onClick`, not the piece mesh directly.
+- **Piece selection via tile click** — R3F v9 `instanceId` on pointer events is unreliable. All piece selection goes through `Board.tsx` tile `onClick`.
 - **JSX materials only** — R3F's reconciler applies colour space transforms for JSX `<meshPhysicalMaterial>`. Creating materials with `new MeshPhysicalMaterial({...})` bypasses this and produces washed-out colours.
-- **Always filter dyingPieces before AI/hint calls** — dying pieces remain in `pieces` during their animation. Passing them to `getBestMove` or `getValidMoves` causes wrong results.
-- **TDZ shadowing** — never write `const { boardSize } = getBoardConfig(rules, boardSize)`. The `const` puts the new `boardSize` in TDZ for the whole block, so the argument `boardSize` throws before the call executes. Omit `boardSize` from the destructure; use the store value directly.
+- **Always filter dyingPieces before AI/hint calls** — dying pieces remain in `pieces` during their animation.
+- **TDZ shadowing** — never write `const { boardSize } = getBoardConfig(rules, boardSize)`. The `const` puts the new `boardSize` in TDZ, so the argument throws before the call executes. Omit `boardSize` from the destructure.
 - **PostgREST aggregates not enabled** — don't use `count:id.count()` in Supabase JS client queries. Group client-side instead.
-- **Online: don't apply settings prematurely** — `findMatch` takes `matchRules`/`matchBoardSize` as params and does NOT touch the store. Settings are only applied inside `handleMatched` once a game is confirmed. This ensures Cancel returns the user to their original game state.
-- **Alea Evangelii AI** — 19×19 with 96 pieces, hard mode is slow. No web worker yet.
+- **Online: DB fetch is source of truth for names/ELO** — broadcast/presence events can fire with empty values. `handleOnlineStatusChange` merges `matched` updates to prevent broadcasts from overwriting DB-fetched data.
+- **endGame must pass real winner ID** — pass `userId` or `opponentId` (from `OnlineStatus`), never `null`. `null` is treated as a draw by the ELO trigger.
+- **Alea Evangelii AI** — 19×19 with 96 pieces, hard mode is slow on main thread. No web worker yet.
