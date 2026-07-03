@@ -2612,8 +2612,8 @@ function App() {
         const opponentName = isOnline ? (onlineStatus.opponentName || '…') : undefined
         const opponentElo = isOnline ? (onlineStatus.opponentElo ?? undefined) : undefined
         const myElo = elo ?? undefined
-        const defenderName = isOnline ? (playerMode === 'defender' ? myName : opponentName) : undefined
-        const attackerName = isOnline ? (playerMode === 'attacker' ? myName : opponentName) : undefined
+        const defenderName = playerMode === 'defender' ? (userId ? myName : undefined) : (isOnline ? opponentName : undefined)
+        const attackerName = playerMode === 'attacker' ? (userId ? myName : undefined) : (isOnline ? opponentName : undefined)
         const defenderElo = playerMode === 'defender' ? myElo : (isOnline ? opponentElo : undefined)
         const attackerElo = playerMode === 'attacker' ? myElo : (isOnline ? opponentElo : undefined)
         return <>
