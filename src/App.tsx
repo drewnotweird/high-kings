@@ -119,6 +119,8 @@ body, button, input, select {
 .leaderboard__col--rank { width: 36px; flex-shrink: 0; color: #a07840; font-size: 12px; }
 .leaderboard__col--name { flex: 1; }
 .leaderboard__col--elo { width: 52px; text-align: right; flex-shrink: 0; font-weight: 600; color: #c8880a; font-size: 14px; }
+.profile-scroll__play-online-btn { background: linear-gradient(135deg, #c8880a, #a06808); border: none; color: #fff8e8; font-family: inherit; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; padding: 10px 28px; cursor: pointer; border-radius: 4px; margin: 16px auto 8px; display: block; transition: opacity 0.2s; }
+.profile-scroll__play-online-btn:hover { opacity: 0.85; }
 .profile-scroll__elo-info { font-size: 10px; letter-spacing: 1px; color: #7a5228; text-align: center; margin-top: 24px; opacity: 0.7; }
 .profile-scroll__summary { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 12px 0 4px; }
 .profile-scroll__summary-wins { font-size: clamp(26px, 5vw, 38px); color: #3a7a3a; letter-spacing: 1px; }
@@ -1279,7 +1281,7 @@ function CreditsScroll({ onClose }: { onClose: () => void }) {
 
 type StatRow = { opponent_type: string; result: string; rules: string; board_size: number; count: number }
 
-function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: () => void }) {
+function ProfileScroll({ onClose, onSignIn, onPlayOnline }: { onClose: () => void; onSignIn: () => void; onPlayOnline: () => void }) {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [nameError, setNameError] = useState<string | null>(null)
@@ -1405,6 +1407,7 @@ function ProfileScroll({ onClose, onSignIn }: { onClose: () => void; onSignIn: (
               </div>
             ))
           })()}
+          <button className="profile-scroll__play-online-btn" onClick={onPlayOnline}>Play Online</button>
           <button className="credits-page__close-btn" onClick={handleSignOut}>Log Out</button>
           <p className="profile-scroll__elo-info">ELO: K=40 first 30 games · K=32 standard · K=16 above 2000 · repeat opponents capped at K=20</p>
         </>
@@ -2379,9 +2382,9 @@ function App() {
       if (event === 'SIGNED_OUT') { setAuth(null, null); return }
       if (session?.user) {
         const { data: profile } = await supabase
-          .from('profiles').select('username').eq('id', session.user.id).single()
+          .from('profiles').select('username, elo').eq('id', session.user.id).single()
         const resolvedUsername = profile?.username ?? null
-        setAuth(session.user.id, resolvedUsername)
+        setAuth(session.user.id, resolvedUsername, profile?.elo ?? null)
         // After email confirmation, username will be null — prompt them to choose one
         if (event === 'SIGNED_IN' && !resolvedUsername) {
           setShowUsernamePrompt(true)
@@ -2690,7 +2693,7 @@ function App() {
       </>}
 
       <ThemeSwitcher />
-      {showProfile && <ProfileScroll onClose={() => setShowProfile(false)} onSignIn={() => setShowAuth(true)} />}
+      {showProfile && <ProfileScroll onClose={() => setShowProfile(false)} onSignIn={() => setShowAuth(true)} onPlayOnline={() => { setShowProfile(false); setMenuOpen(true); setShowLobby(true) }} />}
       {showHowToPlay && <HowToPlayScroll onClose={() => setShowHowToPlay(false)} />}
       {showCredits && <CreditsScroll onClose={() => setShowCredits(false)} />}
       {showLeaderboard && <LeaderboardScroll onClose={() => setShowLeaderboard(false)} />}
