@@ -2060,7 +2060,7 @@ function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onLeaderboard, on
               <span className="settings-row__label">Power Saving</span>
               <Toggle on={draft.powerSaving} onClick={() => setDraft(d => ({ ...d, powerSaving: !d.powerSaving, cameraLocked: !d.powerSaving ? true : d.cameraLocked }))} />
             </div>
-            <div className="settings-row">
+            <div className="settings-row" style={{ opacity: draft.powerSaving ? 0.25 : 1, pointerEvents: draft.powerSaving ? 'none' : undefined, transition: 'opacity 0.2s ease' }}>
               <span className="settings-row__label">View</span>
               <Cycler<'Free' | 'Top-down'>
                 options={['Free', 'Top-down']}
