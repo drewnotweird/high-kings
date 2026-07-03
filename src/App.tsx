@@ -2645,7 +2645,7 @@ function App() {
 
       {introStarted && <>
         <div style={{ position: 'absolute', top: '3vw', left: '3vw', zIndex: 15, display: 'flex', gap: '1vw' }}>
-          <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
+          <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ opacity: !uiVisible || menuOpen || onlineStatus.type === 'matched' ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating || onlineStatus.type === 'matched') ? 'none' : undefined }}>
             <HintButton onClick={() => {
               if (playerMode === '2player' || winner) return
               const humanSide: PlayerSide = playerMode === 'defender' ? 'defender' : 'attacker'
@@ -2666,7 +2666,7 @@ function App() {
               }
             }} />
           </div>
-          <div className="ui-button-wrapper ui-button-wrapper--undo" style={{ opacity: !uiVisible || menuOpen ? 0 : hasMoved && history.length > 0 ? (setupAnimating ? 0.2 : 1) : 0, transition: 'opacity 0.6s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating || !hasMoved || history.length === 0) ? 'none' : undefined }}>
+          <div className="ui-button-wrapper ui-button-wrapper--undo" style={{ opacity: !uiVisible || menuOpen || onlineStatus.type === 'matched' ? 0 : hasMoved && history.length > 0 ? (setupAnimating ? 0.2 : 1) : 0, transition: 'opacity 0.6s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating || !hasMoved || history.length === 0 || onlineStatus.type === 'matched') ? 'none' : undefined }}>
             <UndoButton onClick={() => {
               if (history.length === 0 || setupAnimating) return
               undoMove()
