@@ -160,7 +160,7 @@ body, button, input, select {
 /* Top button columns */
 .ui-col {
   position: absolute; top: 5vw; z-index: 15;
-  display: flex; flex-direction: column; gap: 2px;
+  display: flex; flex-direction: column; gap: 2vw;
 }
 .ui-col--left { left: 5vw; align-items: flex-start; }
 .ui-col--right { right: 5vw; align-items: flex-end; }
