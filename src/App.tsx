@@ -2739,10 +2739,10 @@ function App() {
         const defenderElo = playerMode === 'defender' ? myElo : (isOnline ? opponentElo : undefined)
         const attackerElo = playerMode === 'attacker' ? myElo : (isOnline ? opponentElo : undefined)
         return <>
-          <div className="score-panel-wrapper score-panel-wrapper--defender" style={{ position: 'absolute', bottom: '12vw', left: '3vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
+          <div className="score-panel-wrapper score-panel-wrapper--defender" style={{ position: 'absolute', bottom: '14vw', left: '5vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
             <ScorePanel side="defender" isActive={currentTurn === 'defender'} name={defenderName} elo={defenderElo} />
           </div>
-          <div className="score-panel-wrapper score-panel-wrapper--attacker" style={{ position: 'absolute', bottom: '12vw', right: '3vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
+          <div className="score-panel-wrapper score-panel-wrapper--attacker" style={{ position: 'absolute', bottom: '14vw', right: '5vw', zIndex: 10, animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
             <ScorePanel side="attacker" isActive={currentTurn === 'attacker'} name={attackerName} elo={attackerElo} />
           </div>
         </>
