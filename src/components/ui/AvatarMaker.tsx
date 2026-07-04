@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { AvatarDisplay } from './AvatarDisplay'
 import { randomAvatar, AVATAR_COUNTS } from '../../lib/avatarConfig'
 import type { AvatarConfig } from '../../lib/avatarConfig'
@@ -24,6 +24,10 @@ const LAYERS: { key: LayerKey; label: string }[] = [
 export function AvatarMaker({ initial, onSave, onCancel }: Props) {
   const [config, setConfig] = useState<AvatarConfig>(initial)
   const [spinning, setSpinning] = useState(false)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Clean up interval if component unmounts while spinning
+  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current) }, [])
 
   const cycle = useCallback((key: LayerKey, dir: 1 | -1) => {
     setConfig(c => {
@@ -37,11 +41,12 @@ export function AvatarMaker({ initial, onSave, onCancel }: Props) {
     setSpinning(true)
     let ticks = 0
     const total = 18
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setConfig(randomAvatar())
       ticks++
       if (ticks >= total) {
-        clearInterval(interval)
+        clearInterval(intervalRef.current!)
+        intervalRef.current = null
         setSpinning(false)
       }
     }, 60)

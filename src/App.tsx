@@ -2399,7 +2399,7 @@ function LeaderboardScroll({ onClose }: { onClose: () => void }) {
       .then(({ data }) => {
         if (data) setRows(data.map((r, i) => ({ ...r, rank: i + 1 })))
         setLoading(false)
-      })
+      }, () => setLoading(false))
   }, [])
 
   const myRank = rows.find(r => r.id === userId)?.rank ?? null
@@ -2542,7 +2542,7 @@ function App() {
         setAuth(session.user.id, profile?.username ?? null, profile?.elo ?? null, avatarRow?.avatar ?? null)
       }
       setAuthReady(true)
-    })
+    }).catch(() => setAuthReady(true))
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') { setAuth(null, null); return }
       if (session?.user) {
@@ -2627,7 +2627,7 @@ function App() {
   useEffect(() => {
     if (!lastMove || onlineStatus.type !== 'matched') return
     sendMove(lastMove.pieceId, lastMove.toRow, lastMove.toCol)
-  }, [lastMove])
+  }, [lastMove, sendMove, onlineStatus.type])
 
   // End online game when winner decided
   useEffect(() => {

@@ -188,7 +188,7 @@ export const useGameStore = create<GameStore>((set) => ({
         defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
       },
       winner: result.winner,
-      history: [snapshot],
+      history: [...s.history, snapshot],
       lastMoveTarget: { row: toRow, col: toCol },
       lastMove: { pieceId: s.selectedId!, fromRow: movedPiece.row, fromCol: movedPiece.col, toRow, toCol },
       lastMovePath: [], // clear path on human move — glow is for opponent moves only

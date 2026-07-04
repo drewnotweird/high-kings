@@ -378,7 +378,8 @@ function checkKingCaptured(king: Piece, pieces: Piece[], boardSize: number, cent
   for (const [dr, dc] of DIRS) {
     const r = king.row + dr
     const c = king.col + dc
-    if (r < 0 || r >= boardSize || c < 0 || c >= boardSize) continue
+    // Board edges count as hostile — a king against the edge is surrounded on that side
+    if (r < 0 || r >= boardSize || c < 0 || c >= boardSize) { surrounded++; continue }
     const neighbor = pieces.find(p => p.row === r && p.col === c)
     if (neighbor?.type === 'attacker' || isHostile(r, c, boardSize, center, pieces)) surrounded++
   }

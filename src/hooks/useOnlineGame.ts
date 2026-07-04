@@ -25,7 +25,7 @@ interface OnlineGameState {
 export function useOnlineGame(
   onStatusChange: (status: OnlineStatus) => void,
 ) {
-  const { machineMove, setPieces, pieces, userId, username, elo } = useGameStore()
+  const { machineMove, setPieces, userId, username, elo } = useGameStore()
   const state = useRef<OnlineGameState>({
     gameId: null,
     mySide: null,
@@ -35,7 +35,7 @@ export function useOnlineGame(
   })
 
   const cleanup = useCallback(() => {
-    if (state.current.disconnectTimer) clearTimeout(state.current.disconnectTimer)
+    if (state.current.disconnectTimer) clearInterval(state.current.disconnectTimer)
     state.current.disconnectTimer = null
     if (state.current.channel) {
       supabase.removeChannel(state.current.channel)
@@ -65,7 +65,7 @@ export function useOnlineGame(
         channel.send({
           type: 'broadcast',
           event: 'resync',
-          payload: { type: 'resync', seq: state.current.seq, pieces },
+          payload: { type: 'resync', seq: state.current.seq, pieces: useGameStore.getState().pieces },
         })
       })
       .on('broadcast', { event: 'opponent_name' }, ({ payload }: { payload: NameEvent }) => {
@@ -100,7 +100,7 @@ export function useOnlineGame(
           channel.send({ type: 'broadcast', event: 'opponent_name', payload: { type: 'opponent_name', name: username ?? 'Unknown', elo: elo ?? null } })
         }
       })
-  }, [machineMove, onStatusChange, pieces, userId, username])
+  }, [machineMove, onStatusChange, userId, username])
 
   const startGame = useCallback((gameId: string, mySide: 'attacker' | 'defender') => {
     joinGameChannel(gameId, mySide)

@@ -280,6 +280,8 @@ export function Board({ theme, menuPhase }: BoardProps) {
   const prevSelectedPiece = useRef<typeof pieces[0] | undefined>(undefined)
   const leavingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  useEffect(() => () => { if (leavingTimer.current) clearTimeout(leavingTimer.current) }, [])
+
   useLayoutEffect(() => {
     const prev = prevValidMoves.current
     const prevPiece = prevSelectedPiece.current
@@ -320,7 +322,7 @@ export function Board({ theme, menuPhase }: BoardProps) {
     shape.quadraticCurveTo(-HALF, -HALF, -h, -HALF)
     shape.closePath()
 
-    return new ExtrudeGeometry(shape, {
+    const geo = new ExtrudeGeometry(shape, {
       depth: TILE_HEIGHT,
       bevelEnabled: true,
       bevelThickness: BEVEL,
@@ -328,6 +330,7 @@ export function Board({ theme, menuPhase }: BoardProps) {
       bevelSegments: 6,
       UVGenerator: uvGenerator,
     })
+    return geo
   }, [])
 
   const tileAssignment = useMemo(() => {
@@ -368,6 +371,7 @@ export function Board({ theme, menuPhase }: BoardProps) {
       })
     )
   }, [tileTextures])
+  useEffect(() => () => { rotatedTileTextures.flat().forEach(t => t.dispose()) }, [rotatedTileTextures])
 
   const cornerTileTexture = useTexture(`${import.meta.env.BASE_URL}textures/tile-11.png`)
 
