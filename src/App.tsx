@@ -153,7 +153,7 @@ body, button, input, select {
 .leaderboard__col--rank-3 { color: #a07040; }
 .leaderboard__col--name { flex: 1; }
 .leaderboard__col--elo { width: 60px; text-align: right; flex-shrink: 0; font-weight: 700; color: #c8880a; font-size: 15px; }
-.footer-links { position: absolute; bottom: 5vw; left: 0; right: 0; display: flex; justify-content: space-around; z-index: 10; }
+.footer-links { position: absolute; bottom: 5vw; left: 5vw; right: 5vw; display: flex; justify-content: space-between; z-index: 10; }
 .footer-link { background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; cursor: pointer; padding: 4px; transition: opacity 0.2s; }
 .footer-link:hover { opacity: 0.7; }
 @media (min-width: 768px) { .footer-links { display: none; } }
