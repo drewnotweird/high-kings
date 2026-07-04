@@ -75,9 +75,10 @@ body, button, input, select {
 .score-panel__elo { color: #e8d8b8; font-size: 16px; font-weight: 600; letter-spacing: 1px; line-height: 1; }
 @media (min-width: 768px) {
   .score-panel__content { gap: 14px; padding: 12px 18px; min-width: 80px; }
-  .score-panel__piece-icon { width: 44px; height: 44px; }
-  .score-panel__name { font-size: 11px; }
-  .score-panel__elo { font-size: 22px; }
+  .score-panel__piece-icon { width: 52px; height: 52px; }
+  .score-panel__name { font-size: 14px; }
+  .score-panel__elo { font-size: 26px; }
+  .score-panel__text { gap: 8px; }
 }
 .ui-button {
   display: flex;
@@ -2233,7 +2234,7 @@ function ScorePanel({ side, isActive, name, elo }: { side: PlayerSide; isActive:
       }}>
         <PieceIcon side={side} />
         {(name || elo !== undefined) && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: isAttacker ? 'flex-end' : 'flex-start', gap: 4 }}>
+          <div className="score-panel__text" style={{ display: 'flex', flexDirection: 'column', alignItems: isAttacker ? 'flex-end' : 'flex-start', gap: 4 }}>
             {name && <span className="score-panel__name">{name}</span>}
             {elo !== undefined && <span className="score-panel__elo">{elo}</span>}
           </div>
