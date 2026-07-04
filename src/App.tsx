@@ -156,7 +156,8 @@ body, button, input, select {
 .footer-link { position: absolute; bottom: 3vw; background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; cursor: pointer; padding: 4px; z-index: 10; transition: opacity 0.2s; }
 .footer-link:hover { opacity: 0.7; }
 .footer-link--left { left: 3vw; }
-.footer-link--left-2 { left: calc(3vw + 100px); }
+.footer-link--left-2 { left: calc(3vw + 90px); }
+.footer-link--left-3 { left: calc(3vw + 180px); }
 .footer-link--right { right: 3vw; }
 @media (min-width: 768px) { .footer-link { display: none; } }
 /* Top button columns */
@@ -2765,16 +2766,16 @@ function App() {
         const isSpectating = onlineStatus.type === 'spectating'
 
         return <>
-          {/* Top-left column: Login, Games, [Leaderboard desktop], Hint */}
+          {/* Top-left column: Login, [Leaderboard desktop], Hint */}
           <div className="ui-col ui-col--left" style={baseStyle()}>
             <ProfileButton loggedIn={!!userId} onClick={() => userId ? setShowProfile(true) : setShowAuth(true)} />
-            <GamesButton onClick={() => {
-              if (!userId) { setShowAuth(true); return }
-              setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' })
-              setShowLobby(true)
-            }} />
-            {/* Leaderboard — top on desktop, footer on mobile */}
+            {/* Games + Leaderboard — top on desktop */}
             <div className="ui-col__desktop-only">
+              <GamesButton onClick={() => {
+                if (!userId) { setShowAuth(true); return }
+                setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' })
+                setShowLobby(true)
+              }} />
               <LeaderboardButton onClick={() => setShowLeaderboard(true)} />
             </div>
             <div style={{ opacity: isOnline || isSpectating ? 0 : 1, pointerEvents: (isOnline || isSpectating) ? 'none' : undefined, transition: 'opacity 0.3s' }}>
@@ -2810,7 +2811,8 @@ function App() {
 
           {/* Footer links — mobile only (hidden on desktop via CSS) */}
           <button className="footer-link footer-link--left" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }} onClick={() => setShowHowToPlay(true)}>How to Play</button>
-          <button className="footer-link footer-link--left-2" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }} onClick={() => setShowLeaderboard(true)}>Leaderboard</button>
+          <button className="footer-link footer-link--left-2" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }} onClick={() => { if (!userId) { setShowAuth(true); return }; setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' }); setShowLobby(true) }}>Games</button>
+          <button className="footer-link footer-link--left-3" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }} onClick={() => setShowLeaderboard(true)}>Leaderboard</button>
           <button className="footer-link footer-link--right" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }} onClick={() => setShowCredits(true)}>Credits</button>
         </>
       })()}
