@@ -153,13 +153,10 @@ body, button, input, select {
 .leaderboard__col--rank-3 { color: #a07040; }
 .leaderboard__col--name { flex: 1; }
 .leaderboard__col--elo { width: 60px; text-align: right; flex-shrink: 0; font-weight: 700; color: #c8880a; font-size: 15px; }
-.footer-link { position: absolute; bottom: 3vw; background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; cursor: pointer; padding: 4px; z-index: 10; transition: opacity 0.2s; }
+.footer-links { position: absolute; bottom: 3vw; left: 0; right: 0; display: flex; justify-content: space-around; z-index: 10; }
+.footer-link { background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; cursor: pointer; padding: 4px; transition: opacity 0.2s; }
 .footer-link:hover { opacity: 0.7; }
-.footer-link--left { left: 3vw; }
-.footer-link--left-2 { left: calc(3vw + 90px); }
-.footer-link--left-3 { left: calc(3vw + 180px); }
-.footer-link--right { right: 3vw; }
-@media (min-width: 768px) { .footer-link { display: none; } }
+@media (min-width: 768px) { .footer-links { display: none; } }
 /* Top button columns */
 .ui-col {
   position: absolute; top: 3vw; z-index: 15;
@@ -2810,10 +2807,12 @@ function App() {
           </div>
 
           {/* Footer links — mobile only (hidden on desktop via CSS) */}
-          <button className="footer-link footer-link--left" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }} onClick={() => setShowHowToPlay(true)}>How to Play</button>
-          <button className="footer-link footer-link--left-2" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }} onClick={() => { if (!userId) { setShowAuth(true); return }; setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' }); setShowLobby(true) }}>Games</button>
-          <button className="footer-link footer-link--left-3" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }} onClick={() => setShowLeaderboard(true)}>Leaderboard</button>
-          <button className="footer-link footer-link--right" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }} onClick={() => setShowCredits(true)}>Credits</button>
+          <div className="footer-links" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }}>
+            <button className="footer-link" onClick={() => setShowHowToPlay(true)}>How to Play</button>
+            <button className="footer-link" onClick={() => { if (!userId) { setShowAuth(true); return }; setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' }); setShowLobby(true) }}>Games</button>
+            <button className="footer-link" onClick={() => setShowLeaderboard(true)}>Leaderboard</button>
+            <button className="footer-link" onClick={() => setShowCredits(true)}>Credits</button>
+          </div>
         </>
       })()}
 
