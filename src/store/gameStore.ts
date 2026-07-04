@@ -67,6 +67,7 @@ interface GameStore {
   movePiece: (toRow: number, toCol: number) => void
   machineMove: (pieceId: string, toRow: number, toCol: number) => void
   clearDyingPieces: () => void
+  setPieces: (pieces: Piece[]) => void
   resetGame: () => void
   resetPiecesOnly: () => void
   undoMove: () => void
@@ -240,6 +241,8 @@ export const useGameStore = create<GameStore>((set) => ({
     lastMoveTarget: null,
     undoTrigger: 0,
   })),
+
+  setPieces: (pieces) => set({ pieces, dyingPieces: [], selectedId: null, validMoves: [] }),
 
   resetPiecesOnly: () => set((s) => ({
     pieces: createInitialPieces(getBoardConfig(s.rules, s.boardSize)),

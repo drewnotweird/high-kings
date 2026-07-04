@@ -886,6 +886,31 @@ body, button, input, select {
   border-radius: 6px; padding: 8px 16px; font-size: 11px; color: #c88040;
   letter-spacing: 1px; z-index: 110; white-space: nowrap;
 }
+.spectator-bar {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: rgba(20,10,2,0.92); border: 1px solid rgba(200,160,40,0.35);
+  border-radius: 6px; padding: 8px 16px; z-index: 110;
+  display: flex; align-items: center; gap: 16px;
+}
+.spectator-bar__label {
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #c8b888;
+}
+.spectator-bar__leave {
+  background: none; border: 1px solid rgba(200,160,40,0.4); border-radius: 3px;
+  font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: #c8b888; padding: 4px 10px; cursor: pointer; transition: opacity 0.2s;
+}
+.spectator-bar__leave:hover { opacity: 0.7; }
+.lobby-panel__watch-btn {
+  background: none; border: 1px solid rgba(200,160,40,0.4); border-radius: 3px;
+  font-family: inherit; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: #c8b888; padding: 6px 14px; cursor: pointer; transition: opacity 0.2s; white-space: nowrap;
+}
+.lobby-panel__watch-btn:hover { opacity: 0.7; }
+.lobby-panel__section-title {
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #a07840;
+  padding: 10px 0 6px; border-top: 1px solid rgba(100,60,10,0.2); margin-top: 4px;
+}
 .guest-login-modal__backdrop {
   position: fixed; inset: 0; z-index: 120;
   background: rgba(0,0,0,0.8);
@@ -2339,7 +2364,7 @@ function App() {
     }
   }, [])
 
-  const { startGame, sendMove, endGame } = useOnlineGame(handleOnlineStatusChange)
+  const { startGame, watchGame, stopWatching, sendMove, endGame } = useOnlineGame(handleOnlineStatusChange)
 
   const handleGameStart = useCallback(async (gameId: string, mySide: 'attacker' | 'defender', gameRules: string, gameBoardSize: number) => {
     setSetting('rules', gameRules as Rules)
@@ -2364,7 +2389,16 @@ function App() {
     }
   }, [setSetting, setPlayerMode, resetGame, startGame, setElo, setOnlineStatus])
 
-  const { challenges, myChallenge, hostChallenge, cancelChallenge, acceptChallenge } = useLobby(userId, username ?? null, handleGameStart)
+  const { challenges, myChallenge, activeGames, hostChallenge, cancelChallenge, acceptChallenge } = useLobby(userId, username ?? null, handleGameStart)
+
+  const handleWatch = useCallback(async (game: import('./hooks/useLobby').ActiveGame) => {
+    setSetting('rules', game.rules as Rules)
+    setSetting('boardSize', game.board_size as never)
+    resetGame()
+    watchGame(game.id)
+    setShowLobby(false)
+    setMenuOpen(false)
+  }, [setSetting, resetGame, watchGame])
 
   // Restore session on mount, listen for auth changes
   useEffect(() => {
@@ -2477,7 +2511,7 @@ function App() {
 
   // Machine player — fires after each player move when not in 2-player or online mode
   useEffect(() => {
-    if (playerMode === '2player' || onlineStatus.type === 'matched' || winner || roleSelectOpen || setupAnimating) return
+    if (playerMode === '2player' || onlineStatus.type === 'matched' || onlineStatus.type === 'spectating' || winner || roleSelectOpen || setupAnimating) return
     const machineSide: PlayerSide = playerMode === 'attacker' ? 'defender' : 'attacker'
     if (currentTurn !== machineSide) return
 
@@ -2598,7 +2632,7 @@ function App() {
       </>}
 
       <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
-        <div style={{ position: 'absolute', inset: 0 }}>
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: onlineStatus.type === 'spectating' ? 'none' : undefined }}>
           {powerSaving
             ? <Board2D menuOpen={menuOpen} />
             : <Scene
@@ -2733,6 +2767,7 @@ function App() {
       {showLobby && lobbyDraft && (
         <LobbyPanel
           challenges={challenges}
+          activeGames={activeGames}
           myChallenge={myChallenge}
           draftRules={lobbyDraft.rules}
           draftBoardSize={lobbyDraft.boardSize}
@@ -2740,8 +2775,15 @@ function App() {
           onHost={() => hostChallenge(lobbyDraft.rules, lobbyDraft.boardSize, lobbyDraft.side)}
           onCancel={() => cancelChallenge()}
           onAccept={acceptChallenge}
+          onWatch={handleWatch}
           onClose={() => { cancelChallenge(); setShowLobby(false) }}
         />
+      )}
+      {onlineStatus.type === 'spectating' && (
+        <div className="spectator-bar">
+          <span className="spectator-bar__label">Spectating</span>
+          <button className="spectator-bar__leave" onClick={() => { stopWatching(); setOnlineStatus({ type: 'idle' }); resetGame() }}>Leave</button>
+        </div>
       )}
       {userId && onlineStatus.type !== 'matched' && !showLobby && challenges.length > 0 && (
         <div className="challenge-invites">

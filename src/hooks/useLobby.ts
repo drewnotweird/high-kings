@@ -11,6 +11,15 @@ export interface Challenge {
   created_at: string
 }
 
+export interface ActiveGame {
+  id: string
+  attacker_name: string
+  defender_name: string
+  rules: string
+  board_size: number
+  started_at: string
+}
+
 export function useLobby(
   userId: string | null,
   username: string | null,
@@ -18,6 +27,7 @@ export function useLobby(
 ) {
   const [challenges, setChallenges] = useState<Challenge[]>([])
   const [myChallenge, setMyChallenge] = useState<Challenge | null>(null)
+  const [activeGames, setActiveGames] = useState<ActiveGame[]>([])
   const onGameStartRef = useRef(onGameStart)
   onGameStartRef.current = onGameStart
 
@@ -30,15 +40,35 @@ export function useLobby(
     }
   }, [userId])
 
-  // Realtime challenges list
+  const loadActiveGames = useCallback(async () => {
+    const { data } = await supabase
+      .from('games')
+      .select('id, rules, board_size, started_at, attacker:attacker_id(username), defender:defender_id(username)')
+      .eq('status', 'active')
+      .order('started_at')
+    if (data) {
+      setActiveGames(data.map((g: any) => ({
+        id: g.id,
+        attacker_name: g.attacker?.username ?? '?',
+        defender_name: g.defender?.username ?? '?',
+        rules: g.rules,
+        board_size: g.board_size,
+        started_at: g.started_at,
+      })))
+    }
+  }, [])
+
+  // Realtime challenges + active games
   useEffect(() => {
     if (!userId) return
     loadChallenges()
+    loadActiveGames()
     const channel = supabase.channel('lobby-challenges')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'challenges' }, loadChallenges)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'games' }, loadActiveGames)
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [userId, loadChallenges])
+  }, [userId, loadChallenges, loadActiveGames])
 
   // Realtime: host is notified when someone creates a game with them in it
   useEffect(() => {
@@ -101,5 +131,5 @@ export function useLobby(
     onGameStartRef.current(game.id, mySide, challenge.rules, challenge.board_size)
   }, [userId])
 
-  return { challenges, myChallenge, hostChallenge, cancelChallenge, acceptChallenge }
+  return { challenges, myChallenge, activeGames, hostChallenge, cancelChallenge, acceptChallenge }
 }

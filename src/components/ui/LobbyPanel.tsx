@@ -1,7 +1,8 @@
-import type { Challenge } from '../../hooks/useLobby'
+import type { Challenge, ActiveGame } from '../../hooks/useLobby'
 
 interface Props {
   challenges: Challenge[]
+  activeGames: ActiveGame[]
   myChallenge: Challenge | null
   draftRules: string
   draftBoardSize: number
@@ -9,10 +10,11 @@ interface Props {
   onHost: () => void
   onCancel: () => void
   onAccept: (challenge: Challenge) => void
+  onWatch: (game: ActiveGame) => void
   onClose: () => void
 }
 
-export function LobbyPanel({ challenges, myChallenge, draftRules, draftBoardSize, draftSide, onHost, onCancel, onAccept, onClose }: Props) {
+export function LobbyPanel({ challenges, activeGames, myChallenge, draftRules, draftBoardSize, draftSide, onHost, onCancel, onAccept, onWatch, onClose }: Props) {
   return (
     <div className="lobby-backdrop" onClick={e => { if (e.target === e.currentTarget && !myChallenge) onClose() }}>
       <div className="lobby-panel">
@@ -61,8 +63,23 @@ export function LobbyPanel({ challenges, myChallenge, draftRules, draftBoardSize
           </div>
         )}
 
-        {!myChallenge && challenges.length === 0 && (
+        {!myChallenge && challenges.length === 0 && activeGames.length === 0 && (
           <p className="lobby-panel__empty">No open challenges. Host one above.</p>
+        )}
+
+        {activeGames.length > 0 && (
+          <div className="lobby-panel__list">
+            <div className="lobby-panel__section-title">Live Games</div>
+            {activeGames.map(g => (
+              <div key={g.id} className="lobby-panel__challenge">
+                <div className="lobby-panel__challenge-info">
+                  <span className="lobby-panel__challenge-host">{g.attacker_name} vs {g.defender_name}</span>
+                  <span className="lobby-panel__challenge-detail">{g.rules} · {g.board_size}×{g.board_size}</span>
+                </div>
+                <button className="lobby-panel__watch-btn" onClick={() => onWatch(g)}>Watch</button>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

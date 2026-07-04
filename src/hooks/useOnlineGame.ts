@@ -6,11 +6,13 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 export type OnlineStatus =
   | { type: 'idle' }
   | { type: 'matched'; gameId: string; opponentName: string; opponentElo: number | null; opponentId: string | null }
+  | { type: 'spectating'; gameId: string }
   | { type: 'opponent_disconnected'; secondsLeft: number }
   | { type: 'ended' }
 
 type MoveEvent = { type: 'move'; seq: number; pieceId: string; toRow: number; toCol: number }
 type NameEvent = { type: 'opponent_name'; name: string; elo: number | null }
+type ResyncEvent = { type: 'resync'; seq: number; pieces: unknown[] }
 
 interface OnlineGameState {
   gameId: string | null
@@ -23,7 +25,7 @@ interface OnlineGameState {
 export function useOnlineGame(
   onStatusChange: (status: OnlineStatus) => void,
 ) {
-  const { machineMove, pieces, userId, username, elo } = useGameStore()
+  const { machineMove, setPieces, pieces, userId, username, elo } = useGameStore()
   const state = useRef<OnlineGameState>({
     gameId: null,
     mySide: null,
@@ -105,6 +107,33 @@ export function useOnlineGame(
     onStatusChange({ type: 'matched', gameId, opponentName: '', opponentElo: null, opponentId: null })
   }, [joinGameChannel, onStatusChange])
 
+  const watchGame = useCallback((gameId: string) => {
+    cleanup()
+    state.current.gameId = gameId
+    state.current.mySide = null
+    state.current.seq = 0
+
+    const channel = supabase.channel(`game:${gameId}`, { config: { broadcast: { self: false } } })
+    state.current.channel = channel
+
+    channel
+      .on('broadcast', { event: 'move' }, ({ payload }: { payload: MoveEvent }) => {
+        machineMove(payload.pieceId, payload.toRow, payload.toCol)
+        state.current.seq = payload.seq
+      })
+      .on('broadcast', { event: 'resync' }, ({ payload }: { payload: ResyncEvent }) => {
+        if (payload.pieces) setPieces(payload.pieces as any)
+        state.current.seq = payload.seq
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          channel.send({ type: 'broadcast', event: 'resync_request', payload: { type: 'resync_request' } })
+        }
+      })
+
+    onStatusChange({ type: 'spectating', gameId })
+  }, [cleanup, machineMove, setPieces, onStatusChange])
+
   const sendMove = useCallback((pieceId: string, toRow: number, toCol: number) => {
     if (!state.current.channel) return
     state.current.seq += 1
@@ -129,5 +158,7 @@ export function useOnlineGame(
 
   useEffect(() => () => cleanup(), [cleanup])
 
-  return { startGame, sendMove, endGame }
+  const stopWatching = useCallback(() => { cleanup() }, [cleanup])
+
+  return { startGame, watchGame, stopWatching, sendMove, endGame }
 }
