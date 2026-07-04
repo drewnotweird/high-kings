@@ -1464,13 +1464,15 @@ function ProfileScroll({ onClose, onSignIn, onPlayOnline }: { onClose: () => voi
     if (!trimmed || trimmed.length < 3) { setNameError('Must be at least 3 characters'); return }
     if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) { setNameError('Letters, numbers and underscores only'); return }
     setNameSaving(true); setNameError(null)
-    const newAvatar = avatar ?? randomAvatar()
-    const { error } = await supabase.from('profiles').upsert({ id: userId, username: trimmed, avatar: newAvatar })
+    const { error } = await supabase.from('profiles').upsert({ id: userId, username: trimmed })
     if (error) {
       setNameError(error.message.includes('unique') ? 'That name is taken' : error.message)
       setNameSaving(false); return
     }
     setUsername(trimmed)
+    // Save avatar separately (column may not exist until migration 005 is run)
+    const newAvatar = avatar ?? randomAvatar()
+    await supabase.from('profiles').update({ avatar: newAvatar }).eq('id', userId)
     if (!avatar) setAvatar(newAvatar)
     setNameSaving(false)
     setEditingName(false)
@@ -2534,8 +2536,10 @@ function App() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         const { data: profile } = await supabase
-          .from('profiles').select('username, elo, avatar').eq('id', session.user.id).single()
-        setAuth(session.user.id, profile?.username ?? null, profile?.elo ?? null, profile?.avatar ?? null)
+          .from('profiles').select('username, elo').eq('id', session.user.id).single()
+        const { data: avatarRow } = await supabase
+          .from('profiles').select('avatar').eq('id', session.user.id).single()
+        setAuth(session.user.id, profile?.username ?? null, profile?.elo ?? null, avatarRow?.avatar ?? null)
       }
       setAuthReady(true)
     })
@@ -2543,9 +2547,11 @@ function App() {
       if (event === 'SIGNED_OUT') { setAuth(null, null); return }
       if (session?.user) {
         const { data: profile } = await supabase
-          .from('profiles').select('username, elo, avatar').eq('id', session.user.id).single()
+          .from('profiles').select('username, elo').eq('id', session.user.id).single()
+        const { data: avatarRow } = await supabase
+          .from('profiles').select('avatar').eq('id', session.user.id).single()
         const resolvedUsername = profile?.username ?? null
-        setAuth(session.user.id, resolvedUsername, profile?.elo ?? null, profile?.avatar ?? null)
+        setAuth(session.user.id, resolvedUsername, profile?.elo ?? null, avatarRow?.avatar ?? null)
         // After email confirmation, username will be null — prompt them to choose one
         if (event === 'SIGNED_IN' && !resolvedUsername) {
           setShowUsernamePrompt(true)
