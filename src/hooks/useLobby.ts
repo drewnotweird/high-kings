@@ -41,10 +41,12 @@ export function useLobby(
   }, [userId])
 
   const loadActiveGames = useCallback(async () => {
+    const since = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
     const { data } = await supabase
       .from('games')
       .select('id, rules, board_size, started_at, attacker:attacker_id(username), defender:defender_id(username)')
       .eq('status', 'active')
+      .gte('started_at', since)
       .order('started_at')
     if (data) {
       setActiveGames(data.map((g: any) => ({
