@@ -173,6 +173,9 @@ body, button, input, select {
 .ui-col__desktop-only { display: none; }
 @media (min-width: 768px) {
   .ui-col { flex-direction: row; gap: 2vw; align-items: flex-start; }
+}
+@media (min-width: 1024px) {
+  .ui-col { gap: 4vw; }
   .ui-col--right { flex-direction: row-reverse; }
   .ui-col__desktop-only { display: contents; }
 }
