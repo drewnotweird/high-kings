@@ -13,6 +13,9 @@ import type { PlayerSide, GameMode, Difficulty, Rules } from './store/gameStore'
 import { getBestMove } from './game/ai'
 import { getBoardConfig } from './game/hnefatafl'
 import { supabase } from './lib/supabase'
+import { randomAvatar } from './lib/avatarConfig'
+import { AvatarDisplay } from './components/ui/AvatarDisplay'
+import { AvatarMaker } from './components/ui/AvatarMaker'
 
 const fireCSS = `
 body, button, input, select {
@@ -196,6 +199,25 @@ body, button, input, select {
 }
 .profile-scroll__play-online-btn { background: linear-gradient(135deg, #c8880a, #a06808); border: none; color: #fff8e8; font-family: inherit; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; padding: 10px 28px; cursor: pointer; border-radius: 4px; margin: 16px auto 8px; display: block; transition: opacity 0.2s; }
 .profile-scroll__play-online-btn:hover { opacity: 0.85; }
+/* Avatar */
+.profile-scroll__avatar-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 16px; }
+.profile-scroll__avatar-edit { margin-top: 0; }
+.avatar-maker { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 16px 0 8px; width: 100%; }
+.avatar-maker__preview { border-radius: 50%; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+.avatar-maker__layers { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.avatar-maker__row { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; background: rgba(100,60,10,0.08); border-radius: 4px; }
+.avatar-maker__row-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #a07840; font-weight: 600; flex: 1; }
+.avatar-maker__row-controls { display: flex; align-items: center; gap: 12px; }
+.avatar-maker__arrow { background: none; border: 1px solid rgba(100,60,10,0.3); color: #c8880a; font-size: 18px; line-height: 1; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+.avatar-maker__arrow:hover { background: rgba(200,136,10,0.15); }
+.avatar-maker__index { font-size: 12px; color: #706050; min-width: 32px; text-align: center; }
+.avatar-maker__randomise { background: rgba(100,60,10,0.12); border: 1px solid rgba(100,60,10,0.3); color: #c8880a; font-family: inherit; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; padding: 8px 24px; border-radius: 4px; cursor: pointer; transition: opacity 0.2s; width: 100%; }
+.avatar-maker__randomise:hover { background: rgba(200,136,10,0.18); }
+.avatar-maker__randomise--spinning { opacity: 0.6; cursor: default; }
+.avatar-maker__actions { display: flex; gap: 10px; width: 100%; }
+.avatar-maker__cancel { flex: 1; background: none; border: 1px solid rgba(100,60,10,0.25); color: #706050; font-family: inherit; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; padding: 9px; border-radius: 4px; cursor: pointer; transition: opacity 0.2s; }
+.avatar-maker__save { flex: 1; background: linear-gradient(135deg, #c8880a, #a06808); border: none; color: #fff8e8; font-family: inherit; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; padding: 9px; border-radius: 4px; cursor: pointer; transition: opacity 0.2s; }
+.avatar-maker__save:hover, .avatar-maker__cancel:hover { opacity: 0.8; }
 .profile-scroll__elo-info { font-size: 10px; letter-spacing: 1px; color: #7a5228; text-align: center; margin-top: 24px; opacity: 0.7; }
 .profile-scroll__summary { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 12px 0 4px; }
 .profile-scroll__summary-wins { font-size: clamp(26px, 5vw, 38px); color: #3a7a3a; letter-spacing: 1px; }
@@ -1409,7 +1431,8 @@ function ProfileScroll({ onClose, onSignIn, onPlayOnline }: { onClose: () => voi
   const [nameError, setNameError] = useState<string | null>(null)
   const [nameSaving, setNameSaving] = useState(false)
   const [stats, setStats] = useState<StatRow[]>([])
-  const { userId, username, elo, setAuth, setUsername } = useGameStore()
+  const [editingAvatar, setEditingAvatar] = useState(false)
+  const { userId, username, elo, avatar, setAuth, setUsername, setAvatar } = useGameStore()
 
   useEffect(() => {
     if (!userId) return
@@ -1441,20 +1464,38 @@ function ProfileScroll({ onClose, onSignIn, onPlayOnline }: { onClose: () => voi
     if (!trimmed || trimmed.length < 3) { setNameError('Must be at least 3 characters'); return }
     if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) { setNameError('Letters, numbers and underscores only'); return }
     setNameSaving(true); setNameError(null)
-    const { error } = await supabase.from('profiles').upsert({ id: userId, username: trimmed })
+    const newAvatar = avatar ?? randomAvatar()
+    const { error } = await supabase.from('profiles').upsert({ id: userId, username: trimmed, avatar: newAvatar })
     if (error) {
       setNameError(error.message.includes('unique') ? 'That name is taken' : error.message)
       setNameSaving(false); return
     }
     setUsername(trimmed)
+    if (!avatar) setAvatar(newAvatar)
     setNameSaving(false)
     setEditingName(false)
+  }
+  const handleSaveAvatar = async (newConfig: import('./lib/avatarConfig').AvatarConfig) => {
+    if (!userId) return
+    await supabase.from('profiles').update({ avatar: newConfig }).eq('id', userId)
+      .then(({ error }) => { if (error) console.error('avatar save:', error.message) })
+    setAvatar(newConfig)
+    setEditingAvatar(false)
   }
   return (
     <ScrollPage title="Profile" onClose={onClose}>
       {userId ? (
         <>
-          <div className="profile-scroll__hero">
+          {editingAvatar && avatar && (
+            <AvatarMaker initial={avatar} onSave={handleSaveAvatar} onCancel={() => setEditingAvatar(false)} />
+          )}
+          {!editingAvatar && <div className="profile-scroll__hero">
+            {avatar && (
+              <div className="profile-scroll__avatar-wrap">
+                <AvatarDisplay config={avatar} size={96} />
+                <button className="profile-scroll__edit-btn profile-scroll__avatar-edit" onClick={() => setEditingAvatar(true)}>Edit avatar</button>
+              </div>
+            )}
             {editingName ? (
               <div className="profile-scroll__edit-name">
                 <input
@@ -1486,7 +1527,7 @@ function ProfileScroll({ onClose, onSignIn, onPlayOnline }: { onClose: () => voi
                 <span className="profile-scroll__elo-value">{elo}</span>
               </div>
             )}
-          </div>
+          </div>}
           <hr className="credits-page__rule" />
           {(() => {
             const totalW = stats.filter(s => s.result === 'win').reduce((a, s) => a + s.count, 0)
@@ -2493,8 +2534,8 @@ function App() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         const { data: profile } = await supabase
-          .from('profiles').select('username, elo').eq('id', session.user.id).single()
-        setAuth(session.user.id, profile?.username ?? null, profile?.elo ?? null)
+          .from('profiles').select('username, elo, avatar').eq('id', session.user.id).single()
+        setAuth(session.user.id, profile?.username ?? null, profile?.elo ?? null, profile?.avatar ?? null)
       }
       setAuthReady(true)
     })
@@ -2502,9 +2543,9 @@ function App() {
       if (event === 'SIGNED_OUT') { setAuth(null, null); return }
       if (session?.user) {
         const { data: profile } = await supabase
-          .from('profiles').select('username, elo').eq('id', session.user.id).single()
+          .from('profiles').select('username, elo, avatar').eq('id', session.user.id).single()
         const resolvedUsername = profile?.username ?? null
-        setAuth(session.user.id, resolvedUsername, profile?.elo ?? null)
+        setAuth(session.user.id, resolvedUsername, profile?.elo ?? null, profile?.avatar ?? null)
         // After email confirmation, username will be null — prompt them to choose one
         if (event === 'SIGNED_IN' && !resolvedUsername) {
           setShowUsernamePrompt(true)

@@ -57,11 +57,13 @@ interface GameStore {
   userId: string | null
   username: string | null
   elo: number | null
+  avatar: import('../lib/avatarConfig').AvatarConfig | null
   authReady: boolean
-  setAuth: (userId: string | null, username: string | null, elo?: number | null) => void
+  setAuth: (userId: string | null, username: string | null, elo?: number | null, avatar?: import('../lib/avatarConfig').AvatarConfig | null) => void
   setAuthReady: (ready: boolean) => void
   setUsername: (username: string) => void
   setElo: (elo: number) => void
+  setAvatar: (avatar: import('../lib/avatarConfig').AvatarConfig) => void
   setTheme: (theme: Theme) => void
   selectPiece: (id: string | null) => void
   movePiece: (toRow: number, toCol: number) => void
@@ -106,11 +108,13 @@ export const useGameStore = create<GameStore>((set) => ({
   userId: null,
   username: null,
   elo: null,
+  avatar: null,
   authReady: false,
-  setAuth: (userId, username, elo = null) => set({ userId, username, elo }),
+  setAuth: (userId, username, elo = null, avatar = null) => set({ userId, username, elo, avatar }),
   setAuthReady: (ready) => set({ authReady: ready }),
   setUsername: (username) => set({ username }),
   setElo: (elo) => set({ elo }),
+  setAvatar: (avatar) => set({ avatar }),
 
   setTheme: (theme) => set({ theme }),
 
