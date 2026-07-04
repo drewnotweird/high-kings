@@ -1187,7 +1187,7 @@ function ProfileButton({ onClick, loggedIn }: { onClick: () => void; loggedIn: b
   return (
     <button className="ui-button ui-button--profile" onClick={onClick} style={{ position: 'relative' }}>
       <img className="ui-button__icon" src={`${base_url}icons/${loggedIn ? 'profile' : 'login'}.svg`} alt="" />
-      <span className="ui-button__label">{loggedIn ? 'Profile' : 'Log In'}</span>
+      <span className="ui-button__label">{loggedIn ? 'Profile' : 'Login'}</span>
       {loggedIn && <span className="ui-button__profile-dot" />}
     </button>
   )
@@ -1206,7 +1206,7 @@ function HowToPlayButton({ onClick }: { onClick: () => void }) {
   return (
     <button className="ui-button ui-button--howtoplay" onClick={onClick}>
       <img className="ui-button__icon" src={`${base_url}icons/scroll.svg`} alt="" />
-      <span className="ui-button__label">How To</span>
+      <span className="ui-button__label">Rules</span>
     </button>
   )
 }
@@ -1215,7 +1215,7 @@ function CreditsButton({ onClick }: { onClick: () => void }) {
   return (
     <button className="ui-button ui-button--credits" onClick={onClick}>
       <img className="ui-button__icon" src={`${base_url}icons/credits.svg`} alt="" />
-      <span className="ui-button__label">About</span>
+      <span className="ui-button__label">Makers</span>
     </button>
   )
 }
@@ -2810,10 +2810,10 @@ function App() {
 
           {/* Footer links — mobile only (hidden on desktop via CSS) */}
           <div className="footer-links" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }}>
-            <button className="footer-link" onClick={() => setShowHowToPlay(true)}>How to Play</button>
+            <button className="footer-link" onClick={() => setShowHowToPlay(true)}>Rules</button>
             <button className="footer-link" onClick={() => { if (!userId) { setShowAuth(true); return }; setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' }); setShowLobby(true) }}>Games</button>
             <button className="footer-link" onClick={() => setShowLeaderboard(true)}>Ranks</button>
-            <button className="footer-link" onClick={() => setShowCredits(true)}>About</button>
+            <button className="footer-link" onClick={() => setShowCredits(true)}>Makers</button>
           </div>
         </>
       })()}
