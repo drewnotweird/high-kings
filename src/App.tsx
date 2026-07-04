@@ -71,23 +71,37 @@ body, button, input, select {
 }
 .ui-button {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
-  width: 52px;
-  height: 52px;
+  justify-content: flex-start;
+  gap: 6px;
   background: none;
   border: none;
   color: #e8d8b8;
   cursor: pointer;
   font-family: inherit;
   transition: opacity 0.2s;
+  padding: 4px 2px;
+  white-space: nowrap;
 }
 .ui-button:hover { opacity: 0.7; }
 .ui-button__icon { width: 22px; height: 22px; flex-shrink: 0; }
 .ui-button__label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; }
-.ui-button__profile-dot { position: absolute; top: 8px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: #5dba85; border: 1.5px solid rgba(0,0,0,0.6); }
+.ui-button__profile-dot { position: absolute; top: 4px; right: -2px; width: 7px; height: 7px; border-radius: 50%; background: #5dba85; border: 1.5px solid rgba(0,0,0,0.6); }
+/* Right-side buttons: label before icon on mobile */
+.ui-col--right .ui-button { flex-direction: row-reverse; justify-content: flex-end; }
+@media (min-width: 768px) {
+  .ui-button {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    width: 52px;
+    min-height: 52px;
+    padding: 0;
+  }
+  .ui-col--right .ui-button { flex-direction: column; justify-content: center; }
+}
 /* Profile scroll */
 .profile-scroll__hero { text-align: center; padding: 4px 0 16px; }
 .profile-scroll__name { font-size: clamp(22px, 5vw, 32px); letter-spacing: 2px; text-transform: uppercase; color: #2e1606; margin: 0 0 4px; }
@@ -144,6 +158,20 @@ body, button, input, select {
 .footer-link--left { left: 3vw; }
 .footer-link--left-2 { left: calc(3vw + 100px); }
 .footer-link--right { right: 3vw; }
+@media (min-width: 768px) { .footer-link { display: none; } }
+/* Top button columns */
+.ui-col {
+  position: absolute; top: 3vw; z-index: 15;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.ui-col--left { left: 3vw; align-items: flex-start; }
+.ui-col--right { right: 3vw; align-items: flex-end; }
+.ui-col__desktop-only { display: none; }
+@media (min-width: 768px) {
+  .ui-col { flex-direction: row; gap: 1vw; align-items: flex-start; }
+  .ui-col--right { flex-direction: row-reverse; }
+  .ui-col__desktop-only { display: contents; }
+}
 .profile-scroll__play-online-btn { background: linear-gradient(135deg, #c8880a, #a06808); border: none; color: #fff8e8; font-family: inherit; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; padding: 10px 28px; cursor: pointer; border-radius: 4px; margin: 16px auto 8px; display: block; transition: opacity 0.2s; }
 .profile-scroll__play-online-btn:hover { opacity: 0.85; }
 .profile-scroll__elo-info { font-size: 10px; letter-spacing: 1px; color: #7a5228; text-align: center; margin-top: 24px; opacity: 0.7; }
@@ -1126,10 +1154,12 @@ const embers = Array.from({ length: 12 }, (_, i) => {
   }
 })
 
+const base_url = import.meta.env.BASE_URL
+
 function HintButton({ onClick }: { onClick: () => void }) {
   return (
     <button className="ui-button ui-button--hint" onClick={onClick}>
-      <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/hint.svg`} alt="" />
+      <img className="ui-button__icon" src={`${base_url}icons/hint.svg`} alt="" />
       <span className="ui-button__label">Hint</span>
     </button>
   )
@@ -1138,7 +1168,7 @@ function HintButton({ onClick }: { onClick: () => void }) {
 function UndoButton({ onClick }: { onClick: () => void }) {
   return (
     <button className="ui-button ui-button--undo" onClick={onClick}>
-      <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/undo.svg`} alt="" />
+      <img className="ui-button__icon" src={`${base_url}icons/undo.svg`} alt="" />
       <span className="ui-button__label">Undo</span>
     </button>
   )
@@ -1147,19 +1177,54 @@ function UndoButton({ onClick }: { onClick: () => void }) {
 function MenuButton({ onClick, isOpen }: { onClick: () => void; isOpen: boolean }) {
   return (
     <button className="ui-button ui-button--menu" onClick={onClick}>
-      <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/${isOpen ? 'close' : 'menu'}.svg`} alt="" />
+      <img className="ui-button__icon" src={`${base_url}icons/${isOpen ? 'close' : 'menu'}.svg`} alt="" />
       <span className="ui-button__label">{isOpen ? 'Close' : 'Setup'}</span>
     </button>
   )
 }
 
 function ProfileButton({ onClick, loggedIn }: { onClick: () => void; loggedIn: boolean }) {
-  const base = import.meta.env.BASE_URL
   return (
     <button className="ui-button ui-button--profile" onClick={onClick} style={{ position: 'relative' }}>
-      <img className="ui-button__icon" src={`${base}icons/${loggedIn ? 'profile' : 'login'}.svg`} alt="" />
+      <img className="ui-button__icon" src={`${base_url}icons/${loggedIn ? 'profile' : 'login'}.svg`} alt="" />
       <span className="ui-button__label">{loggedIn ? 'You' : 'Log In'}</span>
       {loggedIn && <span className="ui-button__profile-dot" />}
+    </button>
+  )
+}
+
+function GamesButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button className="ui-button ui-button--games" onClick={onClick}>
+      <img className="ui-button__icon" src={`${base_url}icons/games.svg`} alt="" />
+      <span className="ui-button__label">Games</span>
+    </button>
+  )
+}
+
+function HowToPlayButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button className="ui-button ui-button--howtoplay" onClick={onClick}>
+      <img className="ui-button__icon" src={`${base_url}icons/scroll.svg`} alt="" />
+      <span className="ui-button__label">How To</span>
+    </button>
+  )
+}
+
+function CreditsButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button className="ui-button ui-button--credits" onClick={onClick}>
+      <img className="ui-button__icon" src={`${base_url}icons/credits.svg`} alt="" />
+      <span className="ui-button__label">Credits</span>
+    </button>
+  )
+}
+
+function LeaderboardButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button className="ui-button ui-button--leaderboard" onClick={onClick}>
+      <img className="ui-button__icon" src={`${base_url}icons/leaderboard.svg`} alt="" />
+      <span className="ui-button__label">Ranks</span>
     </button>
   )
 }
@@ -2689,48 +2754,66 @@ function App() {
         <img src={`${import.meta.env.BASE_URL}logo.png`} alt="High Kings" className="h-32 w-auto select-none" />
       </div>
 
-      {introStarted && <>
-        <div style={{ position: 'absolute', top: '3vw', left: '3vw', zIndex: 15, display: 'flex', gap: '1vw' }}>
-          <div className="ui-button-wrapper ui-button-wrapper--hint" style={{ opacity: !uiVisible || menuOpen || onlineStatus.type === 'matched' ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating || onlineStatus.type === 'matched') ? 'none' : undefined }}>
-            <HintButton onClick={() => {
-              if (playerMode === '2player' || winner) return
-              const humanSide: PlayerSide = playerMode === 'defender' ? 'defender' : 'attacker'
-              if (currentTurn !== humanSide) return
-              // Compute the hint move once and cache it for this turn
-              if (!hintMove.current) {
-                const { center, kingEscapeEdge, shieldwall, weakKing, noThrone } = getBoardConfig(rules, boardSize)
-                const alivePieces = pieces.filter(p => !dyingPieces.some(d => d.id === p.id))
-                hintMove.current = getBestMove(alivePieces, humanSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing, noThrone)
-              }
-              const move = hintMove.current
-              if (!move) return
-              if (selectedId === move.pieceId) {
-                hintMove.current = null
-                movePiece(move.toRow, move.toCol)
-              } else {
-                selectPiece(move.pieceId)
-              }
-            }} />
-          </div>
-          <div className="ui-button-wrapper ui-button-wrapper--undo" style={{ opacity: !uiVisible || menuOpen || onlineStatus.type === 'matched' ? 0 : hasMoved && history.length > 0 ? (setupAnimating ? 0.2 : 1) : 0, transition: 'opacity 0.6s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating || !hasMoved || history.length === 0 || onlineStatus.type === 'matched') ? 'none' : undefined }}>
-            <UndoButton onClick={() => {
-              if (history.length === 0 || setupAnimating) return
-              undoMove()
-            }} />
-          </div>
-        </div>
-        <button className="footer-link footer-link--left" style={{ opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }} onClick={() => setShowHowToPlay(true)}>How to Play</button>
-        <button className="footer-link footer-link--left-2" style={{ opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }} onClick={() => setShowLeaderboard(true)}>Leaderboard</button>
-        <button className="footer-link footer-link--right" style={{ opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }} onClick={() => setShowCredits(true)}>Credits</button>
-        <div style={{ position: 'absolute', top: '3vw', right: '3vw', zIndex: 15, display: 'flex', gap: '1vw', opacity: !uiVisible || menuOpen ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!uiVisible || menuOpen || setupAnimating) ? 'none' : undefined }}>
-          <div className="ui-button-wrapper ui-button-wrapper--profile">
+      {introStarted && (() => {
+        const vis = uiVisible && !menuOpen
+        const baseStyle = (extra?: boolean): React.CSSProperties => ({
+          opacity: !vis ? 0 : (setupAnimating || extra) ? 0.2 : 1,
+          transition: 'opacity 0.4s ease',
+          pointerEvents: (!vis || setupAnimating || extra) ? 'none' : undefined,
+        })
+        const isOnline = onlineStatus.type === 'matched'
+        const isSpectating = onlineStatus.type === 'spectating'
+
+        return <>
+          {/* Top-left column: Login, Games, [Leaderboard desktop], Hint */}
+          <div className="ui-col ui-col--left" style={baseStyle()}>
             <ProfileButton loggedIn={!!userId} onClick={() => userId ? setShowProfile(true) : setShowAuth(true)} />
+            <GamesButton onClick={() => {
+              if (!userId) { setShowAuth(true); return }
+              setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' })
+              setShowLobby(true)
+            }} />
+            {/* Leaderboard — top on desktop, footer on mobile */}
+            <div className="ui-col__desktop-only">
+              <LeaderboardButton onClick={() => setShowLeaderboard(true)} />
+            </div>
+            <div style={{ opacity: isOnline || isSpectating ? 0 : 1, pointerEvents: (isOnline || isSpectating) ? 'none' : undefined, transition: 'opacity 0.3s' }}>
+              <HintButton onClick={() => {
+                if (playerMode === '2player' || winner) return
+                const humanSide: PlayerSide = playerMode === 'defender' ? 'defender' : 'attacker'
+                if (currentTurn !== humanSide) return
+                if (!hintMove.current) {
+                  const { center, kingEscapeEdge, shieldwall, weakKing, noThrone } = getBoardConfig(rules, boardSize)
+                  const alivePieces = pieces.filter(p => !dyingPieces.some(d => d.id === p.id))
+                  hintMove.current = getBestMove(alivePieces, humanSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing, noThrone)
+                }
+                const move = hintMove.current
+                if (!move) return
+                if (selectedId === move.pieceId) { hintMove.current = null; movePiece(move.toRow, move.toCol) }
+                else selectPiece(move.pieceId)
+              }} />
+            </div>
           </div>
-          <div className="ui-button-wrapper ui-button-wrapper--menu">
+
+          {/* Top-right column: Setup, [Credits/HowTo desktop], Undo */}
+          <div className="ui-col ui-col--right" style={baseStyle()}>
             <MenuButton isOpen={false} onClick={() => setMenuOpen(o => !o)} />
+            {/* How To + Credits — top on desktop, footer on mobile */}
+            <div className="ui-col__desktop-only">
+              <HowToPlayButton onClick={() => setShowHowToPlay(true)} />
+              <CreditsButton onClick={() => setShowCredits(true)} />
+            </div>
+            <div style={{ opacity: isOnline || isSpectating ? 0 : hasMoved && history.length > 0 ? 1 : 0, pointerEvents: (isOnline || isSpectating || !hasMoved || history.length === 0) ? 'none' : undefined, transition: 'opacity 0.6s' }}>
+              <UndoButton onClick={() => { if (history.length === 0 || setupAnimating) return; undoMove() }} />
+            </div>
           </div>
-        </div>
-      </>}
+
+          {/* Footer links — mobile only (hidden on desktop via CSS) */}
+          <button className="footer-link footer-link--left" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }} onClick={() => setShowHowToPlay(true)}>How to Play</button>
+          <button className="footer-link footer-link--left-2" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }} onClick={() => setShowLeaderboard(true)}>Leaderboard</button>
+          <button className="footer-link footer-link--right" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }} onClick={() => setShowCredits(true)}>Credits</button>
+        </>
+      })()}
 
       <ThemeSwitcher />
       {showProfile && <ProfileScroll onClose={() => setShowProfile(false)} onSignIn={() => setShowAuth(true)} onPlayOnline={() => { setShowProfile(false); setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' }); setShowLobby(true) }} />}
