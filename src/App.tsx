@@ -1213,7 +1213,7 @@ function CreditsButton({ onClick }: { onClick: () => void }) {
   return (
     <button className="ui-button ui-button--credits" onClick={onClick}>
       <img className="ui-button__icon" src={`${base_url}icons/credits.svg`} alt="" />
-      <span className="ui-button__label">Credits</span>
+      <span className="ui-button__label">About</span>
     </button>
   )
 }
@@ -2811,7 +2811,7 @@ function App() {
             <button className="footer-link" onClick={() => setShowHowToPlay(true)}>How to Play</button>
             <button className="footer-link" onClick={() => { if (!userId) { setShowAuth(true); return }; setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' }); setShowLobby(true) }}>Games</button>
             <button className="footer-link" onClick={() => setShowLeaderboard(true)}>Leaderboard</button>
-            <button className="footer-link" onClick={() => setShowCredits(true)}>Credits</button>
+            <button className="footer-link" onClick={() => setShowCredits(true)}>About</button>
           </div>
         </>
       })()}
