@@ -147,24 +147,27 @@ body, button, input, select {
 .profile-scroll__btn--primary { background: linear-gradient(135deg, #c8880a, #a06808); color: #fff8e8; }
 .profile-scroll__btn--ghost { background: none; border: 1px solid rgba(100,60,10,0.3); color: #7a5228; }
 /* Leaderboard */
-.leaderboard__my-rank { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #a07840; margin: 0 0 16px; padding: 10px 12px; background: rgba(200,136,10,0.1); border-radius: 4px; border-left: 3px solid #c8880a; }
-.leaderboard__my-rank strong { color: #c8880a; font-size: 15px; }
+.leaderboard__my-rank { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #a07840; margin: 0 0 20px; padding: 12px 16px; background: rgba(200,136,10,0.12); border-top: 2px solid #c8880a; border-bottom: 2px solid #c8880a; text-align: center; }
+.leaderboard__my-rank strong { color: #c8880a; font-size: 22px; letter-spacing: 1px; display: block; margin-top: 2px; font-family: 'MedievalSharp', cursive; }
 .leaderboard__table { display: flex; flex-direction: column; width: 100%; }
-.leaderboard__header { display: flex; align-items: center; padding: 0 12px 8px; border-bottom: 1px solid rgba(100,60,10,0.3); margin-bottom: 4px; }
-.leaderboard__header .leaderboard__col { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #a07840; }
-.leaderboard__row { display: flex; align-items: center; padding: 10px 12px; border-bottom: 1px solid rgba(100,60,10,0.1); transition: background 0.15s; }
+.leaderboard__header { display: flex; align-items: center; padding: 0 12px 10px; border-bottom: 2px solid rgba(100,60,10,0.4); margin-bottom: 2px; }
+.leaderboard__header .leaderboard__col { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #a07840; font-weight: 700; }
+.leaderboard__row { display: flex; align-items: center; padding: 13px 12px; border-bottom: 1px solid rgba(100,60,10,0.15); transition: background 0.15s; }
 .leaderboard__row:last-child { border-bottom: none; }
-.leaderboard__row:hover { background: rgba(100,60,10,0.07); }
-.leaderboard__row--me { background: rgba(200,136,10,0.1); }
-.leaderboard__row--me:hover { background: rgba(200,136,10,0.15); }
-.leaderboard__row--me .leaderboard__col--name { color: #c8880a; font-weight: 600; }
-.leaderboard__col { font-size: 15px; color: #3a1e06; }
-.leaderboard__col--rank { width: 44px; flex-shrink: 0; font-size: 12px; font-weight: 700; color: #a07840; }
-.leaderboard__col--rank-1 { color: #c8880a; }
-.leaderboard__col--rank-2 { color: #888; }
-.leaderboard__col--rank-3 { color: #a07040; }
-.leaderboard__col--name { flex: 1; }
-.leaderboard__col--elo { width: 60px; text-align: right; flex-shrink: 0; font-weight: 700; color: #c8880a; font-size: 15px; }
+.leaderboard__row:hover { background: rgba(100,60,10,0.1); }
+.leaderboard__row--top3 { padding: 15px 12px; border-bottom: 1px solid rgba(100,60,10,0.2); }
+.leaderboard__row--me { background: rgba(200,136,10,0.12); border-left: 3px solid #c8880a; }
+.leaderboard__row--me:hover { background: rgba(200,136,10,0.18); }
+.leaderboard__row--me .leaderboard__col--name { color: #c8880a; }
+.leaderboard__col { font-size: 16px; color: #3a1e06; }
+.leaderboard__col--rank { width: 52px; flex-shrink: 0; font-size: 20px; font-weight: 700; font-family: 'MedievalSharp', cursive; color: #7a5228; }
+.leaderboard__col--rank-1 { color: #c8880a; font-size: 24px; }
+.leaderboard__col--rank-2 { color: #909090; font-size: 22px; }
+.leaderboard__col--rank-3 { color: #a07040; font-size: 22px; }
+.leaderboard__col--name { flex: 1; font-size: 16px; font-weight: 600; color: #2e1606; letter-spacing: 0.5px; }
+.leaderboard__col--name-top3 { font-size: 18px; font-weight: 700; }
+.leaderboard__col--elo { width: 70px; text-align: right; flex-shrink: 0; font-weight: 700; color: #c8880a; font-size: 20px; font-family: 'MedievalSharp', cursive; letter-spacing: 1px; }
+.leaderboard__col--elo-top3 { font-size: 24px; }
 .footer-links { position: absolute; bottom: 5vw; left: 5vw; right: 5vw; display: flex; justify-content: space-between; z-index: 10; }
 .footer-link { background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #f0e8d0; cursor: pointer; padding: 4px; transition: opacity 0.2s; text-shadow: 0 0 8px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,1), 0 0 6px rgba(0,0,0,0.9); }
 .footer-link:hover { opacity: 0.7; }
@@ -2375,15 +2378,19 @@ function LeaderboardScroll({ onClose }: { onClose: () => void }) {
               <span className="leaderboard__col leaderboard__col--name">Player</span>
               <span className="leaderboard__col leaderboard__col--elo">ELO</span>
             </div>
-            {rows.map(r => (
-              <div key={r.id} className={`leaderboard__row${r.id === userId ? ' leaderboard__row--me' : ''}`}>
-                <span className={`leaderboard__col leaderboard__col--rank${r.rank <= 3 ? ` leaderboard__col--rank-${r.rank}` : ''}`}>
-                  {r.rank}
-                </span>
-                <span className="leaderboard__col leaderboard__col--name">{r.username}</span>
-                <span className="leaderboard__col leaderboard__col--elo">{r.elo}</span>
-              </div>
-            ))}
+            {rows.map(r => {
+              const isTop3 = r.rank <= 3
+              const medals = ['⚔', '🛡', '⚱']
+              return (
+                <div key={r.id} className={`leaderboard__row${isTop3 ? ' leaderboard__row--top3' : ''}${r.id === userId ? ' leaderboard__row--me' : ''}`}>
+                  <span className={`leaderboard__col leaderboard__col--rank${isTop3 ? ` leaderboard__col--rank-${r.rank}` : ''}`}>
+                    {isTop3 ? medals[r.rank - 1] : r.rank}
+                  </span>
+                  <span className={`leaderboard__col leaderboard__col--name${isTop3 ? ' leaderboard__col--name-top3' : ''}`}>{r.username}</span>
+                  <span className={`leaderboard__col leaderboard__col--elo${isTop3 ? ' leaderboard__col--elo-top3' : ''}`}>{r.elo}</span>
+                </div>
+              )
+            })}
           </div>
         </>
       )}
