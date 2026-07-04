@@ -166,7 +166,7 @@ body, button, input, select {
 .leaderboard__col--name { flex: 1; }
 .leaderboard__col--elo { width: 60px; text-align: right; flex-shrink: 0; font-weight: 700; color: #c8880a; font-size: 15px; }
 .footer-links { position: absolute; bottom: 5vw; left: 5vw; right: 5vw; display: flex; justify-content: space-between; z-index: 10; }
-.footer-link { background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; cursor: pointer; padding: 4px; transition: opacity 0.2s; }
+.footer-link { background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #f0e8d0; cursor: pointer; padding: 4px; transition: opacity 0.2s; text-shadow: 0 0 8px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,1), 0 0 6px rgba(0,0,0,0.9); }
 .footer-link:hover { opacity: 0.7; }
 @media (min-width: 768px) { .footer-links { display: none; } }
 @media (min-width: 768px) {
