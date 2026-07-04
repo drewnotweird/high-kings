@@ -96,7 +96,8 @@ body, button, input, select {
   white-space: nowrap;
 }
 .ui-button:hover { opacity: 0.7; }
-.ui-button__icon { width: 22px; height: 22px; flex-shrink: 0; }
+.ui-button__icon { width: 22px; height: 22px; flex-shrink: 0; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.8)); }
+.ui-button__label { text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
 .ui-button__label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; }
 .ui-button__profile-dot { position: absolute; top: 4px; right: -2px; width: 7px; height: 7px; border-radius: 50%; background: #5dba85; border: 1.5px solid rgba(0,0,0,0.6); }
 /* Right-side buttons: label before icon on mobile */
