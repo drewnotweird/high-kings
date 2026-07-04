@@ -1398,7 +1398,7 @@ function ScrollPage({ title, onClose, children }: { title: string; onClose: () =
 function CreditsScroll({ onClose }: { onClose: () => void }) {
   const base = import.meta.env.BASE_URL
   return (
-    <ScrollPage title="Credits" onClose={onClose}>
+    <ScrollPage title="Makers" onClose={onClose}>
       <img src={`${base}credits-banner.jpg`} alt="" className="credits-page__banner" />
       <p>
         High Kings was forged around 2010 by three friends who wanted to bring one of history's forgotten strategy games back to life.
@@ -1987,7 +1987,7 @@ function Illustration({ label }: { label: string }) {
 
 function HowToPlayScroll({ onClose }: { onClose: () => void }) {
   return (
-    <ScrollPage title="How to Play" onClose={onClose}>
+    <ScrollPage title="Rules" onClose={onClose}>
       <>
         <p>Before chess took hold, there was Hnefatafl — the Viking strategy game that dominated northern Europe for centuries, until chess arrived from the south and gradually eclipsed it.</p>
         <hr className="credits-page__rule" />
