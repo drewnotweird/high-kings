@@ -164,7 +164,7 @@ body, button, input, select {
 .leaderboard__col--rank-1 { color: #c8880a; font-size: 24px; }
 .leaderboard__col--rank-2 { color: #909090; font-size: 22px; }
 .leaderboard__col--rank-3 { color: #a07040; font-size: 22px; }
-.leaderboard__col--name { flex: 1; font-size: 16px; font-weight: 600; color: #2e1606; letter-spacing: 0.5px; }
+.leaderboard__col--name { flex: 1; font-size: 16px; font-weight: 600; color: #2e1606; letter-spacing: 0.5px; text-align: left; }
 .leaderboard__col--name-top3 { font-size: 18px; font-weight: 700; }
 .leaderboard__col--elo { width: 70px; text-align: right; flex-shrink: 0; font-weight: 700; color: #c8880a; font-size: 20px; font-family: 'MedievalSharp', cursive; letter-spacing: 1px; }
 .leaderboard__col--elo-top3 { font-size: 24px; }
@@ -2380,11 +2380,10 @@ function LeaderboardScroll({ onClose }: { onClose: () => void }) {
             </div>
             {rows.map(r => {
               const isTop3 = r.rank <= 3
-              const medals = ['⚔', '🛡', '⚱']
               return (
                 <div key={r.id} className={`leaderboard__row${isTop3 ? ' leaderboard__row--top3' : ''}${r.id === userId ? ' leaderboard__row--me' : ''}`}>
                   <span className={`leaderboard__col leaderboard__col--rank${isTop3 ? ` leaderboard__col--rank-${r.rank}` : ''}`}>
-                    {isTop3 ? medals[r.rank - 1] : r.rank}
+                    {r.rank}
                   </span>
                   <span className={`leaderboard__col leaderboard__col--name${isTop3 ? ' leaderboard__col--name-top3' : ''}`}>{r.username}</span>
                   <span className={`leaderboard__col leaderboard__col--elo${isTop3 ? ' leaderboard__col--elo-top3' : ''}`}>{r.elo}</span>
