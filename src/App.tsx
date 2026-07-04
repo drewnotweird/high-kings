@@ -69,6 +69,16 @@ body, button, input, select {
   box-sizing: border-box;
   padding: 14px !important;
 }
+.score-panel__content { gap: 10px; padding: 8px 14px; min-width: 60px; border-radius: 6px; }
+.score-panel__piece-icon { width: 32px; height: 32px; object-fit: contain; flex-shrink: 0; }
+.score-panel__name { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8880a; line-height: 1; }
+.score-panel__elo { color: #e8d8b8; font-size: 16px; font-weight: 600; letter-spacing: 1px; line-height: 1; }
+@media (min-width: 768px) {
+  .score-panel__content { gap: 14px; padding: 12px 18px; min-width: 80px; }
+  .score-panel__piece-icon { width: 44px; height: 44px; }
+  .score-panel__name { font-size: 11px; }
+  .score-panel__elo { font-size: 22px; }
+}
 .ui-button {
   display: flex;
   flex-direction: row;
@@ -2199,7 +2209,7 @@ function PieceIcon({ side }: { side: PlayerSide }) {
     ? `${import.meta.env.BASE_URL}white-piece.png`
     : `${import.meta.env.BASE_URL}blue-piece.png`
   return (
-    <img className="score-panel__piece-icon" src={src} alt="" style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0 }} />
+    <img className="score-panel__piece-icon" src={src} alt="" />
   )
 }
 
@@ -2214,22 +2224,18 @@ function ScorePanel({ side, isActive, name, elo }: { side: PlayerSide; isActive:
         : 'transparent',
       transition: 'background 0.6s ease',
     }}>
-      <div className="score-panel__inner" style={{
+      <div className="score-panel__inner score-panel__content" style={{
         display: 'flex',
         alignItems: 'center',
         flexDirection: isAttacker ? 'row-reverse' : 'row',
-        gap: 10,
         background: 'rgba(0,0,0,0.85)',
-        borderRadius: 6,
-        padding: '8px 14px',
         backdropFilter: 'blur(4px)',
-        minWidth: 60,
       }}>
         <PieceIcon side={side} />
         {(name || elo !== undefined) && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: isAttacker ? 'flex-end' : 'flex-start', gap: 4 }}>
-            {name && <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: '#c8880a', lineHeight: 1 }}>{name}</span>}
-            {elo !== undefined && <span style={{ color: '#e8d8b8', fontSize: 16, fontWeight: 600, letterSpacing: 1, lineHeight: 1 }}>{elo}</span>}
+            {name && <span className="score-panel__name">{name}</span>}
+            {elo !== undefined && <span className="score-panel__elo">{elo}</span>}
           </div>
         )}
       </div>
