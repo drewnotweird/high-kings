@@ -1,7 +1,7 @@
 import { useMemo, useRef, useEffect, useLayoutEffect, useState } from 'react'
 import { useTexture } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
-import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, Mesh, MeshStandardMaterial, PlaneGeometry, Texture } from 'three'
+import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, Mesh, MeshStandardMaterial, MeshBasicMaterial, PlaneGeometry, Texture } from 'three'
 import { getBoardConfig, isCorner, isThrone, isValidMove } from '../../game/hnefatafl'
 import { useGameStore } from '../../store/gameStore'
 import type { ThemeConfig } from '../../lib/themes'
@@ -213,8 +213,60 @@ function TileHoverGlow({ x, z, active }: { x: number; z: number; active: boolean
   )
 }
 
+const MAX_PATH_TILES = 22 // enough for largest board (19×19)
+const pathPlaneGeo = new PlaneGeometry(SQUARE_SIZE * 0.96, SQUARE_SIZE * 0.96)
+
+function LastMovePathGlow({ path, boardOffset }: { path: [number, number][]; boardOffset: number }) {
+  const meshRefs = useRef<(Mesh | null)[]>(Array(MAX_PATH_TILES).fill(null))
+  const matRefs = useRef<(MeshBasicMaterial | null)[]>(Array(MAX_PATH_TILES).fill(null))
+  const opacities = useRef<number[]>(Array(MAX_PATH_TILES).fill(0))
+
+  useFrame((_, delta) => {
+    for (let i = 0; i < MAX_PATH_TILES; i++) {
+      const mesh = meshRefs.current[i]
+      const mat = matRefs.current[i]
+      if (!mesh || !mat) continue
+      const inPath = i < path.length
+      const target = inPath ? 0.28 : 0
+      // Snap position before fading in from invisible so we don't see a ghost
+      if (inPath && opacities.current[i] < 0.01) {
+        mesh.position.x = path[i][1] - boardOffset
+        mesh.position.z = path[i][0] - boardOffset
+      }
+      opacities.current[i] += (target - opacities.current[i]) * Math.min(delta * 7, 1)
+      mat.opacity = opacities.current[i]
+      mesh.visible = opacities.current[i] > 0.004
+    }
+  })
+
+  return (
+    <>
+      {Array.from({ length: MAX_PATH_TILES }, (_, i) => (
+        <mesh
+          key={i}
+          ref={el => { meshRefs.current[i] = el }}
+          position={[0, TILE_TOP + 0.002, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          geometry={pathPlaneGeo}
+          visible={false}
+        >
+          <meshBasicMaterial
+            ref={el => { matRefs.current[i] = el }}
+            color="#d4a830"
+            transparent
+            opacity={0}
+            depthWrite={false}
+            polygonOffset
+            polygonOffsetFactor={-1}
+          />
+        </mesh>
+      ))}
+    </>
+  )
+}
+
 export function Board({ theme, menuPhase }: BoardProps) {
-  const { rules, boardSize: storedBoardSize, pieces, validMoves, selectedId, selectPiece, movePiece, gameKey, powerSaving } = useGameStore()
+  const { rules, boardSize: storedBoardSize, pieces, validMoves, selectedId, selectPiece, movePiece, gameKey, powerSaving, lastMovePath } = useGameStore()
   const { boardSize, center, attackerStarts, defenderStarts, kingEscapeEdge } = getBoardConfig(rules, storedBoardSize)
   useEffect(() => { clearPhaseCache() }, [gameKey])
   const [hoveredTile, setHoveredTile] = useState<{ x: number; z: number } | null>(null)
@@ -425,6 +477,8 @@ export function Board({ theme, menuPhase }: BoardProps) {
         )
       })
       })()}
+
+      <LastMovePathGlow path={lastMovePath} boardOffset={boardOffset} />
 
       {!powerSaving && (
         <TileHoverGlow

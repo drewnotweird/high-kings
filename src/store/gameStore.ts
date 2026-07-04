@@ -2,6 +2,18 @@ import { create } from 'zustand'
 import { createInitialPieces, getBoardConfig, getValidMoves, applyMove } from '../game/hnefatafl'
 import type { Piece } from '../game/hnefatafl'
 
+function computeMovePath(fromRow: number, fromCol: number, toRow: number, toCol: number): [number, number][] {
+  const path: [number, number][] = []
+  if (fromRow === toRow) {
+    const minC = Math.min(fromCol, toCol), maxC = Math.max(fromCol, toCol)
+    for (let c = minC; c <= maxC; c++) path.push([fromRow, c])
+  } else {
+    const minR = Math.min(fromRow, toRow), maxR = Math.max(fromRow, toRow)
+    for (let r = minR; r <= maxR; r++) path.push([r, fromCol])
+  }
+  return path
+}
+
 function findCaptorIds(capturedPieces: Piece[], resultPieces: Piece[], movedIsDefender: boolean): string[] {
   const ids = new Set<string>()
   for (const cap of capturedPieces) {
@@ -43,7 +55,8 @@ interface GameStore {
   history: HistoryEntry[]
   undoTrigger: number
   lastMoveTarget: { row: number; col: number } | null
-  lastMove: { pieceId: string; toRow: number; toCol: number } | null
+  lastMove: { pieceId: string; fromRow: number; fromCol: number; toRow: number; toCol: number } | null
+  lastMovePath: [number, number][]
   // Settings
   musicEnabled: boolean
   cameraLocked: boolean
@@ -96,6 +109,7 @@ export const useGameStore = create<GameStore>((set) => ({
   undoTrigger: 0,
   lastMoveTarget: null,
   lastMove: null,
+  lastMovePath: [],
   musicEnabled: true,
   cameraLocked: false,
   difficulty: 'medium',
@@ -176,7 +190,8 @@ export const useGameStore = create<GameStore>((set) => ({
       winner: result.winner,
       history: [snapshot],
       lastMoveTarget: { row: toRow, col: toCol },
-      lastMove: { pieceId: s.selectedId!, toRow, toCol },
+      lastMove: { pieceId: s.selectedId!, fromRow: movedPiece.row, fromCol: movedPiece.col, toRow, toCol },
+      lastMovePath: computeMovePath(movedPiece.row, movedPiece.col, toRow, toCol),
     }
   }),
 
@@ -205,6 +220,8 @@ export const useGameStore = create<GameStore>((set) => ({
         defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
       },
       winner: result.winner,
+      lastMove: { pieceId, fromRow: movedPiece.row, fromCol: movedPiece.col, toRow, toCol },
+      lastMovePath: computeMovePath(movedPiece.row, movedPiece.col, toRow, toCol),
     }
   }),
 
@@ -243,6 +260,8 @@ export const useGameStore = create<GameStore>((set) => ({
     gameKey: s.gameKey + 1,
     history: [],
     lastMoveTarget: null,
+    lastMove: null,
+    lastMovePath: [],
     undoTrigger: 0,
   })),
 
