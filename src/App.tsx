@@ -77,8 +77,8 @@ body, button, input, select {
   .score-panel__content { gap: 14px; padding: 12px 18px; min-width: 80px; }
   .score-panel__piece-icon { width: 52px; height: 52px; }
   .score-panel__name { font-size: 14px; }
-  .score-panel__elo { font-size: 26px; }
-  .score-panel__text { gap: 14px; }
+  .score-panel__elo { font-size: 28px; }
+  .score-panel__text { gap: 8px; }
 }
 .ui-button {
   display: flex;
