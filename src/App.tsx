@@ -1177,7 +1177,7 @@ function UndoButton({ onClick }: { onClick: () => void }) {
 function MenuButton({ onClick, isOpen }: { onClick: () => void; isOpen: boolean }) {
   return (
     <button className="ui-button ui-button--menu" onClick={onClick}>
-      <img className="ui-button__icon" src={`${base_url}icons/${isOpen ? 'close' : 'menu'}.svg`} alt="" />
+      <img className="ui-button__icon" src={`${base_url}icons/${isOpen ? 'close' : 'setup'}.svg`} alt="" />
       <span className="ui-button__label">{isOpen ? 'Close' : 'Setup'}</span>
     </button>
   )
@@ -1205,7 +1205,7 @@ function GamesButton({ onClick }: { onClick: () => void }) {
 function HowToPlayButton({ onClick }: { onClick: () => void }) {
   return (
     <button className="ui-button ui-button--howtoplay" onClick={onClick}>
-      <img className="ui-button__icon" src={`${base_url}icons/scroll.svg`} alt="" />
+      <img className="ui-button__icon" src={`${base_url}icons/rules.svg`} alt="" />
       <span className="ui-button__label">Rules</span>
     </button>
   )
@@ -1214,7 +1214,7 @@ function HowToPlayButton({ onClick }: { onClick: () => void }) {
 function CreditsButton({ onClick }: { onClick: () => void }) {
   return (
     <button className="ui-button ui-button--credits" onClick={onClick}>
-      <img className="ui-button__icon" src={`${base_url}icons/credits.svg`} alt="" />
+      <img className="ui-button__icon" src={`${base_url}icons/makers.svg`} alt="" />
       <span className="ui-button__label">Makers</span>
     </button>
   )
@@ -1223,7 +1223,7 @@ function CreditsButton({ onClick }: { onClick: () => void }) {
 function LeaderboardButton({ onClick }: { onClick: () => void }) {
   return (
     <button className="ui-button ui-button--leaderboard" onClick={onClick}>
-      <img className="ui-button__icon" src={`${base_url}icons/leaderboard.svg`} alt="" />
+      <img className="ui-button__icon" src={`${base_url}icons/ranks.svg`} alt="" />
       <span className="ui-button__label">Ranks</span>
     </button>
   )
