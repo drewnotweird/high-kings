@@ -2748,7 +2748,7 @@ function App() {
         </>
       })()}
 
-      <div className="absolute top-1 md:top-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+      <div className="absolute top-1 md:top-[3vw] left-1/2 -translate-x-1/2 z-10 pointer-events-none">
         <img src={`${import.meta.env.BASE_URL}logo.png`} alt="High Kings" className="h-32 w-auto select-none" />
       </div>
 
