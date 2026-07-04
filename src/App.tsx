@@ -1187,7 +1187,7 @@ function ProfileButton({ onClick, loggedIn }: { onClick: () => void; loggedIn: b
   return (
     <button className="ui-button ui-button--profile" onClick={onClick} style={{ position: 'relative' }}>
       <img className="ui-button__icon" src={`${base_url}icons/${loggedIn ? 'profile' : 'login'}.svg`} alt="" />
-      <span className="ui-button__label">{loggedIn ? 'You' : 'Log In'}</span>
+      <span className="ui-button__label">{loggedIn ? 'Profile' : 'Log In'}</span>
       {loggedIn && <span className="ui-button__profile-dot" />}
     </button>
   )
@@ -2342,7 +2342,7 @@ function LeaderboardScroll({ onClose }: { onClose: () => void }) {
   const myRank = rows.find(r => r.id === userId)?.rank ?? null
 
   return (
-    <ScrollPage title="Leaderboard" onClose={onClose}>
+    <ScrollPage title="Ranks" onClose={onClose}>
       {loading ? (
         <p style={{ textAlign: 'center', color: '#706050', fontSize: 13 }}>Loading…</p>
       ) : rows.length === 0 ? (
@@ -2812,7 +2812,7 @@ function App() {
           <div className="footer-links" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }}>
             <button className="footer-link" onClick={() => setShowHowToPlay(true)}>How to Play</button>
             <button className="footer-link" onClick={() => { if (!userId) { setShowAuth(true); return }; setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' }); setShowLobby(true) }}>Games</button>
-            <button className="footer-link" onClick={() => setShowLeaderboard(true)}>Leaderboard</button>
+            <button className="footer-link" onClick={() => setShowLeaderboard(true)}>Ranks</button>
             <button className="footer-link" onClick={() => setShowCredits(true)}>About</button>
           </div>
         </>
