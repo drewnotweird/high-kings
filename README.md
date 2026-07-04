@@ -39,8 +39,12 @@ Hnefatafl is an asymmetric strategy game. The defender escorts the King to a cor
 ### UI
 - Profile screen — username, ELO rating, win/loss record by variant, Play Online shortcut
 - Score panels — show player name and ELO when logged in; expand to fit content
-- Footer links — How to Play · Leaderboard · Credits
-- Setup button (top right) — opens settings panel; side choice available for Vs Machine and Online
+- Responsive button layout:
+  - **Mobile (<768px):** top-left column (Login, Hint), top-right column (Setup, Undo), footer bar (How to Play · Games · Leaderboard · About)
+  - **Desktop (≥768px):** top-left row (Login, Games, Ranks, Hint), top-right row (Credits, How To, Setup), footer hidden
+- Setup button — opens settings panel; side choice available for Vs Machine and Online
+- Spectate button in lobby — watch any live game in real time
+- Easy mode wins excluded from profile stats
 
 ## Variants
 

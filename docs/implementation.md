@@ -1,6 +1,6 @@
 # High Kings — Implementation Notes
 
-Last updated: 2026-07-03 (session 2)
+Last updated: 2026-07-04 (session 3)
 
 ---
 
@@ -35,8 +35,8 @@ src/
     gameStore.ts               — Zustand store; single source of truth
 
   hooks/
-    useOnlineGame.ts           — online match hook (startGame, sendMove, endGame, disconnect)
-    useLobby.ts                — lobby state, Realtime subscriptions, host/cancel/accept
+    useOnlineGame.ts           — online match hook (startGame, watchGame, stopWatching, sendMove, endGame)
+    useLobby.ts                — lobby state, Realtime subscriptions, host/cancel/accept, active games list
 
   components/
     board/
@@ -65,6 +65,7 @@ supabase/
     001_profiles.sql           — profiles table, RLS
     002_online_matches.sql     — games, game_results tables, RLS, Realtime
     003_elo_improvements.sql   — ELO trigger, side_bias table, improved K-factor
+    004_challenges_table.sql   — challenges table, RLS (two delete policies), games insert policy, Realtime
 ```
 
 ---
@@ -166,10 +167,8 @@ The menu is a single settings panel. `MenuOverlay` renders directly with no sub-
 **Below the panel (outside it):**
 - Cancel button
 
-**Footer links (bottom of screen, always visible):**
-- How to Play (bottom left)
-- Leaderboard (bottom left, next to How to Play)
-- Credits (bottom right)
+**Footer links (mobile only, hidden ≥768px):**
+- How to Play · Games · Leaderboard · About — equally spaced across full width, inset 5vw each side
 
 **Play mode mapping:**
 
@@ -178,6 +177,28 @@ The menu is a single settings panel. `MenuOverlay` renders directly with no sub-
 | `Vs Machine` | `draft.side` — whichever side the player chose |
 | `Take turns` | `'2player'` |
 | `Online` | set later when game starts (assigned side from lobby) |
+
+---
+
+## UI Button Layout
+
+Two absolutely-positioned column divs (`.ui-col`) sit at `top: 5vw`, inset `5vw` from each side.
+
+**Mobile (<768px):** columns stack vertically (`flex-direction: column`, `gap: 2vw`). Buttons display icon + label inline (`flex-direction: row`). Right-column buttons use `row-reverse` so the label is left of the icon.
+- Left: Login, Hint
+- Right: Setup, Undo
+
+**Desktop (≥768px):** columns lay out horizontally (`flex-direction: row`, `gap: 2vw`). Buttons stack icon above label (`flex-direction: column`). Right column uses `row-reverse` so Setup ends up rightmost despite being first in the DOM.
+- Left: Login, Games, Ranks, Hint
+- Right: Undo, Credits, How To, Setup
+
+Items visible only on desktop are wrapped in `.ui-col__desktop-only` (`display: none` → `display: contents` at breakpoint), which makes them join the parent flex container rather than adding a nesting level.
+
+All icons are in `public/icons/` as SVGs with `width="20" height="20"` intrinsic size. CSS sizes them to 22px via `.ui-button__icon`.
+
+Score panels (`.score-panel-wrapper`) sit at `bottom: 14vw` on mobile, `bottom: 5vw` on desktop, `left/right: 5vw`.
+
+---
 
 **Resume / New Game / Cancel:**
 - **Resume** — disabled when draft rules, boardSize, or play mode differ from store (requires a new game)
@@ -194,7 +215,9 @@ The menu is a single settings panel. `MenuOverlay` renders directly with no sub-
 
 ### Lobby (`useLobby.ts`)
 
-`useLobby(userId, username, onGameStart)` returns: `{ challenges, myChallenge, hostChallenge, cancelChallenge, acceptChallenge }`
+`useLobby(userId, username, onGameStart)` returns: `{ challenges, myChallenge, activeGames, hostChallenge, cancelChallenge, acceptChallenge }`
+
+`activeGames` — list of `ActiveGame` objects (id, attacker_name, defender_name, rules, board_size, started_at) for the "Live Games" lobby section. Populated via `loadActiveGames()` (fetches `games WHERE status='active'` joined to profiles) and kept live via Realtime on the games table.
 
 - **`hostChallenge(rules, boardSize, side)`** — deletes any existing challenge from this user, inserts new `challenges` row; sets `myChallenge` locally
 - **`cancelChallenge()`** — deletes own challenge row
@@ -219,6 +242,7 @@ type OnlineStatus =
   | { type: 'matched'; gameId: string; opponentName: string; opponentElo: number | null; opponentId: string | null }
   | { type: 'opponent_disconnected'; secondsLeft: number }
   | { type: 'ended' }
+  | { type: 'spectating'; gameId: string }
 ```
 
 `handleOnlineStatusChange` in App.tsx merges `matched` updates — broadcast/presence values cannot overwrite DB-fetched `opponentName`, `opponentElo`, or `opponentId` once set.
@@ -239,9 +263,22 @@ type OnlineStatus =
 
 **Important:** Hint and Undo buttons are hidden during online matches.
 
+### Spectating
+
+From the lobby, any active game shows a Watch button. `handleWatch` in App.tsx:
+1. Applies the game's `rules` and `boardSize` to the store
+2. Calls `resetGame()`
+3. Calls `watchGame(gameId)` — joins the game's broadcast channel as read-only
+4. After subscribing, sends a `resync_request` broadcast
+5. An active player responds with a `resync` event containing the full `pieces` array + seq
+6. Spectator calls `setPieces()` to initialise board state, then applies subsequent `move` broadcasts via `machineMove`
+7. Board pointer events are disabled while spectating
+8. AI tick is suppressed while spectating
+9. Spectator bar shown with a Leave button (`stopWatching()` + `resetGame()`)
+
 ### `useOnlineGame` hook
 
-`useOnlineGame(onStatusChange)` returns: `{ startGame, sendMove, endGame }`
+`useOnlineGame(onStatusChange)` returns: `{ startGame, watchGame, stopWatching, sendMove, endGame }`
 
 Internal state held in `useRef<OnlineGameState>` (not React state):
 ```ts
@@ -319,7 +356,7 @@ Realtime enabled on `challenges` and `games`.
 
 ## Score Panels
 
-Two score panels sit at `bottom: 12vw` (left: defender, right: attacker). Width is content-sized (`fit-content`).
+Two score panels (`.score-panel-wrapper`) sit at `bottom: 14vw` on mobile / `bottom: 5vw` on desktop, `left/right: 5vw`. Width is content-sized (`fit-content`).
 
 When logged in (any mode):
 - Player's own name and ELO shown on their side's panel
@@ -489,5 +526,8 @@ Live: https://drewnotweird.co.uk/highkings
 - **supabase-js queries require `.then()` or `await`** — fire-and-forget calls like `supabase.from(...).update(...)` without chaining do not execute. Always chain `.then()` (or `await`) or the HTTP request never goes out.
 - **challenges table RLS** — two delete policies are needed: one for the host (cancel), one for any authenticated user (accept). A single `using (auth.uid() = host_id)` policy blocks acceptors. Migration: `004_challenges_table.sql`.
 - **games table needs an insert policy** — the acceptor creates the `games` row, not just the host. Without `with check (auth.uid() = attacker_id or auth.uid() = defender_id)` on insert, the acceptor's insert is silently blocked by RLS.
-- **vs-machine stat recorder fires in online games** — guard with `onlineStatus.type !== 'matched'` to prevent spurious `game_results` inserts during online games.
+- **vs-machine stat recorder fires in online games** — guard with `onlineStatus.type !== 'matched'` AND `difficulty !== 'easy'` to prevent spurious inserts during online games and to exclude easy mode from profile stats.
+- **Online game results need a separate recorder** — the vs-machine effect doesn't fire for online games. A dedicated `useEffect` watching `winner + onlineStatus.type === 'matched'` inserts with `opponent_type: 'human'`.
+- **Spectator resync** — spectator joins channel → sends `resync_request` → active player responds with full `pieces` + seq → spectator calls `setPieces()`. Without this the spectator sees an empty board.
+- **`setPieces` in gameStore** — added to support spectator board initialisation. Sets `pieces`, clears `dyingPieces`, `selectedId`, `validMoves`.
 - **Alea Evangelii AI** — 19×19 with 96 pieces, hard mode is slow on main thread. No web worker yet.
