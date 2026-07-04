@@ -85,7 +85,7 @@ body, button, input, select {
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  gap: 6px;
+  gap: 10px;
   background: none;
   border: none;
   color: #e8d8b8;
@@ -107,7 +107,7 @@ body, button, input, select {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     width: 52px;
     min-height: 52px;
     padding: 0;
