@@ -185,11 +185,11 @@ body, button, input, select {
 .ui-col__desktop-only { display: none; }
 @media (min-width: 768px) {
   .ui-col { flex-direction: row; gap: 2vw; align-items: flex-start; }
+  .ui-col--right { flex-direction: row-reverse; }
+  .ui-col__desktop-only { display: contents; }
 }
 @media (min-width: 1024px) {
   .ui-col { gap: 4vw; }
-  .ui-col--right { flex-direction: row-reverse; }
-  .ui-col__desktop-only { display: contents; }
 }
 .profile-scroll__play-online-btn { background: linear-gradient(135deg, #c8880a, #a06808); border: none; color: #fff8e8; font-family: inherit; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; padding: 10px 28px; cursor: pointer; border-radius: 4px; margin: 16px auto 8px; display: block; transition: opacity 0.2s; }
 .profile-scroll__play-online-btn:hover { opacity: 0.85; }
