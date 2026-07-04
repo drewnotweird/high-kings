@@ -157,6 +157,12 @@ body, button, input, select {
 .footer-link { background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #c8b888; cursor: pointer; padding: 4px; transition: opacity 0.2s; }
 .footer-link:hover { opacity: 0.7; }
 @media (min-width: 768px) { .footer-links { display: none; } }
+@media (min-width: 768px) {
+  .ui-button__label, .profile-scroll__edit-btn, .profile-scroll__stat-label,
+  .footer-link, .profile-scroll__elo-info, .find-match-modal__settings-summary,
+  .lobby-panel__mine-label, .lobby-panel__challenge-detail, .challenge-invite__detail,
+  .spectator-bar__label, .spectator-bar__leave, .match-header__turn { font-size: 12px; }
+}
 /* Top button columns */
 .ui-col {
   position: absolute; top: 5vw; z-index: 15;
