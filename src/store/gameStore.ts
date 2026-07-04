@@ -244,6 +244,7 @@ export const useGameStore = create<GameStore>((set) => ({
       selectedId: null,
       validMoves: [],
       winner: null,
+      lastMovePath: [],
       undoTrigger: s.undoTrigger + 1,
     }
   }),
