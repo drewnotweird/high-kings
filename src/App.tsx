@@ -1494,7 +1494,7 @@ function ProfileScroll({ onClose, onSignIn, onPlayOnline }: { onClose: () => voi
           {!editingAvatar && <div className="profile-scroll__hero">
             {avatar && (
               <div className="profile-scroll__avatar-wrap">
-                <AvatarDisplay config={avatar} size={96} />
+                <AvatarDisplay config={avatar} size={96} circle />
                 <button className="profile-scroll__edit-btn profile-scroll__avatar-edit" onClick={() => setEditingAvatar(true)}>Edit avatar</button>
               </div>
             )}
@@ -2460,6 +2460,20 @@ function GuestLoginModal({ onLogin, onClose }: {
   )
 }
 
+function AvatarDevSandbox() {
+  const [config, setConfig] = useState(() => randomAvatar())
+  return (
+    <div className="avatar-dev-sandbox" style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      background: 'radial-gradient(ellipse at 50% 60%, #2a1200 0%, #0a0800 60%, #000 100%)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24,
+    }}>
+      <div style={{ color: '#c8a860', fontFamily: 'inherit', fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', opacity: 0.6 }}>Avatar Maker — Dev Preview</div>
+      <AvatarMaker initial={config} onSave={(c) => setConfig(c)} onCancel={() => {}} />
+    </div>
+  )
+}
+
 function App() {
   const [introStarted, setIntroStarted] = useState(false)
   const [uiVisible, setUiVisible] = useState(false)
@@ -2533,7 +2547,9 @@ function App() {
 
   // Restore session on mount, listen for auth changes
   useEffect(() => {
+    const authTimeout = setTimeout(() => setAuthReady(true), 5000)
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      clearTimeout(authTimeout)
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles').select('username, elo').eq('id', session.user.id).single()
@@ -2542,7 +2558,7 @@ function App() {
         setAuth(session.user.id, profile?.username ?? null, profile?.elo ?? null, avatarRow?.avatar ?? null)
       }
       setAuthReady(true)
-    }).catch(() => setAuthReady(true))
+    }).catch(() => { clearTimeout(authTimeout); setAuthReady(true) })
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') { setAuth(null, null); return }
       if (session?.user) {
@@ -2635,7 +2651,7 @@ function App() {
     const opponentId = onlineStatus.opponentId
     const winnerId = winner === playerMode ? userId : opponentId
     endGame(winnerId)
-  }, [winner])
+  }, [winner, endGame, playerMode, userId, onlineStatus])
 
   // ?ps=true in the URL activates power-saving mode on load
   useEffect(() => {
@@ -2798,10 +2814,20 @@ function App() {
         />
       </div>
 
-      {/* Online match header */}
-      {/* Score panels */}
       {introStarted && (() => {
+        const vis = uiVisible && !menuOpen
+        const baseStyle = (extra?: boolean): React.CSSProperties => ({
+          opacity: !vis ? 0 : (setupAnimating || extra) ? 0.2 : 1,
+          transition: 'opacity 0.4s ease',
+          pointerEvents: (!vis || setupAnimating || extra) ? 'none' : undefined,
+        })
+        const panelStyle: React.CSSProperties = {
+          opacity: !vis || setupAnimating ? 0 : 1,
+          transition: 'opacity 0.4s ease',
+          pointerEvents: !vis || setupAnimating ? 'none' : undefined,
+        }
         const isOnline = onlineStatus.type === 'matched'
+        const isSpectating = onlineStatus.type === 'spectating'
         const myName = username ?? 'You'
         const opponentName = isOnline ? (onlineStatus.opponentName || '…') : undefined
         const opponentElo = isOnline ? (onlineStatus.opponentElo ?? undefined) : undefined
@@ -2810,31 +2836,21 @@ function App() {
         const attackerName = playerMode === 'attacker' ? (userId ? myName : undefined) : (isOnline ? opponentName : undefined)
         const defenderElo = playerMode === 'defender' ? myElo : (isOnline ? opponentElo : undefined)
         const attackerElo = playerMode === 'attacker' ? myElo : (isOnline ? opponentElo : undefined)
+
         return <>
-          <div className="score-panel-wrapper score-panel-wrapper--defender" style={{ left: '5vw', animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
+          {/* Score panels */}
+          <div className="score-panel-wrapper score-panel-wrapper--defender" style={{ left: '5vw', ...panelStyle }}>
             <ScorePanel side="defender" isActive={currentTurn === 'defender'} name={defenderName} elo={defenderElo} />
           </div>
-          <div className="score-panel-wrapper score-panel-wrapper--attacker" style={{ right: '5vw', animation: 'sceneFadeIn 2s ease-out forwards', opacity: menuOpen ? 0 : 1, transition: 'opacity 0.3s ease', pointerEvents: menuOpen ? 'none' : undefined }}>
+          <div className="score-panel-wrapper score-panel-wrapper--attacker" style={{ right: '5vw', ...panelStyle }}>
             <ScorePanel side="attacker" isActive={currentTurn === 'attacker'} name={attackerName} elo={attackerElo} />
           </div>
-        </>
-      })()}
 
-      <div className="absolute top-1 md:top-[calc(3vw-10px)] left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-        <img src={`${import.meta.env.BASE_URL}logo.png`} alt="High Kings" className="h-32 w-auto select-none" />
-      </div>
+          {/* Logo */}
+          <div className="absolute top-1 md:top-[calc(3vw-10px)] left-1/2 -translate-x-1/2 z-10 pointer-events-none" style={panelStyle}>
+            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="High Kings" className="h-32 w-auto select-none" />
+          </div>
 
-      {introStarted && (() => {
-        const vis = uiVisible && !menuOpen
-        const baseStyle = (extra?: boolean): React.CSSProperties => ({
-          opacity: !vis ? 0 : (setupAnimating || extra) ? 0.2 : 1,
-          transition: 'opacity 0.4s ease',
-          pointerEvents: (!vis || setupAnimating || extra) ? 'none' : undefined,
-        })
-        const isOnline = onlineStatus.type === 'matched'
-        const isSpectating = onlineStatus.type === 'spectating'
-
-        return <>
           {/* Top-left column: Login, [Leaderboard desktop], Hint */}
           <div className="ui-col ui-col--left" style={baseStyle()}>
             <ProfileButton loggedIn={!!userId} onClick={() => userId ? setShowProfile(true) : setShowAuth(true)} />
@@ -2847,7 +2863,7 @@ function App() {
               }} />
               <LeaderboardButton onClick={() => setShowLeaderboard(true)} />
             </div>
-            <div style={{ opacity: isOnline || isSpectating ? 0 : 1, pointerEvents: (isOnline || isSpectating) ? 'none' : undefined, transition: 'opacity 0.3s' }}>
+            <div style={{ opacity: isOnline || isSpectating || playerMode === '2player' ? 0 : 1, pointerEvents: (isOnline || isSpectating || playerMode === '2player') ? 'none' : undefined, transition: 'opacity 0.3s' }}>
               <HintButton onClick={() => {
                 if (playerMode === '2player' || winner) return
                 const humanSide: PlayerSide = playerMode === 'defender' ? 'defender' : 'attacker'
@@ -2873,7 +2889,7 @@ function App() {
               <HowToPlayButton onClick={() => setShowHowToPlay(true)} />
               <CreditsButton onClick={() => setShowCredits(true)} />
             </div>
-            <div style={{ opacity: isOnline || isSpectating ? 0 : hasMoved && history.length > 0 ? 1 : 0, pointerEvents: (isOnline || isSpectating || !hasMoved || history.length === 0) ? 'none' : undefined, transition: 'opacity 0.6s' }}>
+            <div style={{ opacity: isOnline || isSpectating || playerMode === '2player' ? 0 : hasMoved && history.length > 0 ? 1 : 0, pointerEvents: (isOnline || isSpectating || playerMode === '2player' || !hasMoved || history.length === 0) ? 'none' : undefined, transition: 'opacity 0.6s' }}>
               <UndoButton onClick={() => { if (history.length === 0 || setupAnimating) return; undoMove() }} />
             </div>
           </div>
@@ -2888,6 +2904,9 @@ function App() {
         </>
       })()}
 
+      {import.meta.env.DEV && new URLSearchParams(window.location.search).get('dev') === 'avatar' && (
+        <AvatarDevSandbox />
+      )}
       <ThemeSwitcher />
       {showProfile && <ProfileScroll onClose={() => setShowProfile(false)} onSignIn={() => setShowAuth(true)} onPlayOnline={() => { setShowProfile(false); setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' }); setShowLobby(true) }} />}
       {showHowToPlay && <HowToPlayScroll onClose={() => setShowHowToPlay(false)} />}

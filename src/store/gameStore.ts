@@ -220,7 +220,6 @@ export const useGameStore = create<GameStore>((set) => ({
         defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
       },
       winner: result.winner,
-      lastMove: { pieceId, fromRow: movedPiece.row, fromCol: movedPiece.col, toRow, toCol },
       lastMovePath: computeMovePath(movedPiece.row, movedPiece.col, toRow, toCol),
     }
   }),
@@ -249,14 +248,16 @@ export const useGameStore = create<GameStore>((set) => ({
     }
   }),
 
-  resetGame: () => set((s) => ({
-    pieces: createInitialPieces(getBoardConfig(s.rules, s.boardSize)),
+  resetGame: () => set((s) => {
+    const config = getBoardConfig(s.rules, s.boardSize)
+    return {
+    pieces: createInitialPieces(config),
     dyingPieces: [],
     captorIds: [],
     selectedId: null,
     validMoves: [],
     winner: null,
-    currentTurn: 'defender',
+    currentTurn: config.attackerFirst ? 'attacker' : 'defender',
     scores: { attacker: 0, defender: 0 },
     gameKey: s.gameKey + 1,
     history: [],
@@ -264,23 +265,25 @@ export const useGameStore = create<GameStore>((set) => ({
     lastMove: null,
     lastMovePath: [],
     undoTrigger: 0,
-  })),
+  }}),
 
   setPieces: (pieces) => set({ pieces, dyingPieces: [], selectedId: null, validMoves: [] }),
 
-  resetPiecesOnly: () => set((s) => ({
-    pieces: createInitialPieces(getBoardConfig(s.rules, s.boardSize)),
+  resetPiecesOnly: () => set((s) => {
+    const config = getBoardConfig(s.rules, s.boardSize)
+    return {
+    pieces: createInitialPieces(config),
     dyingPieces: [],
     captorIds: [],
     selectedId: null,
     validMoves: [],
     winner: null,
-    currentTurn: 'defender',
+    currentTurn: config.attackerFirst ? 'attacker' : 'defender',
     scores: { attacker: 0, defender: 0 },
     history: [],
     lastMoveTarget: null,
     undoTrigger: 0,
-  })),
+  }}),
 
   setSetting: (key, value) => set({ [key]: value }),
 }))

@@ -12,13 +12,13 @@ interface Props {
 type LayerKey = keyof AvatarConfig
 
 const LAYERS: { key: LayerKey; label: string }[] = [
-  { key: 'background', label: 'Background' },
-  { key: 'face',       label: 'Face' },
   { key: 'skinColor',  label: 'Skin' },
+  { key: 'hair',       label: 'Hair Style' },
+  { key: 'hairColor',  label: 'Hair Colour' },
   { key: 'eyes',       label: 'Eyes' },
-  { key: 'nose',       label: 'Nose' },
+  { key: 'mouth',      label: 'Mouth' },
   { key: 'helmet',     label: 'Helmet' },
-  { key: 'accessory',  label: 'Accessory' },
+  { key: 'facialHair', label: 'Facial Hair' },
 ]
 
 export function AvatarMaker({ initial, onSave, onCancel }: Props) {
@@ -55,7 +55,7 @@ export function AvatarMaker({ initial, onSave, onCancel }: Props) {
   return (
     <div className="avatar-maker">
       <div className="avatar-maker__preview">
-        <AvatarDisplay config={config} size={120} />
+        <AvatarDisplay config={config} size={120} circle={false} />
       </div>
 
       <div className="avatar-maker__layers">

@@ -1,0 +1,6 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Simple iron cap -->
+  <path d="M22,52 Q22,18 50,18 Q78,18 78,52 L72,52 Q72,24 50,24 Q28,24 28,52 Z" fill="#5a5a5a"/>
+  <rect x="22" y="50" width="56" height="5" rx="2" fill="#484848"/>
+  <rect x="44" y="18" width="12" height="5" rx="1" fill="#484848"/>
+</svg>

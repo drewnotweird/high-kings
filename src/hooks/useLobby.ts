@@ -41,12 +41,23 @@ export function useLobby(
   }, [userId])
 
   const loadActiveGames = useCallback(async () => {
-    const since = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
+    const now = Date.now()
+    const displayCutoff = new Date(now - 3 * 60 * 60 * 1000).toISOString()
+    const abandonCutoff = new Date(now - 4 * 60 * 60 * 1000).toISOString()
+
+    // Mark games older than 4 hours that are still 'active' as abandoned
+    supabase
+      .from('games')
+      .update({ status: 'abandoned', ended_at: new Date().toISOString() })
+      .eq('status', 'active')
+      .lt('started_at', abandonCutoff)
+      .then(({ error }) => { if (error) console.error('stale game cleanup:', error.message) })
+
     const { data } = await supabase
       .from('games')
       .select('id, rules, board_size, started_at, attacker:attacker_id(username), defender:defender_id(username)')
       .eq('status', 'active')
-      .gte('started_at', since)
+      .gte('started_at', displayCutoff)
       .order('started_at')
     if (data) {
       setActiveGames(data.map((g: any) => ({

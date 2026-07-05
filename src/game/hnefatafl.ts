@@ -16,6 +16,7 @@ export interface BoardConfig {
   shieldwall?: boolean      // Copenhagen/Tawlbwrdd: contiguous edge line captured when both ends flanked
   weakKing?: boolean        // king off the throne can be sandwiched like a normal piece
   noThrone?: boolean        // center square has no special properties (Tyr)
+  attackerFirst?: boolean   // attackers move first (Tyr variants)
 }
 
 const COPENHAGEN: BoardConfig = {
@@ -155,7 +156,7 @@ const ALEA_EVANGELII: BoardConfig = {
 }
 
 // Tyr — 15×15. Designed by Aage Nielsen. Weak king (2-sided capture), edge escape,
-// no throne. Attackers move first. 40 attackers, 20 defenders.
+// no throne, attackers move first. 40 attackers, 20 defenders.
 // Starting positions read from the official rules diagram (aagenielsen.dk/tyr_rules.pdf).
 const TYR: BoardConfig = {
   boardSize: 15,
@@ -163,6 +164,7 @@ const TYR: BoardConfig = {
   kingEscapeEdge: true,
   weakKing: true,
   noThrone: true,
+  attackerFirst: true,
   attackerStarts: [
     // Row 0 (board row 15)
     [0,0],[0,3],[0,7],[0,11],[0,14],
@@ -207,6 +209,7 @@ const SIMPLE_TYR: BoardConfig = {
   kingEscapeEdge: true,
   weakKing: true,
   noThrone: true,
+  attackerFirst: true,
   attackerStarts: [
     [0,0],[0,3],[0,7],[0,10],
     [2,2],[2,5],[2,8],
@@ -474,6 +477,7 @@ export function applyMove(
   // Move piece
   const moved = pieces.map(p => p.id === pieceId ? { ...p, row: toRow, col: toCol } : p)
   const mover = moved.find(p => p.id === pieceId)!
+  const moverIsAttacker = mover.type === 'attacker'
 
   // Custodian captures — skip the king (needs full surround, handled separately)
   const capturedIds: string[] = []
@@ -511,7 +515,7 @@ export function applyMove(
     return { pieces: remaining, capturedIds, winner: 'defender' }
   }
 
-  if (checkKingCaptured(king, remaining, boardSize, center, weakKing, noThrone)) {
+  if (moverIsAttacker && checkKingCaptured(king, remaining, boardSize, center, weakKing, noThrone)) {
     return { pieces: remaining.filter(p => p.type !== 'king'), capturedIds: [...capturedIds, king.id], winner: 'attacker' }
   }
 
