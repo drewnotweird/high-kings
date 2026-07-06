@@ -516,7 +516,7 @@ function CameraLock({ locked }: { locked: boolean }) {
     // Screen-up = -Z in world, so shifting target to -Z moves viewport centre
     // above the board, placing the board in the lower half.
     const worldUnitsPerPx = (2 * h * tan) / size.height
-    const targetZ = -60 * worldUnitsPerPx
+    const targetZ = -40 * worldUnitsPerPx
     return {
       position: new Vector3(0, h, targetZ + 0.001),
       target: new Vector3(0, 0, targetZ),
