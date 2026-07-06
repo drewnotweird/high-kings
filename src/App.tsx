@@ -952,8 +952,7 @@ body, button, input, select {
   border-radius: 6px; padding: 8px 16px; font-size: 11px; color: #c88040;
   letter-spacing: 1px; z-index: 110; white-space: nowrap;
 }
-.score-panel-wrapper { position: absolute; bottom: 14vw; z-index: 10; }
-@media (min-width: 768px) { .score-panel-wrapper { bottom: 5vw; } }
+.score-panel-wrapper { position: absolute; bottom: 5vw; z-index: 10; }
 .spectator-bar {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
   background: rgba(20,10,2,0.92); border: 1px solid rgba(200,160,40,0.35);
