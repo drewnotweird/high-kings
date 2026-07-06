@@ -500,20 +500,25 @@ function CameraLock({ locked }: { locked: boolean }) {
   const { size } = useThree()
   const { rules, boardSize: storedBoardSize } = useGameStore()
   const boardSize = getBoardConfig(rules, storedBoardSize).boardSize
-  // Compute camera height so the board always fits within the viewport with margin.
-  // Board base geometry is (boardSize + 1.2) wide; add 1.8 unit visual margin each side.
+  // Compute camera position and target so the board best-fits the usable viewport,
+  // with the board centre shifted down 80px to leave room for the logo.
   const topDownCam = useMemo(() => {
     const aspect = size.width / size.height
     const fovHalfRad = (45 * Math.PI) / 180 / 2
     const tan = Math.tan(fovHalfRad)
     const halfNeeded = (boardSize + 1.2) / 2 + 1.8
-    // Horizontal fit
+    // Best-fit: take the larger of horizontal and vertical fit heights
     const hHoriz = halfNeeded / (tan * aspect)
-    // Vertical fit: board must occupy ≤ usable portion of screen height
     const usableH = Math.max(size.height - 260, 100)
     const hVert = (halfNeeded * size.height) / (tan * usableH)
-    const h = Math.max(22, hHoriz, hVert)
-    return new Vector3(0, h, 0.01)
+    const h = Math.max(10, hHoriz, hVert)
+    // Shift the look-at target down 80px in screen space → +Z in world space
+    const worldUnitsPerPx = (2 * h * tan) / size.height
+    const targetZ = 80 * worldUnitsPerPx
+    return {
+      position: new Vector3(0, h, 0.01),
+      target: new Vector3(0, 0, targetZ),
+    }
   }, [size.width, size.height, boardSize])
 
   const prevLocked = useRef(false)
@@ -523,11 +528,11 @@ function CameraLock({ locked }: { locked: boolean }) {
     const firstFrame = !prevLocked.current
     prevLocked.current = true
     const speed = firstFrame ? 1 : Math.min(delta * 5, 1)
-    camera.position.lerp(topDownCam, speed)
+    camera.position.lerp(topDownCam.position, speed)
     if (controls) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const c = controls as any
-      c.target.lerp(DEFAULT_CAM_TARGET, speed)
+      c.target.lerp(topDownCam.target, speed)
       c.update()
     }
   })
