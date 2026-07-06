@@ -99,6 +99,10 @@ body, button, input, select {
   white-space: nowrap;
 }
 .ui-button:hover { opacity: 0.7; }
+@media (min-width: 768px) and (pointer: fine) {
+  .ui-button { opacity: 0.7; }
+  .ui-button:hover { opacity: 1; }
+}
 .ui-button__icon { width: 14px; height: 14px; flex-shrink: 0; filter: drop-shadow(0 0 20px rgba(0,0,0,1)) drop-shadow(0 0 12px rgba(0,0,0,1)) drop-shadow(0 0 4px rgba(0,0,0,1)); position: relative; z-index: 1; }
 @media (min-width: 768px) { .ui-button__icon { width: 22px; height: 22px; } }
 .ui-button__label { text-shadow: 0 0 8px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,1), 0 0 6px rgba(0,0,0,0.9); position: relative; z-index: 2; }
