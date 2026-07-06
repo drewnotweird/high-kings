@@ -506,7 +506,7 @@ function CameraLock({ locked }: { locked: boolean }) {
     const aspect = size.width / size.height
     const fovHalfRad = (45 * Math.PI) / 180 / 2
     const tan = Math.tan(fovHalfRad)
-    const halfNeeded = (boardSize + 1.2) / 2 + 2.5
+    const halfNeeded = (boardSize + 1.2) / 2 + boardSize * 0.25
     // Best-fit: take the larger of horizontal and vertical fit heights
     const hHoriz = halfNeeded / (tan * aspect)
     const usableH = Math.max(size.height - 260, 100)
@@ -516,7 +516,7 @@ function CameraLock({ locked }: { locked: boolean }) {
     // Screen-up = -Z in world, so shifting target to -Z moves viewport centre
     // above the board, placing the board in the lower half.
     const worldUnitsPerPx = (2 * h * tan) / size.height
-    const targetZ = -40 * worldUnitsPerPx
+    const targetZ = -30 * worldUnitsPerPx
     return {
       position: new Vector3(0, h, targetZ + 0.001),
       target: new Vector3(0, 0, targetZ),
