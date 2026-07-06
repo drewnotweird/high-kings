@@ -500,16 +500,18 @@ function CameraLock({ locked }: { locked: boolean }) {
   const { size } = useThree()
   const { rules, boardSize: storedBoardSize } = useGameStore()
   const boardSize = getBoardConfig(rules, storedBoardSize).boardSize
-  // Compute height so the board fits horizontally and vertically with margin
+  // Compute camera height so the board always fits within the viewport with margin.
+  // Board base geometry is (boardSize + 1.2) wide; add 1.8 unit visual margin each side.
   const topDownCam = useMemo(() => {
     const aspect = size.width / size.height
     const fovHalfRad = (45 * Math.PI) / 180 / 2
     const tan = Math.tan(fovHalfRad)
-    // Horizontal fit: half-board + margin
-    const hHoriz = (boardSize / 2 + 1.1) / (tan * aspect)
-    // Vertical fit: board must occupy ≤ (100vh - 280px) of screen height
-    const usableH = Math.max(size.height - 280, 100)
-    const hVert = (boardSize * size.height) / (2 * tan * usableH)
+    const halfNeeded = (boardSize + 1.2) / 2 + 1.8
+    // Horizontal fit
+    const hHoriz = halfNeeded / (tan * aspect)
+    // Vertical fit: board must occupy ≤ usable portion of screen height
+    const usableH = Math.max(size.height - 260, 100)
+    const hVert = (halfNeeded * size.height) / (tan * usableH)
     const h = Math.max(22, hHoriz, hVert)
     return new Vector3(0, h, 0.01)
   }, [size.width, size.height, boardSize])
