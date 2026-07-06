@@ -512,11 +512,12 @@ function CameraLock({ locked }: { locked: boolean }) {
     const usableH = Math.max(size.height - 260, 100)
     const hVert = (halfNeeded * size.height) / (tan * usableH)
     const h = Math.max(10, hHoriz, hVert)
-    // Shift the look-at target down 80px in screen space → +Z in world space
+    // Shift board centre down 80px (screen space) → +Z in world space.
+    // Camera position tracks the same Z so it stays directly above the target (no tilt).
     const worldUnitsPerPx = (2 * h * tan) / size.height
     const targetZ = 80 * worldUnitsPerPx
     return {
-      position: new Vector3(0, h, 0.01),
+      position: new Vector3(0, h, targetZ + 0.001),
       target: new Vector3(0, 0, targetZ),
     }
   }, [size.width, size.height, boardSize])
