@@ -111,12 +111,29 @@ body, button, input, select {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 8px;
+    gap: 0;
     width: 52px;
     min-height: 52px;
     padding: 0;
   }
   .ui-col--right .ui-button { flex-direction: column; justify-content: center; }
+  /* Label sits above icon */
+  .ui-button__label { order: -1; margin-bottom: 6px; }
+}
+/* Non-touch desktop: hide label, reveal on hover with icon sliding down */
+@media (min-width: 768px) and (pointer: fine) {
+  .ui-button__label {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-bottom: 0;
+    transition: max-height 0.25s ease, opacity 0.2s ease, margin-bottom 0.2s ease;
+  }
+  .ui-button:hover .ui-button__label {
+    max-height: 20px;
+    opacity: 1;
+    margin-bottom: 6px;
+  }
 }
 /* Profile scroll */
 .profile-scroll__hero { text-align: center; padding: 4px 0 16px; }
