@@ -1,6 +1,6 @@
 # High Kings — Implementation Notes
 
-Last updated: 2026-07-04 (session 3)
+Last updated: 2026-07-05 (session 4)
 
 ---
 
@@ -48,14 +48,25 @@ src/
       PiecesLayer.tsx          — InstancedMesh for all attacker/defender pieces
     ui/
       AuthModal.tsx            — sign in / sign up / username prompt modal
+      AvatarDisplay.tsx        — renders composed avatar SVG from AvatarConfig
+      AvatarMaker.tsx          — avatar editor UI (layer-by-layer selector)
       LobbyPanel.tsx           — game lobby UI (host challenge, open challenges list)
       ThemeSwitcher.tsx        — theme switcher component
       DefeatFire.tsx           — fire effect on the losing side's score card
 
   lib/
+    avatarConfig.ts            — AvatarConfig type, counts, SVG imports, layer arrays
     themes.ts                  — ThemeConfig definitions
     textures.ts                — texture-gen helpers (dev only)
     supabase.ts                — Supabase client singleton
+
+  assets/
+    avatars/
+      hair/0.svg … N.svg       — hair shapes (Illustrator-editable; no fill attr → inherits hairColor)
+      eyes/0.svg, 1.svg
+      mouth/0.svg, 1.svg
+      helmet/0.svg, 1.svg
+      facial-hair/0.svg, 1.svg — 0.svg is empty; 1+ have shapes that inherit hairColor
 
   contexts/
     intro.ts                   — IntroStartContext (carries introStartMs for light timing)
@@ -66,6 +77,8 @@ supabase/
     002_online_matches.sql     — games, game_results tables, RLS, Realtime
     003_elo_improvements.sql   — ELO trigger, side_bias table, improved K-factor
     004_challenges_table.sql   — challenges table, RLS (two delete policies), games insert policy, Realtime
+    005_avatar_column.sql      — ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar jsonb
+                                 (must be run manually in Supabase dashboard — not yet applied)
 ```
 
 ---
@@ -123,6 +136,7 @@ Pure functions, no side effects.
 - `shieldwall?` — enables shieldwall captures (Copenhagen/Tawlbwrdd)
 - `weakKing?` — king can be sandwiched like a normal piece once off throne
 - `noThrone?` — throne has no special properties (Tyr variants)
+- `attackerFirst?` — if true, attackers move first (Tyr, Simple Tyr). `resetGame` and `resetPiecesOnly` read this to set `currentTurn`.
 
 **`getValidMoves(piece, pieces, boardSize, center, noThrone?)`** — returns `[row,col][]` of legal squares.
 
@@ -132,6 +146,7 @@ Pure functions, no side effects.
 - **Custodial** — piece sandwiched between two enemies (or one enemy + hostile square) after a move. Hostile squares: corners, empty throne (if noThrone is false).
 - **Shieldwall** — 2+ enemy pieces against an edge, both ends flanked by a corner or friendly piece. King immune.
 - **King capture** — strong king needs all 4 sides sealed. Weak king sandwiched like a normal piece once off the throne.
+- **Passive capture** — `checkKingCaptured` is only called when `moverIsAttacker` is true. The king moving himself into a surrounded position does not trigger a loss (Ard Rí fix).
 
 ### AI (ai.ts)
 
@@ -197,6 +212,8 @@ Items visible only on desktop are wrapped in `.ui-col__desktop-only` (`display: 
 All icons are in `public/icons/` as SVGs with `width="20" height="20"` intrinsic size. CSS sizes them to 22px via `.ui-button__icon`.
 
 Score panels (`.score-panel-wrapper`) sit at `bottom: 14vw` on mobile, `bottom: 5vw` on desktop, `left/right: 5vw`.
+
+The logo, score panels, and all buttons share the same `vis = uiVisible && !menuOpen` gate and the same `0.4s ease` opacity transition. All three groups also fade to 0 during `setupAnimating`. Hint and Undo additionally hide (opacity 0, pointer-events none) in online/spectating mode and in 2-player (take turns) mode.
 
 ---
 
@@ -464,6 +481,51 @@ Copenhagen, Fetlar, and Historical each have two distinct starting layouts per b
 
 ---
 
+## Avatar System
+
+Players can customise an avatar shown on their profile.
+
+### AvatarConfig
+```ts
+interface AvatarConfig {
+  skinColor: number   // index into SKIN_COLORS
+  hair: number        // index into HAIRS
+  hairColor: number   // index into HAIR_COLORS
+  eyes: number
+  mouth: number
+  helmet: number
+  facialHair: number
+}
+```
+
+### Layer composition
+
+`AvatarDisplay` renders a square `<div>` with `background: SKIN_COLORS[skinColor]`, then an `<svg viewBox="0 0 100 100">` stacking layers in order:
+
+1. **Hair** — `fill={hairColor}`, `dangerouslySetInnerHTML` with `HAIRS[hair]`
+2. **Eyes**
+3. **Mouth**
+4. **Helmet**
+5. **Facial Hair** — `fill={hairColor}`
+
+Pass `circle` prop to clip the display to a circle (used in profile chip and score panels).
+
+### SVG source files
+
+`src/assets/avatars/<layer>/<index>.svg` — editable in Illustrator/Figma. Imported via Vite `?raw`. The `inner()` helper in `avatarConfig.ts` strips the `<svg>` wrapper to extract just the inner markup.
+
+Hair and facial-hair SVGs must have **no `fill` attribute** on their paths — they inherit the `fill` from the parent `<g fill={hairColor}>`.
+
+### Dev sandbox
+
+`?dev=avatar` URL param (dev builds only) renders `AvatarDevSandbox` — a full-screen `AvatarMaker` for testing all layer combinations without logging in.
+
+### Database
+
+`profiles.avatar jsonb` column stores the serialised `AvatarConfig`. Migration `005_avatar_column.sql` adds this column — must be applied manually in the Supabase dashboard.
+
+---
+
 ## Power-saving Mode
 
 When active:
@@ -531,3 +593,8 @@ Live: https://drewnotweird.co.uk/highkings
 - **Spectator resync** — spectator joins channel → sends `resync_request` → active player responds with full `pieces` + seq → spectator calls `setPieces()`. Without this the spectator sees an empty board.
 - **`setPieces` in gameStore** — added to support spectator board initialisation. Sets `pieces`, clears `dyingPieces`, `selectedId`, `validMoves`.
 - **Alea Evangelii AI** — 19×19 with 96 pieces, hard mode is slow on main thread. No web worker yet.
+- **Avatar SVG layer composition** — SVG files in `src/assets/avatars/` are imported with Vite `?raw`. The `inner()` helper strips the outer `<svg>` wrapper so content can be injected via `dangerouslySetInnerHTML`. Hair and facial-hair layers must have no `fill` attribute — they inherit `fill={hairColor}` from the parent `<g>`.
+- **Avatar `sceneFadeIn` animation conflict** — never put `animation: 'sceneFadeIn ... forwards'` on an element whose opacity also needs to be dynamically controlled. The `forwards` fill locks opacity at 1 and overrides inline style changes. Use transition-only for those elements.
+- **Stale online games** — `loadActiveGames` in `useLobby.ts` marks `games` rows older than 4 hours with `status: 'active'` as `'abandoned'` via a fire-and-forget `.then()` update. This fires each time the lobby loads.
+- **machineMovesetLastMove echo** — `machineMove` must NOT set `lastMove`. Only `movePiece` (human moves) sets `lastMove`, which App.tsx watches to broadcast. If `machineMove` sets it, incoming opponent moves echo back as outgoing moves.
+- **Loading gate** — three conditions must all be true before the loader dismisses: (1) 1s minimum hold, (2) Three.js assets ready (board + piece geometries), (3) UI image assets loaded. Auth (`getSession`) has a 5-second timeout safety net but is not part of the gate — Supabase can be blocked without preventing the game from loading.
