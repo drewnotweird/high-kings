@@ -171,13 +171,9 @@ body, button, input, select {
 .leaderboard__col--name-top3 { font-size: 18px; font-weight: 700; }
 .leaderboard__col--elo { width: 70px; text-align: right; flex-shrink: 0; font-weight: 700; color: #c8880a; font-size: 20px; font-family: 'MedievalSharp', cursive; letter-spacing: 1px; }
 .leaderboard__col--elo-top3 { font-size: 24px; }
-.footer-links { position: absolute; bottom: 5vw; left: 5vw; right: 5vw; display: flex; justify-content: space-between; z-index: 10; }
-.footer-link { background: none; border: none; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #f0e8d0; cursor: pointer; padding: 4px; transition: opacity 0.2s; text-shadow: 0 0 8px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,1), 0 0 6px rgba(0,0,0,0.9); }
-.footer-link:hover { opacity: 0.7; }
-@media (min-width: 768px) { .footer-links { display: none; } }
 @media (min-width: 768px) {
   .ui-button__label, .profile-scroll__edit-btn, .profile-scroll__stat-label,
-  .footer-link, .profile-scroll__elo-info, .find-match-modal__settings-summary,
+  .profile-scroll__elo-info, .find-match-modal__settings-summary,
   .lobby-panel__mine-label, .lobby-panel__challenge-detail, .challenge-invite__detail,
   .spectator-bar__label, .spectator-bar__leave, .match-header__turn { font-size: 12px; }
 }
@@ -188,11 +184,9 @@ body, button, input, select {
 }
 .ui-col--left { left: 5vw; align-items: flex-start; }
 .ui-col--right { right: 5vw; align-items: flex-end; }
-.ui-col__desktop-only { display: none; }
 @media (min-width: 768px) {
   .ui-col { flex-direction: row; gap: 2vw; align-items: flex-start; }
   .ui-col--right { flex-direction: row-reverse; }
-  .ui-col__desktop-only { display: contents; }
 }
 @media (min-width: 1024px) {
   .ui-col { gap: 4vw; }
@@ -2854,15 +2848,12 @@ function App() {
           {/* Top-left column: Login, [Leaderboard desktop], Hint */}
           <div className="ui-col ui-col--left" style={baseStyle()}>
             <ProfileButton loggedIn={!!userId} onClick={() => userId ? setShowProfile(true) : setShowAuth(true)} />
-            {/* Games + Leaderboard — top on desktop */}
-            <div className="ui-col__desktop-only">
-              <GamesButton onClick={() => {
-                if (!userId) { setShowAuth(true); return }
-                setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' })
-                setShowLobby(true)
-              }} />
-              <LeaderboardButton onClick={() => setShowLeaderboard(true)} />
-            </div>
+            <GamesButton onClick={() => {
+              if (!userId) { setShowAuth(true); return }
+              setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' })
+              setShowLobby(true)
+            }} />
+            <LeaderboardButton onClick={() => setShowLeaderboard(true)} />
             <div style={{ opacity: isOnline || isSpectating || playerMode === '2player' ? 0 : 1, pointerEvents: (isOnline || isSpectating || playerMode === '2player') ? 'none' : undefined, transition: 'opacity 0.3s' }}>
               <HintButton onClick={() => {
                 if (playerMode === '2player' || winner) return
@@ -2881,25 +2872,14 @@ function App() {
             </div>
           </div>
 
-          {/* Top-right column: Setup, [Credits/HowTo desktop], Undo */}
+          {/* Top-right column: Setup, Rules, Makers, Undo */}
           <div className="ui-col ui-col--right" style={baseStyle()}>
             <MenuButton isOpen={false} onClick={() => setMenuOpen(o => !o)} />
-            {/* How To + Credits — top on desktop, footer on mobile */}
-            <div className="ui-col__desktop-only">
-              <HowToPlayButton onClick={() => setShowHowToPlay(true)} />
-              <CreditsButton onClick={() => setShowCredits(true)} />
-            </div>
+            <HowToPlayButton onClick={() => setShowHowToPlay(true)} />
+            <CreditsButton onClick={() => setShowCredits(true)} />
             <div style={{ opacity: isOnline || isSpectating || playerMode === '2player' ? 0 : hasMoved && history.length > 0 ? 1 : 0, pointerEvents: (isOnline || isSpectating || playerMode === '2player' || !hasMoved || history.length === 0) ? 'none' : undefined, transition: 'opacity 0.6s' }}>
               <UndoButton onClick={() => { if (history.length === 0 || setupAnimating) return; undoMove() }} />
             </div>
-          </div>
-
-          {/* Footer links — mobile only (hidden on desktop via CSS) */}
-          <div className="footer-links" style={{ opacity: !vis ? 0 : setupAnimating ? 0.2 : 1, transition: 'opacity 0.4s ease', pointerEvents: (!vis || setupAnimating) ? 'none' : undefined }}>
-            <button className="footer-link" onClick={() => setShowHowToPlay(true)}>Rules</button>
-            <button className="footer-link" onClick={() => { if (!userId) { setShowAuth(true); return }; setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' }); setShowLobby(true) }}>Games</button>
-            <button className="footer-link" onClick={() => setShowLeaderboard(true)}>Ranks</button>
-            <button className="footer-link" onClick={() => setShowCredits(true)}>Makers</button>
           </div>
         </>
       })()}
