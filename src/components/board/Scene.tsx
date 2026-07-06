@@ -474,13 +474,20 @@ function AnimatedBoard({ children, menuOpen, snapFlipRef, undoTrigger }: {
   )
 }
 
-const DEFAULT_CAM_POS = new Vector3(0, 12, 14)
 const DEFAULT_CAM_TARGET = new Vector3(0, 0, 0)
 
+function defaultCamPos(boardSize: number): Vector3 {
+  const scale = Math.max(1, boardSize / 11)
+  return new Vector3(0, 12 * scale, 14 * scale)
+}
+
 function CameraReset({ menuOpen }: { menuOpen: boolean }) {
+  const { rules, boardSize: storedBoardSize } = useGameStore()
+  const boardSize = getBoardConfig(rules, storedBoardSize).boardSize
   useFrame(({ camera, controls }) => {
     if (!menuOpen) return
-    camera.position.lerp(DEFAULT_CAM_POS, 0.06)
+    const target = defaultCamPos(boardSize)
+    camera.position.lerp(target, 0.06)
     if (controls) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const c = controls as any
@@ -506,7 +513,7 @@ function CameraLock({ locked }: { locked: boolean }) {
     const aspect = size.width / size.height
     const fovHalfRad = (45 * Math.PI) / 180 / 2
     const tan = Math.tan(fovHalfRad)
-    const halfNeeded = (boardSize + 1.2) / 2 + boardSize * 0.25
+    const halfNeeded = boardSize / 2 + 1.0
     // Best-fit: take the larger of horizontal and vertical fit heights
     const hHoriz = halfNeeded / (tan * aspect)
     const usableH = Math.max(size.height - 260, 100)
@@ -824,7 +831,9 @@ export function Scene({ onIntroStart, menuOpen, onNewGame }: {
   const [dropStartMs, setDropStartMs] = useState<number | null>(null)
   const [dropKey, setDropKey] = useState(0)
   const [screenFlashKey, setScreenFlashKey] = useState(0)
-  const { gameKey, undoTrigger } = useGameStore()
+  const { gameKey, undoTrigger, rules, boardSize: storedBoardSize } = useGameStore()
+  const initBoardSize = getBoardConfig(rules, storedBoardSize).boardSize
+  const initCamPos = defaultCamPos(initBoardSize)
   const prevGameKey = useRef(0)
 
   useEffect(() => {
@@ -846,7 +855,7 @@ export function Scene({ onIntroStart, menuOpen, onNewGame }: {
         <style>{`@keyframes lightningScreenFlash{0%{opacity:0}7%{opacity:1}18%{opacity:0.08}28%{opacity:0.82}100%{opacity:0}}`}</style>
         <Canvas
           shadows={{ type: 2 }}
-          camera={{ position: [0, 12, 14], fov: 45 }}
+          camera={{ position: [initCamPos.x, initCamPos.y, initCamPos.z], fov: 45 }}
           gl={{ antialias: true, alpha: true }}
         >
           <Suspense fallback={null}>
