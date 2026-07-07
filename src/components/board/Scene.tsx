@@ -233,16 +233,6 @@ function FadingLights({ menuOpen, powerSaving }: { menuOpen: boolean; powerSavin
         position={[-3, 20, 5]}
         color="#c8dff8"
         intensity={0}
-        castShadow={!powerSaving}
-        shadow-mapSize={[1024, 1024]}
-        shadow-radius={24}
-        shadow-blurSamples={32}
-        shadow-camera-near={1}
-        shadow-camera-far={40}
-        shadow-camera-left={-10}
-        shadow-camera-right={10}
-        shadow-camera-top={10}
-        shadow-camera-bottom={-10}
       />
       <spotLight
         ref={spotRef}
@@ -255,9 +245,9 @@ function FadingLights({ menuOpen, powerSaving }: { menuOpen: boolean; powerSavin
         penumbra={1.0}
         decay={0.7}
         castShadow={!powerSaving}
-        shadow-mapSize={[1024, 1024]}
-        shadow-radius={20}
-        shadow-blurSamples={32}
+        shadow-mapSize={[512, 512]}
+        shadow-radius={16}
+        shadow-blurSamples={16}
       />
       <directionalLight
         ref={frontRef}
@@ -265,9 +255,9 @@ function FadingLights({ menuOpen, powerSaving }: { menuOpen: boolean; powerSavin
         color="#ffffff"
         intensity={0}
         castShadow={!powerSaving}
-        shadow-mapSize={[2048, 2048]}
-        shadow-radius={10}
-        shadow-blurSamples={16}
+        shadow-mapSize={[512, 512]}
+        shadow-radius={8}
+        shadow-blurSamples={8}
         shadow-camera-near={0.5}
         shadow-camera-far={35}
         shadow-camera-left={-9}
@@ -856,7 +846,8 @@ export function Scene({ onIntroStart, menuOpen, onNewGame }: {
         <Canvas
           shadows={{ type: 2 }}
           camera={{ position: [initCamPos.x, initCamPos.y, initCamPos.z], fov: 45 }}
-          gl={{ antialias: true, alpha: true }}
+          dpr={[1, 1.5]}
+          gl={{ antialias: false, alpha: true }}
         >
           <Suspense fallback={null}>
             <SceneInner menuOpen={!!menuOpen} dropStartMs={dropStartMs} dropKey={dropKey} />
