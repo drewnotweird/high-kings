@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { createInitialPieces, getBoardConfig, getValidMoves, applyMove } from '../game/hnefatafl'
+import { createInitialPieces, getBoardConfig, getValidMoves, applyMove, hasMoves } from '../game/hnefatafl'
 import type { Piece } from '../game/hnefatafl'
 
 function computeMovePath(fromRow: number, fromCol: number, toRow: number, toCol: number): [number, number][] {
@@ -175,6 +175,12 @@ export const useGameStore = create<GameStore>((set) => ({
 
     const snapshot: HistoryEntry = { pieces: activePieces, currentTurn: s.currentTurn, scores: s.scores }
 
+    const nextTurn = s.currentTurn === 'defender' ? 'attacker' : 'defender'
+    const livingPieces = result.pieces // captured pieces excluded by applyMove
+    const stalemateWinner = !result.winner && !hasMoves(nextTurn, livingPieces, boardSize, center, noThrone)
+      ? (nextTurn === 'attacker' ? 'defender' : 'attacker') as 'attacker' | 'defender'
+      : null
+
     return {
       pieces: [...result.pieces, ...capturedPieces],
       dyingPieces: capturedPieces,
@@ -182,16 +188,16 @@ export const useGameStore = create<GameStore>((set) => ({
       captorIds: findCaptorIds(capturedPieces, result.pieces, movedIsDefender),
       selectedId: null,
       validMoves: [],
-      currentTurn: s.currentTurn === 'defender' ? 'attacker' : 'defender',
+      currentTurn: nextTurn,
       scores: {
         attacker: s.scores.attacker + (s.currentTurn === 'attacker' ? capturedPieces.length : 0),
         defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
       },
-      winner: result.winner,
+      winner: result.winner ?? stalemateWinner,
       history: [...s.history, snapshot],
       lastMoveTarget: { row: toRow, col: toCol },
       lastMove: { pieceId: s.selectedId!, fromRow: movedPiece.row, fromCol: movedPiece.col, toRow, toCol },
-      lastMovePath: [], // clear path on human move — glow is for opponent moves only
+      lastMovePath: [],
     }
   }),
 
@@ -207,6 +213,12 @@ export const useGameStore = create<GameStore>((set) => ({
     const moveDist = Math.abs(toRow - movedPiece.row) + Math.abs(toCol - movedPiece.col)
     const captureDelayMs = Math.round(Math.max(500, moveDist * 280) + 80)
 
+    const nextTurn = s.currentTurn === 'defender' ? 'attacker' : 'defender'
+    const livingPieces = result.pieces
+    const stalemateWinner = !result.winner && !hasMoves(nextTurn, livingPieces, boardSize, center, noThrone)
+      ? (nextTurn === 'attacker' ? 'defender' : 'attacker') as 'attacker' | 'defender'
+      : null
+
     return {
       pieces: [...result.pieces, ...capturedPieces],
       dyingPieces: capturedPieces,
@@ -214,12 +226,12 @@ export const useGameStore = create<GameStore>((set) => ({
       captorIds: findCaptorIds(capturedPieces, result.pieces, movedIsDefender),
       selectedId: null,
       validMoves: [],
-      currentTurn: s.currentTurn === 'defender' ? 'attacker' : 'defender',
+      currentTurn: nextTurn,
       scores: {
         attacker: s.scores.attacker + (s.currentTurn === 'attacker' ? capturedPieces.length : 0),
         defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
       },
-      winner: result.winner,
+      winner: result.winner ?? stalemateWinner,
       lastMovePath: computeMovePath(movedPiece.row, movedPiece.col, toRow, toCol),
     }
   }),

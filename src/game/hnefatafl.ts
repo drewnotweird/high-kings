@@ -531,3 +531,13 @@ export function applyMove(
 export function isValidMove(row: number, col: number, validMoves: [number, number][]): boolean {
   return validMoves.some(([r, c]) => r === row && c === col)
 }
+
+// Returns true if the given side has at least one legal move available
+export function hasMoves(side: 'attacker' | 'defender', pieces: Piece[], boardSize: number, center: number, noThrone?: boolean): boolean {
+  for (const piece of pieces) {
+    const isOnSide = side === 'attacker' ? piece.type === 'attacker' : (piece.type === 'defender' || piece.type === 'king')
+    if (!isOnSide) continue
+    if (getValidMoves(piece, pieces, boardSize, center, noThrone).length > 0) return true
+  }
+  return false
+}
