@@ -755,6 +755,58 @@ body, button, input, select {
   margin-top: -8px;
 }
 .winner-overlay__dismiss:hover { color: #a09070; }
+.repetition-warning {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.75);
+  animation: sceneFadeIn 0.25s ease-out forwards;
+}
+.repetition-warning__box {
+  background: rgba(20,10,0,0.97);
+  border: 1px solid rgba(220,60,20,0.6);
+  border-radius: 12px;
+  padding: 28px 32px;
+  max-width: 360px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+.repetition-warning__icon { font-size: 32px; line-height: 1; }
+.repetition-warning__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #e87040;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.repetition-warning__body {
+  font-size: 0.85rem;
+  color: #c8b898;
+  line-height: 1.5;
+}
+.repetition-warning__actions { display: flex; gap: 10px; width: 100%; margin-top: 4px; }
+.repetition-warning__btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.repetition-warning__btn--cancel { background: rgba(255,255,255,0.08); color: #c8b898; }
+.repetition-warning__btn--cancel:hover { background: rgba(255,255,255,0.14); }
+.repetition-warning__btn--confirm { background: rgba(220,60,20,0.25); color: #e87040; border: 1px solid rgba(220,60,20,0.5); }
+.repetition-warning__btn--confirm:hover { background: rgba(220,60,20,0.4); }
 .role-select-overlay {
   position: fixed;
   inset: 0;
@@ -2327,6 +2379,24 @@ const winnerEmbers = Array.from({ length: 32 }, (_, i) => {
   }
 })
 
+function RepetitionWarning({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div className="repetition-warning">
+      <div className="repetition-warning__box">
+        <div className="repetition-warning__icon">⚠️</div>
+        <div className="repetition-warning__title">Repeated Position</div>
+        <p className="repetition-warning__body">
+          This move repeats a board position for the third time. Under the rules of this game, doing so forfeits the game.
+        </p>
+        <div className="repetition-warning__actions">
+          <button className="repetition-warning__btn repetition-warning__btn--cancel" onClick={onCancel}>Go back</button>
+          <button className="repetition-warning__btn repetition-warning__btn--confirm" onClick={onConfirm}>Forfeit &amp; proceed</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function WinnerOverlay({ winner, playerMode, powerSaving, onNewGame, onDismiss }: {
   winner: 'attacker' | 'defender'
   playerMode: GameMode
@@ -2508,7 +2578,7 @@ function App() {
   const [lobbyDraft, setLobbyDraft] = useState<{ rules: Rules; boardSize: number; side: 'attacker' | 'defender' } | null>(null)
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({ type: 'idle' })
   const pendingLobby = useRef<{ rules: Rules; boardSize: number; side: 'attacker' | 'defender' } | null>(null)
-  const { currentTurn, resetGame, powerSaving, setSetting, pieces, dyingPieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, elo, setElo, setAuth, setAuthReady, lastMove } = useGameStore()
+  const { currentTurn, resetGame, powerSaving, setSetting, pieces, dyingPieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, elo, setElo, setAuth, setAuthReady, lastMove, repetitionWarning, confirmRepetitionMove, cancelRepetitionMove } = useGameStore()
 
   // Merge matched status instead of replacing — prevents broadcasts overwriting DB-fetched names/ELOs
   const handleOnlineStatusChange = useCallback((status: OnlineStatus) => {
@@ -2932,6 +3002,7 @@ function App() {
           }}
         />
       )}
+      {repetitionWarning && <RepetitionWarning onConfirm={confirmRepetitionMove} onCancel={cancelRepetitionMove} />}
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       {showUsernamePrompt && <AuthModal initialScreen="username" onClose={() => setShowUsernamePrompt(false)} />}
       {showGuestLogin && (

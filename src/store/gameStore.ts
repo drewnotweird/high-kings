@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { createInitialPieces, getBoardConfig, getValidMoves, applyMove, hasMoves } from '../game/hnefatafl'
+import { createInitialPieces, getBoardConfig, getValidMoves, applyMove, hasMoves, positionKey } from '../game/hnefatafl'
 import type { Piece } from '../game/hnefatafl'
 
 function computeMovePath(fromRow: number, fromCol: number, toRow: number, toCol: number): [number, number][] {
@@ -38,6 +38,7 @@ interface HistoryEntry {
   pieces: Piece[]
   currentTurn: PlayerSide
   scores: Record<PlayerSide, number>
+  posKey: string  // position key AFTER this move (used for repetition detection)
 }
 
 interface GameStore {
@@ -48,6 +49,7 @@ interface GameStore {
   selectedId: string | null
   validMoves: [number, number][]
   winner: PlayerSide | null
+  repetitionWarning: { toRow: number; toCol: number } | null
   theme: Theme
   currentTurn: PlayerSide
   scores: Record<PlayerSide, number>
@@ -80,6 +82,8 @@ interface GameStore {
   setTheme: (theme: Theme) => void
   selectPiece: (id: string | null) => void
   movePiece: (toRow: number, toCol: number) => void
+  confirmRepetitionMove: () => void
+  cancelRepetitionMove: () => void
   machineMove: (pieceId: string, toRow: number, toCol: number) => void
   clearDyingPieces: () => void
   setPieces: (pieces: Piece[]) => void
@@ -101,6 +105,7 @@ export const useGameStore = create<GameStore>((set) => ({
   selectedId: null,
   validMoves: [],
   winner: null,
+  repetitionWarning: null,
   theme: 'natural',
   currentTurn: 'defender',
   scores: { attacker: 0, defender: 0 },
@@ -168,18 +173,25 @@ export const useGameStore = create<GameStore>((set) => ({
     const result = applyMove(activePieces, s.selectedId, toRow, toCol, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone)
     const capturedPieces = activePieces.filter(p => result.capturedIds.includes(p.id))
 
+    // Repetition check: if the resulting position has appeared twice already, warn before committing
+    if (!result.winner) {
+      const nextTurn = s.currentTurn === 'defender' ? 'attacker' : 'defender'
+      const key = positionKey(result.pieces, nextTurn)
+      const seen = s.history.filter(h => h.posKey === key).length
+      if (seen >= 2) return { ...s, repetitionWarning: { toRow, toCol } }
+    }
+
     const movedPiece = activePieces.find(p => p.id === s.selectedId)!
     const movedIsDefender = movedPiece.type === 'defender' || movedPiece.type === 'king'
     const moveDist = Math.abs(toRow - movedPiece.row) + Math.abs(toCol - movedPiece.col)
     const captureDelayMs = Math.round(Math.max(500, moveDist * 280) + 80)
 
-    const snapshot: HistoryEntry = { pieces: activePieces, currentTurn: s.currentTurn, scores: s.scores }
-
     const nextTurn = s.currentTurn === 'defender' ? 'attacker' : 'defender'
-    const livingPieces = result.pieces // captured pieces excluded by applyMove
+    const livingPieces = result.pieces
     const stalemateWinner = !result.winner && !hasMoves(nextTurn, livingPieces, boardSize, center, noThrone)
       ? (nextTurn === 'attacker' ? 'defender' : 'attacker') as 'attacker' | 'defender'
       : null
+    const snapshot: HistoryEntry = { pieces: activePieces, currentTurn: s.currentTurn, scores: s.scores, posKey: positionKey(result.pieces, nextTurn) }
 
     return {
       pieces: [...result.pieces, ...capturedPieces],
@@ -189,6 +201,7 @@ export const useGameStore = create<GameStore>((set) => ({
       selectedId: null,
       validMoves: [],
       currentTurn: nextTurn,
+      repetitionWarning: null,
       scores: {
         attacker: s.scores.attacker + (s.currentTurn === 'attacker' ? capturedPieces.length : 0),
         defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
@@ -200,6 +213,47 @@ export const useGameStore = create<GameStore>((set) => ({
       lastMovePath: [],
     }
   }),
+
+  confirmRepetitionMove: () => set((s) => {
+    if (!s.repetitionWarning || !s.selectedId) return s
+    // Execute the repeated move but immediately forfeit to the opponent
+    const { toRow, toCol } = s.repetitionWarning
+    const { boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone } = getBoardConfig(s.rules, s.boardSize)
+    const activePieces = s.pieces.filter(p => !s.dyingPieces.some(d => d.id === p.id))
+    const result = applyMove(activePieces, s.selectedId, toRow, toCol, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone)
+    const capturedPieces = activePieces.filter(p => result.capturedIds.includes(p.id))
+    const movedPiece = activePieces.find(p => p.id === s.selectedId)!
+    const movedIsDefender = movedPiece.type === 'defender' || movedPiece.type === 'king'
+    const moveDist = Math.abs(toRow - movedPiece.row) + Math.abs(toCol - movedPiece.col)
+    const captureDelayMs = Math.round(Math.max(500, moveDist * 280) + 80)
+    const nextTurn = s.currentTurn === 'defender' ? 'attacker' : 'defender'
+    const snapshot: HistoryEntry = { pieces: activePieces, currentTurn: s.currentTurn, scores: s.scores, posKey: positionKey(result.pieces, nextTurn) }
+    return {
+      pieces: [...result.pieces, ...capturedPieces],
+      dyingPieces: capturedPieces,
+      captureDelayMs,
+      captorIds: findCaptorIds(capturedPieces, result.pieces, movedIsDefender),
+      selectedId: null,
+      validMoves: [],
+      currentTurn: nextTurn,
+      repetitionWarning: null,
+      scores: {
+        attacker: s.scores.attacker + (s.currentTurn === 'attacker' ? capturedPieces.length : 0),
+        defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
+      },
+      winner: s.currentTurn,  // the mover forfeits
+      history: [...s.history, snapshot],
+      lastMoveTarget: { row: toRow, col: toCol },
+      lastMove: { pieceId: s.selectedId!, fromRow: movedPiece.row, fromCol: movedPiece.col, toRow, toCol },
+      lastMovePath: [],
+    }
+  }),
+
+  cancelRepetitionMove: () => set(() => ({
+    repetitionWarning: null,
+    selectedId: null,
+    validMoves: [],
+  })),
 
   machineMove: (pieceId, toRow, toCol) => set((s) => {
     if (s.winner) return s
@@ -218,6 +272,7 @@ export const useGameStore = create<GameStore>((set) => ({
     const stalemateWinner = !result.winner && !hasMoves(nextTurn, livingPieces, boardSize, center, noThrone)
       ? (nextTurn === 'attacker' ? 'defender' : 'attacker') as 'attacker' | 'defender'
       : null
+    const snapshot: HistoryEntry = { pieces: activePieces, currentTurn: s.currentTurn, scores: s.scores, posKey: positionKey(result.pieces, nextTurn) }
 
     return {
       pieces: [...result.pieces, ...capturedPieces],
@@ -232,6 +287,7 @@ export const useGameStore = create<GameStore>((set) => ({
         defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
       },
       winner: result.winner ?? stalemateWinner,
+      history: [...s.history, snapshot],
       lastMovePath: computeMovePath(movedPiece.row, movedPiece.col, toRow, toCol),
     }
   }),
@@ -269,6 +325,7 @@ export const useGameStore = create<GameStore>((set) => ({
     selectedId: null,
     validMoves: [],
     winner: null,
+    repetitionWarning: null,
     currentTurn: config.attackerFirst ? 'attacker' : 'defender',
     scores: { attacker: 0, defender: 0 },
     gameKey: s.gameKey + 1,
@@ -290,6 +347,7 @@ export const useGameStore = create<GameStore>((set) => ({
     selectedId: null,
     validMoves: [],
     winner: null,
+    repetitionWarning: null,
     currentTurn: config.attackerFirst ? 'attacker' : 'defender',
     scores: { attacker: 0, defender: 0 },
     history: [],

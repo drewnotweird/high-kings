@@ -532,6 +532,16 @@ export function isValidMove(row: number, col: number, validMoves: [number, numbe
   return validMoves.some(([r, c]) => r === row && c === col)
 }
 
+// Stable string key representing a board position (pieces + whose turn it is).
+// Used for repetition detection — equal keys mean the same position.
+export function positionKey(pieces: Piece[], turn: 'attacker' | 'defender'): string {
+  return pieces
+    .filter(p => !('dying' in p))  // exclude mid-animation pieces if present
+    .map(p => `${p.type[0]}${p.row},${p.col}`)
+    .sort()
+    .join('|') + '>' + turn
+}
+
 // Returns true if the given side has at least one legal move available
 export function hasMoves(side: 'attacker' | 'defender', pieces: Piece[], boardSize: number, center: number, noThrone?: boolean): boolean {
   for (const piece of pieces) {
