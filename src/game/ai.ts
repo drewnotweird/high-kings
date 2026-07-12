@@ -1,4 +1,4 @@
-import { getValidMoves, isCorner, type Piece } from './hnefatafl'
+import { getValidMoves, isCorner, applyMove, positionKey, type Piece } from './hnefatafl'
 
 export interface AiMove {
   pieceId: string
@@ -155,30 +155,44 @@ export function getBestMove(
   kingEscapeEdge = false,
   _shieldwall = false,
   _weakKing = false,
-  noThrone = false
+  noThrone = false,
+  positionHistory: string[] = []
 ): AiMove | null {
   const allMoves = getAllMoves(pieces, side, boardSize, center, noThrone)
   if (allMoves.length === 0) return null
 
+  const nextTurn = side === 'attacker' ? 'defender' : 'attacker'
+
+  // Classify each move by repetition risk
+  function repCount(m: { piece: Piece; row: number; col: number }): number {
+    const result = applyMove(pieces, m.piece.id, m.row, m.col, boardSize, center, kingEscapeEdge, false, false, noThrone)
+    const key = positionKey(result.pieces, nextTurn)
+    return positionHistory.filter(k => k === key).length
+  }
+
+  // Remove moves that would create a 3rd repetition (AI forfeits if it makes one)
+  const safeMoves = allMoves.filter(m => repCount(m) < 2)
+  const pool = safeMoves.length > 0 ? safeMoves : allMoves // fallback: no safe moves, pick least bad
+
   if (difficulty === 'easy') {
-    // Easy: grab obvious captures if available, otherwise random
-    const scored = allMoves.map(m => ({
+    const scored = pool.map(m => ({
       ...m,
       score: scoreMove(pieces, m.piece, m.row, m.col, side, boardSize, center, kingEscapeEdge, noThrone),
     }))
     const captures = scored.filter(m => m.score >= 12)
-    const pool = captures.length > 0 ? captures : scored
-    const pick = pool[Math.floor(Math.random() * pool.length)]
+    const candidates = captures.length > 0 ? captures : scored
+    const pick = candidates[Math.floor(Math.random() * candidates.length)]
     return { pieceId: pick.piece.id, toRow: pick.row, toCol: pick.col }
   }
 
-  // Medium: full evaluation but high noise → makes real strategic mistakes
-  // Hard: near-optimal with tiny noise to avoid deterministic repetition
   const noise = difficulty === 'medium' ? 20 : 1.5
-  const scored = allMoves
+  const scored = pool
     .map(m => ({
       ...m,
-      score: scoreMove(pieces, m.piece, m.row, m.col, side, boardSize, center, kingEscapeEdge, noThrone) + Math.random() * noise,
+      // Penalise second repetitions so the AI avoids creating them unless forced
+      score: scoreMove(pieces, m.piece, m.row, m.col, side, boardSize, center, kingEscapeEdge, noThrone)
+        - repCount(m) * 40
+        + Math.random() * noise,
     }))
     .sort((a, b) => b.score - a.score)
 

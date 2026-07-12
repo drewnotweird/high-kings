@@ -2,6 +2,11 @@ import { create } from 'zustand'
 import { createInitialPieces, getBoardConfig, getValidMoves, applyMove, hasMoves, positionKey } from '../game/hnefatafl'
 import type { Piece } from '../game/hnefatafl'
 
+// Extract posKeys from history for easy AI/repetition lookups
+function historyKeys(history: { posKey: string }[]): string[] {
+  return history.map(h => h.posKey)
+}
+
 function computeMovePath(fromRow: number, fromCol: number, toRow: number, toCol: number): [number, number][] {
   const path: [number, number][] = []
   if (fromRow === toRow) {
@@ -48,6 +53,7 @@ interface GameStore {
   captureDelayMs: number
   selectedId: string | null
   validMoves: [number, number][]
+  cautionMoves: [number, number][]  // valid moves that would create a 2nd repetition
   winner: PlayerSide | null
   repetitionWarning: { toRow: number; toCol: number } | null
   theme: Theme
@@ -104,6 +110,7 @@ export const useGameStore = create<GameStore>((set) => ({
   captureDelayMs: 450,
   selectedId: null,
   validMoves: [],
+  cautionMoves: [],
   winner: null,
   repetitionWarning: null,
   theme: 'natural',
@@ -139,11 +146,11 @@ export const useGameStore = create<GameStore>((set) => ({
 
   selectPiece: (id) => set((s) => {
     if (s.winner) return s
-    if (!id) return { selectedId: null, validMoves: [] }
-    if (id === s.selectedId) return { selectedId: null, validMoves: [] }
+    if (!id) return { selectedId: null, validMoves: [], cautionMoves: [] }
+    if (id === s.selectedId) return { selectedId: null, validMoves: [], cautionMoves: [] }
 
     const piece = s.pieces.find(p => p.id === id)
-    if (!piece) return { selectedId: null, validMoves: [] }
+    if (!piece) return { selectedId: null, validMoves: [], cautionMoves: [] }
 
     const pieceIsDefender = piece.type === 'defender' || piece.type === 'king'
     const correctTurn =
@@ -158,9 +165,16 @@ export const useGameStore = create<GameStore>((set) => ({
       if (!humanIsDefender && pieceIsDefender) return s
     }
 
-    const { boardSize, center, noThrone } = getBoardConfig(s.rules, s.boardSize)
+    const { boardSize, center, noThrone, kingEscapeEdge, shieldwall, weakKing } = getBoardConfig(s.rules, s.boardSize)
     const validMoves = getValidMoves(piece, s.pieces, boardSize, center, noThrone)
-    return { selectedId: id, validMoves }
+    const nextTurn = s.currentTurn === 'defender' ? 'attacker' : 'defender'
+    const keys = historyKeys(s.history)
+    const cautionMoves = validMoves.filter(([r, c]) => {
+      const result = applyMove(s.pieces, piece.id, r, c, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone)
+      const key = positionKey(result.pieces, nextTurn)
+      return keys.filter(k => k === key).length === 1  // would be 2nd occurrence
+    })
+    return { selectedId: id, validMoves, cautionMoves }
   }),
 
   movePiece: (toRow, toCol) => set((s) => {
@@ -200,6 +214,7 @@ export const useGameStore = create<GameStore>((set) => ({
       captorIds: findCaptorIds(capturedPieces, result.pieces, movedIsDefender),
       selectedId: null,
       validMoves: [],
+      cautionMoves: [],
       currentTurn: nextTurn,
       repetitionWarning: null,
       scores: {
@@ -235,6 +250,7 @@ export const useGameStore = create<GameStore>((set) => ({
       captorIds: findCaptorIds(capturedPieces, result.pieces, movedIsDefender),
       selectedId: null,
       validMoves: [],
+      cautionMoves: [],
       currentTurn: nextTurn,
       repetitionWarning: null,
       scores: {
@@ -253,6 +269,7 @@ export const useGameStore = create<GameStore>((set) => ({
     repetitionWarning: null,
     selectedId: null,
     validMoves: [],
+    cautionMoves: [],
   })),
 
   machineMove: (pieceId, toRow, toCol) => set((s) => {
@@ -272,7 +289,12 @@ export const useGameStore = create<GameStore>((set) => ({
     const stalemateWinner = !result.winner && !hasMoves(nextTurn, livingPieces, boardSize, center, noThrone)
       ? (nextTurn === 'attacker' ? 'defender' : 'attacker') as 'attacker' | 'defender'
       : null
-    const snapshot: HistoryEntry = { pieces: activePieces, currentTurn: s.currentTurn, scores: s.scores, posKey: positionKey(result.pieces, nextTurn) }
+    const posKey = positionKey(result.pieces, nextTurn)
+    const repCount = s.history.filter(h => h.posKey === posKey).length
+    const repetitionWinner = !result.winner && repCount >= 2
+      ? nextTurn as 'attacker' | 'defender'  // AI forfeits — the incoming player wins
+      : null
+    const snapshot: HistoryEntry = { pieces: activePieces, currentTurn: s.currentTurn, scores: s.scores, posKey }
 
     return {
       pieces: [...result.pieces, ...capturedPieces],
@@ -281,12 +303,13 @@ export const useGameStore = create<GameStore>((set) => ({
       captorIds: findCaptorIds(capturedPieces, result.pieces, movedIsDefender),
       selectedId: null,
       validMoves: [],
+      cautionMoves: [],
       currentTurn: nextTurn,
       scores: {
         attacker: s.scores.attacker + (s.currentTurn === 'attacker' ? capturedPieces.length : 0),
         defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
       },
-      winner: result.winner ?? stalemateWinner,
+      winner: result.winner ?? stalemateWinner ?? repetitionWinner,
       history: [...s.history, snapshot],
       lastMovePath: computeMovePath(movedPiece.row, movedPiece.col, toRow, toCol),
     }
@@ -310,6 +333,8 @@ export const useGameStore = create<GameStore>((set) => ({
       captorIds: [],
       selectedId: null,
       validMoves: [],
+      cautionMoves: [],
+      repetitionWarning: null,
       winner: null,
       lastMovePath: [],
       undoTrigger: s.undoTrigger + 1,
@@ -324,6 +349,7 @@ export const useGameStore = create<GameStore>((set) => ({
     captorIds: [],
     selectedId: null,
     validMoves: [],
+    cautionMoves: [],
     winner: null,
     repetitionWarning: null,
     currentTurn: config.attackerFirst ? 'attacker' : 'defender',
@@ -336,7 +362,7 @@ export const useGameStore = create<GameStore>((set) => ({
     undoTrigger: 0,
   }}),
 
-  setPieces: (pieces) => set({ pieces, dyingPieces: [], selectedId: null, validMoves: [] }),
+  setPieces: (pieces) => set({ pieces, dyingPieces: [], selectedId: null, validMoves: [], cautionMoves: [] }),
 
   resetPiecesOnly: () => set((s) => {
     const config = getBoardConfig(s.rules, s.boardSize)
@@ -346,6 +372,7 @@ export const useGameStore = create<GameStore>((set) => ({
     captorIds: [],
     selectedId: null,
     validMoves: [],
+    cautionMoves: [],
     winner: null,
     repetitionWarning: null,
     currentTurn: config.attackerFirst ? 'attacker' : 'defender',

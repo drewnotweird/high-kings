@@ -61,9 +61,9 @@ function getPhase(row: number, col: number) {
   return phaseCache.get(key)!
 }
 
-function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, disappearDelay = 0, onHover, onUnhover, tileHovered = false, dimmed = false }: {
+function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, disappearDelay = 0, caution = false, onHover, onUnhover, tileHovered = false, dimmed = false }: {
   x: number; z: number; row: number; col: number; appearDelay: number
-  disappearing?: boolean; disappearDelay?: number
+  disappearing?: boolean; disappearDelay?: number; caution?: boolean
   onHover?: () => void; onUnhover?: () => void
   tileHovered?: boolean; dimmed?: boolean
 }) {
@@ -143,9 +143,9 @@ function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, di
         <meshStandardMaterial
           ref={matRef}
           transparent
-          color={powerSaving ? "#ff6600" : "#e8874a"}
-          emissive={powerSaving ? "#ff4400" : "#d45a10"}
-          emissiveIntensity={powerSaving ? 0.9 : 0.4}
+          color={caution ? "#e8c040" : powerSaving ? "#ff6600" : "#e8874a"}
+          emissive={caution ? "#c89010" : powerSaving ? "#ff4400" : "#d45a10"}
+          emissiveIntensity={powerSaving ? 0.9 : caution ? 0.6 : 0.4}
           roughness={0.9}
           metalness={0}
           opacity={0.85}
@@ -155,8 +155,8 @@ function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, di
         <mesh ref={glowRef} scale={0}>
           <sphereGeometry args={[0.26, 10, 8]} />
           <meshStandardMaterial
-            color="#ff4400"
-            emissive="#ff4400"
+            color={caution ? "#e8c040" : "#ff4400"}
+            emissive={caution ? "#e8c040" : "#ff4400"}
             emissiveIntensity={0.6}
             transparent
             opacity={0.12}
@@ -266,7 +266,7 @@ function LastMovePathGlow({ path, boardOffset }: { path: [number, number][]; boa
 }
 
 export function Board({ theme, menuPhase }: BoardProps) {
-  const { rules, boardSize: storedBoardSize, pieces, validMoves, selectedId, selectPiece, movePiece, gameKey, powerSaving, lastMovePath } = useGameStore()
+  const { rules, boardSize: storedBoardSize, pieces, validMoves, cautionMoves, selectedId, selectPiece, movePiece, gameKey, powerSaving, lastMovePath } = useGameStore()
   const { boardSize, center, attackerStarts, defenderStarts, kingEscapeEdge } = getBoardConfig(rules, storedBoardSize)
   useEffect(() => { clearPhaseCache() }, [gameKey])
   const [hoveredTile, setHoveredTile] = useState<{ x: number; z: number } | null>(null)
@@ -427,6 +427,7 @@ export function Board({ theme, menuPhase }: BoardProps) {
       {(() => {
         return squares.map(({ row, col, x, z, variantIdx, rotIdx, overlay, isCornerTile }) => {
         const validTarget = isValidMove(row, col, validMoves)
+        const cautionTarget = validTarget && isValidMove(row, col, cautionMoves)
         const dist = selectedPiece
           ? Math.max(Math.abs(row - selectedPiece.row), Math.abs(col - selectedPiece.col))
           : 0
@@ -476,7 +477,7 @@ export function Board({ theme, menuPhase }: BoardProps) {
               </mesh>
             )}
 
-            {validTarget && !menuPhase?.match(/hiding|hidden/) && <ValidMoveMarker x={0} z={0} row={row} col={col} appearDelay={appearDelay} onHover={() => setHoveredTile({ x, z })} onUnhover={() => setHoveredTile(null)} tileHovered={hoveredTile?.x === x && hoveredTile?.z === z} dimmed={hoveredTile !== null && !(hoveredTile.x === x && hoveredTile.z === z)} />}
+            {validTarget && !menuPhase?.match(/hiding|hidden/) && <ValidMoveMarker x={0} z={0} row={row} col={col} appearDelay={appearDelay} caution={cautionTarget} onHover={() => setHoveredTile({ x, z })} onUnhover={() => setHoveredTile(null)} tileHovered={hoveredTile?.x === x && hoveredTile?.z === z} dimmed={hoveredTile !== null && !(hoveredTile.x === x && hoveredTile.z === z)} />}
           </group>
         )
       })

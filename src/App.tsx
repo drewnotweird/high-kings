@@ -2390,7 +2390,7 @@ function RepetitionWarning({ onConfirm, onCancel }: { onConfirm: () => void; onC
         </p>
         <div className="repetition-warning__actions">
           <button className="repetition-warning__btn repetition-warning__btn--cancel" onClick={onCancel}>Go back</button>
-          <button className="repetition-warning__btn repetition-warning__btn--confirm" onClick={onConfirm}>Forfeit &amp; proceed</button>
+          <button className="repetition-warning__btn repetition-warning__btn--confirm" onClick={onConfirm}>Accept loss</button>
         </div>
       </div>
     </div>
@@ -2674,6 +2674,11 @@ function App() {
   const hintMove = useRef<{ pieceId: string; toRow: number; toCol: number } | null>(null)
   useEffect(() => { hintMove.current = null }, [currentTurn, winner])
 
+  // Auto-dismiss repetition warning if the game ends or is reset (covers online games where state changes externally)
+  useEffect(() => {
+    if (repetitionWarning) cancelRepetitionMove()
+  }, [winner, gameKey])
+
   // Track whether any move has been made this game (for undo button fade-in)
   const [hasMoved, setHasMoved] = useState(false)
   const prevTurnRef = useRef(currentTurn)
@@ -2759,7 +2764,8 @@ function App() {
       // If the player still has a piece selected, wait for them to deselect first
       if (freshSelected) { setTimeout(fire, 600); return }
       const alivePieces = freshPieces.filter(p => !freshDying.some(d => d.id === p.id))
-      const move = getBestMove(alivePieces, machineSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing, noThrone)
+      const posHistory = useGameStore.getState().history.map(h => h.posKey)
+      const move = getBestMove(alivePieces, machineSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing, noThrone, posHistory)
       if (move) machineMove(move.pieceId, move.toRow, move.toCol)
     }
     const timer = setTimeout(fire, 2200)
@@ -2953,7 +2959,7 @@ function App() {
                 if (!hintMove.current) {
                   const { center, kingEscapeEdge, shieldwall, weakKing, noThrone } = getBoardConfig(rules, boardSize)
                   const alivePieces = pieces.filter(p => !dyingPieces.some(d => d.id === p.id))
-                  hintMove.current = getBestMove(alivePieces, humanSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing, noThrone)
+                  hintMove.current = getBestMove(alivePieces, humanSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing, noThrone, useGameStore.getState().history.map(h => h.posKey))
                 }
                 const move = hintMove.current
                 if (!move) return

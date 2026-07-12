@@ -44,7 +44,7 @@ const BURST_CSS = `
 `
 
 export function Board2D({ menuOpen }: { menuOpen: boolean }) {
-  const { pieces, dyingPieces: storeDyingPieces, clearDyingPieces, selectedId, selectPiece, movePiece, validMoves, gameKey, rules, boardSize: storedBoardSize, roleSelectOpen } = useGameStore()
+  const { pieces, dyingPieces: storeDyingPieces, clearDyingPieces, selectedId, selectPiece, movePiece, validMoves, cautionMoves, gameKey, rules, boardSize: storedBoardSize, roleSelectOpen } = useGameStore()
   const { boardSize, center } = getBoardConfig(rules, storedBoardSize)
   const TOTAL = boardSize * CELL + PAD * 2
 
@@ -216,25 +216,28 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
         />
 
         {/* Valid move targets */}
-        {validMoves.map(([r, c]) => (
-          <g
-            key={`vm-${r}-${c}`}
-            className="board2d__valid-move"
-            onClick={(e) => { e.stopPropagation(); movePiece(r, c) }}
-            style={{ cursor: 'pointer' }}
-          >
-            <rect
-              x={cx(c)} y={cy(r)}
-              width={CELL} height={CELL}
-              fill="rgba(255,102,0,0.18)"
-            />
-            <circle
-              cx={pcx(c)} cy={pcy(r)}
-              r={9}
-              fill="rgba(255,102,0,0.75)"
-            />
-          </g>
-        ))}
+        {validMoves.map(([r, c]) => {
+          const isCaution = cautionMoves.some(([cr, cc]) => cr === r && cc === c)
+          return (
+            <g
+              key={`vm-${r}-${c}`}
+              className="board2d__valid-move"
+              onClick={(e) => { e.stopPropagation(); movePiece(r, c) }}
+              style={{ cursor: 'pointer' }}
+            >
+              <rect
+                x={cx(c)} y={cy(r)}
+                width={CELL} height={CELL}
+                fill={isCaution ? "rgba(220,180,0,0.18)" : "rgba(255,102,0,0.18)"}
+              />
+              <circle
+                cx={pcx(c)} cy={pcy(r)}
+                r={9}
+                fill={isCaution ? "rgba(220,180,0,0.8)" : "rgba(255,102,0,0.75)"}
+              />
+            </g>
+          )
+        })}
 
         {/* Pieces — hidden during role select, animate in after side is chosen */}
         {!roleSelectOpen && pieces.map(piece => {
