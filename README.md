@@ -92,17 +92,19 @@ GitHub Actions → FTP to Fasthosts shared hosting on push to `main`.
 
 ### How the AI works
 
-The AI uses **minimax search with alpha-beta pruning** and a transposition table. It searches ahead 2 plies (medium) or 3 plies (hard), evaluates leaf nodes with a static position function, and returns the best move found. Easy mode stays 1-ply to keep it accessible.
+The AI uses **iterative deepening minimax with alpha-beta pruning**. It repeatedly searches at depth 1, 2, 3 … until either the maximum depth for the current board size is reached or the 800ms time budget expires — whichever comes first. Only results from fully completed depths are kept; if time runs out mid-depth the best move from the previous complete depth is returned.
 
-**Search depth by difficulty and board size:**
+The transposition table and move ordering both persist across iterations, so each depth benefits from what the shallower searches already learned. The best move from depth N (the principal variation move) is always searched first at depth N+1, which dramatically improves alpha-beta pruning.
 
-| Difficulty | ≤ 13×13 boards | 15×15 and 19×19 |
-|---|---|---|
-| Easy | 1-ply (no lookahead) | 1-ply |
-| Medium | Depth 2 + ±15 noise | Depth 1 + ±15 noise |
-| Hard | Depth 3 | Depth 2 |
+**Maximum search depth by difficulty and board size:**
 
-Large boards reduce depth by 1 to stay within a comfortable time budget (~500–800ms observed on an 11×11 hard game at move 1).
+| Difficulty | 7×7 | 9×9 | 11–13×13 | 15–19×19 |
+|---|---|---|---|---|
+| Easy | 1 (no lookahead) | 1 | 1 | 1 |
+| Medium | 3 | 2 | 2 | 2 |
+| Hard | 5 | 4 | 3 | 2 |
+
+Smaller boards have a much lower branching factor so deeper search is affordable within the budget. On a 7×7 Brandub game, hard mode routinely reaches depth 5 or beyond.
 
 **`getBestMove` signature:**
 ```ts
@@ -132,21 +134,25 @@ All scores are from the **defender's perspective** (positive = good for defender
 | King open escape routes | +30 per route | Direct lines to corners / edges |
 | Attacker proximity to king | −10 × (5 − dist) | For each attacker within 4 squares |
 | Defender cohesion | +5 per adjacent pair | Adjacent defenders form walls and protect each other |
+| Attacker encirclement | −8 × sides² | Quadratic penalty when 2+ orthogonal sides of the king have an unblocked attacker within 3 squares |
 | King escape (terminal) | +9000 / −9000 | Win/loss detected inside the search tree |
 | Stalemate (terminal) | ±9000 | Side to move loses if it has no legal moves |
 
+The encirclement term uses quadratic scaling because the danger is non-linear: 2 sides covered is a mild threat, 3 sides is a near-trap, and 4 sides typically means capture is imminent.
+
 ### Move ordering
 
-Before searching, moves are sorted to maximise alpha-beta pruning:
-1. King moves to an escape square (instant high score, searched first)
-2. King moves (any)
-3. Attacker moves toward king (ranked by distance improvement)
+Moves are sorted before each depth to maximise alpha-beta pruning:
+1. **PV move** — the best move from the previous ID iteration, always first
+2. King moves to an escape square
+3. King moves (any)
+4. Attacker moves toward king (ranked by distance improvement)
 
-This ordering means winning lines are typically found early and large branches can be pruned.
+The PV move ordering between iterations means the most promising line from depth N is expanded first at depth N+1, producing early cutoffs that can halve the effective tree size.
 
 ### Transposition table
 
-A `Map<string, number>` keyed by `positionKey(pieces, side) + depth` caches evaluated positions within each `getBestMove` call. This avoids re-evaluating the same position at the same depth when the search tree has transpositions (different move orders reaching the same board state).
+A `Map<string, number>` keyed by `positionKey(pieces, side) + depth` caches evaluated positions across the entire `getBestMove` call — including across ID iterations. This means positions evaluated at depth 2 during the second iteration can be reused as lookup results during the depth-3 search, avoiding redundant work when different move sequences reach the same board state.
 
 ### Easy mode
 
@@ -191,9 +197,3 @@ const hint = getBestMove(pieces, hintSide, boardSize, center, difficulty,
 
 Both pass the full `positionHistory` so the repetition filter works correctly.
 
-### Ideas for further improvement
-
-- **Opening book** — the first few moves are unconstrained; a small lookup table of known good openings would improve early play
-- **Deeper search on smaller boards** — Brandub (7×7) could support depth 4–5 without a performance hit
-- **Iterative deepening** — search depth 1, 2, 3 … and return the best move found when a time budget expires, rather than a fixed depth cutoff
-- **Better attacker encirclement** — reward configurations where multiple attackers form a partial ring around the king

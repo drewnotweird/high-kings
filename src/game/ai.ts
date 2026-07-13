@@ -6,6 +6,10 @@ export interface AiMove {
   toCol: number
 }
 
+// Thrown inside minimaxSearch to abort a depth when the time budget expires.
+// Caught at the iterative-deepening loop; the last *complete* depth's best move is returned.
+class SearchTimeout extends Error {}
+
 function getAllMoves(
   pieces: Piece[],
   side: 'attacker' | 'defender',
@@ -179,20 +183,43 @@ function evalPosition(
     }
   }
 
+  // Attacker encirclement: penalise the king being flanked from multiple sides.
+  // For each orthogonal direction, check if an unblocked attacker is within 3 squares.
+  // A quadratic penalty kicks in when 2+ sides are covered — this is when the king
+  // is in genuine danger of being trapped.
+  const orthoDirs = [[-1, 0], [1, 0], [0, -1], [0, 1]] as const
+  let encircledSides = 0
+  for (const [dr, dc] of orthoDirs) {
+    for (let dist = 1; dist <= 3; dist++) {
+      const r = king.row + dr * dist, c = king.col + dc * dist
+      if (r < 0 || r >= boardSize || c < 0 || c >= boardSize) break
+      const blocker = pieces.find(p => p.row === r && p.col === c)
+      if (!blocker) continue
+      if (blocker.type === 'attacker') { encircledSides++; break }
+      break // a defender or the king itself blocks this direction
+    }
+  }
+  if (encircledSides >= 2) score -= encircledSides * encircledSides * 8
+
   return score
 }
 
 // Order moves to maximise alpha-beta pruning: winning/threatening moves first.
+// An optional pvMove (best move from the previous ID iteration) is tried first.
 function orderMoves(
   moves: { piece: Piece; row: number; col: number }[],
   pieces: Piece[],
   side: 'attacker' | 'defender',
   boardSize: number,
-  kingEscapeEdge: boolean
+  kingEscapeEdge: boolean,
+  pvMove?: { piece: Piece; row: number; col: number } | null
 ): { piece: Piece; row: number; col: number }[] {
   const king = pieces.find(p => p.type === 'king')
-  return [...moves].sort((a, b) => {
+
+  const sorted = [...moves].sort((a, b) => {
     const priority = (m: { piece: Piece; row: number; col: number }) => {
+      // PV move from the previous iteration — always search first
+      if (pvMove && m.piece.id === pvMove.piece.id && m.row === pvMove.row && m.col === pvMove.col) return 200
       if (m.piece.type === 'king') {
         const escape = kingEscapeEdge
           ? (m.row === 0 || m.row === boardSize - 1 || m.col === 0 || m.col === boardSize - 1)
@@ -201,7 +228,6 @@ function orderMoves(
       }
       if (!king) return 0
       if (side === 'attacker') {
-        // Prefer moving toward the king
         const prev = Math.abs(m.piece.row - king.row) + Math.abs(m.piece.col - king.col)
         const next = Math.abs(m.row - king.row) + Math.abs(m.col - king.col)
         return (prev - next) * 2
@@ -210,10 +236,13 @@ function orderMoves(
     }
     return priority(b) - priority(a)
   })
+
+  return sorted
 }
 
 // Minimax with alpha-beta pruning and a transposition table.
 // All scores are in defender-perspective units (positive = good for defender).
+// Throws SearchTimeout if performance.now() exceeds deadline.
 function minimaxSearch(
   pieces: Piece[],
   side: 'attacker' | 'defender',
@@ -226,8 +255,11 @@ function minimaxSearch(
   shieldwall: boolean,
   weakKing: boolean,
   noThrone: boolean,
-  tt: Map<string, number>
+  tt: Map<string, number>,
+  deadline: number
 ): number {
+  if (performance.now() > deadline) throw new SearchTimeout()
+
   const ttKey = positionKey(pieces, side) + depth
   const cached = tt.get(ttKey)
   if (cached !== undefined) return cached
@@ -244,7 +276,6 @@ function minimaxSearch(
   )
 
   if (moves.length === 0) {
-    // Stalemate — the side to move loses
     const v = side === 'defender' ? -9000 : 9000
     tt.set(ttKey, v)
     return v
@@ -259,11 +290,11 @@ function minimaxSearch(
 
     let val: number
     if (result.winner === 'defender') {
-      val = 9000 + depth // prefer faster wins
+      val = 9000 + depth
     } else if (result.winner === 'attacker') {
       val = -9000 - depth
     } else {
-      val = minimaxSearch(result.pieces, opponent, depth - 1, alpha, beta, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone, tt)
+      val = minimaxSearch(result.pieces, opponent, depth - 1, alpha, beta, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone, tt, deadline)
     }
 
     if (isMaximising) {
@@ -278,6 +309,22 @@ function minimaxSearch(
 
   tt.set(ttKey, best)
   return best
+}
+
+// Maximum search depth by difficulty and board size.
+// Smaller boards support deeper search within a comfortable time budget.
+function maxDepthFor(difficulty: 'easy' | 'medium' | 'hard', boardSize: number): number {
+  if (difficulty === 'easy') return 1
+  if (difficulty === 'medium') {
+    if (boardSize <= 7) return 3
+    if (boardSize <= 9) return 2
+    return 2
+  }
+  // hard
+  if (boardSize <= 7) return 5
+  if (boardSize <= 9) return 4
+  if (boardSize <= 13) return 3
+  return 2
 }
 
 export function getBestMove(
@@ -324,36 +371,66 @@ export function getBestMove(
     return { pieceId: pick.piece.id, toRow: pick.row, toCol: pick.col }
   }
 
-  // Medium / Hard: minimax with alpha-beta pruning
-  // Depth scales down on large boards to stay within a comfortable time budget
-  const baseDepth = difficulty === 'hard' ? 3 : 2
-  const depth = boardSize >= 15 ? Math.max(1, baseDepth - 1) : baseDepth
-  // Medium gets noise so it's beatable; hard plays near-optimally
+  // Medium / Hard: iterative deepening minimax with alpha-beta pruning.
+  // Searches depth 1, 2, … up to maxDepth or until the 800ms budget expires.
+  // The TT persists across iterations so shallower-search results seed deeper ones.
+  // The best move from each completed depth seeds move ordering for the next (PV move).
+  const maxDepth = maxDepthFor(difficulty, boardSize)
   const noise = difficulty === 'medium' ? 15 : 0
-
   const isDefender = side === 'defender'
   const opponent: 'attacker' | 'defender' = isDefender ? 'attacker' : 'defender'
   const tt = new Map<string, number>()
+  const deadline = performance.now() + 800
 
-  const orderedPool = orderMoves(pool, pieces, side, boardSize, kingEscapeEdge)
+  let bestMove: typeof pool[0] | null = null
+  let pvMove: typeof pool[0] | null = null
 
-  const scored = orderedPool.map(m => {
-    const result = applyMove(pieces, m.piece.id, m.row, m.col, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone)
+  for (let depth = 1; depth <= maxDepth; depth++) {
+    const orderedPool = orderMoves(pool, pieces, side, boardSize, kingEscapeEdge, pvMove)
+    let bestThisDepth: typeof pool[0] | null = null
+    let bestScoreThisDepth = -Infinity
 
-    let raw: number
-    if (result.winner === 'defender') {
-      raw = 9000
-    } else if (result.winner === 'attacker') {
-      raw = -9000
-    } else {
-      raw = minimaxSearch(result.pieces, opponent, depth - 1, -Infinity, Infinity, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone, tt)
+    try {
+      for (const m of orderedPool) {
+        const result = applyMove(pieces, m.piece.id, m.row, m.col, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone)
+
+        let raw: number
+        if (result.winner === 'defender') {
+          raw = 9000
+        } else if (result.winner === 'attacker') {
+          raw = -9000
+        } else {
+          raw = minimaxSearch(
+            result.pieces, opponent, depth - 1, -Infinity, Infinity,
+            boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone,
+            tt, deadline
+          )
+        }
+
+        // Convert to the moving side's perspective, add noise and repetition penalty
+        const val = (isDefender ? raw : -raw) - repCount(m) * 40 + Math.random() * noise
+
+        if (val > bestScoreThisDepth) {
+          bestScoreThisDepth = val
+          bestThisDepth = m
+        }
+      }
+
+      // Depth completed — commit this depth's result
+      bestMove = bestThisDepth
+      pvMove = bestThisDepth
+
+    } catch (e) {
+      if (!(e instanceof SearchTimeout)) throw e
+      // Time expired mid-depth — discard partial results, keep last complete depth's best move
+      break
     }
 
-    // Scores are from the defender's perspective; flip sign if we're the attacker
-    const val = isDefender ? raw : -raw
+    // Also stop early if we found a forced win (no need to search deeper)
+    if (bestScoreThisDepth >= 9000) break
+  }
 
-    return { ...m, score: val - repCount(m) * 40 + Math.random() * noise }
-  }).sort((a, b) => b.score - a.score)
-
-  return { pieceId: scored[0].piece.id, toRow: scored[0].row, toCol: scored[0].col }
+  // Fallback to first legal move if budget expired before depth 1 completed (shouldn't happen)
+  const chosen = bestMove ?? pool[0]
+  return { pieceId: chosen.piece.id, toRow: chosen.row, toCol: chosen.col }
 }
