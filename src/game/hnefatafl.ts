@@ -536,7 +536,6 @@ export function isValidMove(row: number, col: number, validMoves: [number, numbe
 // Used for repetition detection — equal keys mean the same position.
 export function positionKey(pieces: Piece[], turn: 'attacker' | 'defender'): string {
   return pieces
-    .filter(p => !('dying' in p))  // exclude mid-animation pieces if present
     .map(p => `${p.type[0]}${p.row},${p.col}`)
     .sort()
     .join('|') + '>' + turn

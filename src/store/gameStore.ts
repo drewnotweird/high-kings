@@ -55,7 +55,7 @@ interface GameStore {
   validMoves: [number, number][]
   cautionMoves: [number, number][]  // valid moves that would create a 2nd repetition
   winner: PlayerSide | null
-  repetitionWarning: { toRow: number; toCol: number } | null
+  repetitionWarning: { pieceId: string; toRow: number; toCol: number } | null
   theme: Theme
   currentTurn: PlayerSide
   scores: Record<PlayerSide, number>
@@ -192,7 +192,7 @@ export const useGameStore = create<GameStore>((set) => ({
       const nextTurn = s.currentTurn === 'defender' ? 'attacker' : 'defender'
       const key = positionKey(result.pieces, nextTurn)
       const seen = s.history.filter(h => h.posKey === key).length
-      if (seen >= 2) return { ...s, repetitionWarning: { toRow, toCol } }
+      if (seen >= 2) return { ...s, repetitionWarning: { pieceId: s.selectedId!, toRow, toCol } }
     }
 
     const movedPiece = activePieces.find(p => p.id === s.selectedId)!
@@ -230,14 +230,14 @@ export const useGameStore = create<GameStore>((set) => ({
   }),
 
   confirmRepetitionMove: () => set((s) => {
-    if (!s.repetitionWarning || !s.selectedId) return s
+    if (!s.repetitionWarning) return s
     // Execute the repeated move but immediately forfeit to the opponent
-    const { toRow, toCol } = s.repetitionWarning
+    const { pieceId: warningPieceId, toRow, toCol } = s.repetitionWarning
     const { boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone } = getBoardConfig(s.rules, s.boardSize)
     const activePieces = s.pieces.filter(p => !s.dyingPieces.some(d => d.id === p.id))
-    const result = applyMove(activePieces, s.selectedId, toRow, toCol, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone)
+    const result = applyMove(activePieces, warningPieceId, toRow, toCol, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone)
     const capturedPieces = activePieces.filter(p => result.capturedIds.includes(p.id))
-    const movedPiece = activePieces.find(p => p.id === s.selectedId)!
+    const movedPiece = activePieces.find(p => p.id === warningPieceId)!
     const movedIsDefender = movedPiece.type === 'defender' || movedPiece.type === 'king'
     const moveDist = Math.abs(toRow - movedPiece.row) + Math.abs(toCol - movedPiece.col)
     const captureDelayMs = Math.round(Math.max(500, moveDist * 280) + 80)
@@ -257,10 +257,10 @@ export const useGameStore = create<GameStore>((set) => ({
         attacker: s.scores.attacker + (s.currentTurn === 'attacker' ? capturedPieces.length : 0),
         defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
       },
-      winner: s.currentTurn,  // the mover forfeits
+      winner: nextTurn,  // the mover forfeits; opponent wins
       history: [...s.history, snapshot],
       lastMoveTarget: { row: toRow, col: toCol },
-      lastMove: { pieceId: s.selectedId!, fromRow: movedPiece.row, fromCol: movedPiece.col, toRow, toCol },
+      lastMove: { pieceId: warningPieceId, fromRow: movedPiece.row, fromCol: movedPiece.col, toRow, toCol },
       lastMovePath: [],
     }
   }),

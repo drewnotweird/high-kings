@@ -77,3 +77,123 @@ GitHub Actions → FTP to Fasthosts shared hosting on push to `main`.
 ## Critical
 
 **Do not run `npm run gen-textures`** — all textures in `public/textures/` are hand-edited source files.
+
+---
+
+## AI — Architecture & Contribution Guide
+
+### Files
+
+| File | Role |
+|---|---|
+| `src/game/ai.ts` | Entire AI engine — search, evaluation, move ordering, repetition safety |
+| `src/game/hnefatafl.ts` | Game rules — `getValidMoves`, `applyMove`, `positionKey`, `hasMoves` |
+| `src/store/gameStore.ts` | Calls `getBestMove` in `machineMove` and the Hint button handler |
+
+### How the AI works
+
+The AI uses **minimax search with alpha-beta pruning** and a transposition table. It searches ahead 2 plies (medium) or 3 plies (hard), evaluates leaf nodes with a static position function, and returns the best move found. Easy mode stays 1-ply to keep it accessible.
+
+**Search depth by difficulty and board size:**
+
+| Difficulty | ≤ 13×13 boards | 15×15 and 19×19 |
+|---|---|---|
+| Easy | 1-ply (no lookahead) | 1-ply |
+| Medium | Depth 2 + ±15 noise | Depth 1 + ±15 noise |
+| Hard | Depth 3 | Depth 2 |
+
+Large boards reduce depth by 1 to stay within a comfortable time budget (~500–800ms observed on an 11×11 hard game at move 1).
+
+**`getBestMove` signature:**
+```ts
+getBestMove(
+  pieces: Piece[],
+  side: 'attacker' | 'defender',
+  boardSize: number,
+  center: number,
+  difficulty: 'easy' | 'medium' | 'hard',
+  kingEscapeEdge = false,   // true = Tawlbwrdd edge escape; false = corner escape
+  shieldwall = false,        // true = Copenhagen / Tawlbwrdd shieldwall captures
+  weakKing = false,          // true = king captured like any other piece
+  noThrone = false,          // true = king may re-enter throne (some variants)
+  positionHistory: string[]  // list of positionKey strings from game history
+): AiMove | null
+```
+
+### Static position evaluator
+
+All scores are from the **defender's perspective** (positive = good for defender, negative = good for attacker). The attacker minimises; the defender maximises.
+
+| Term | Weight | Notes |
+|---|---|---|
+| Defender material | +40 per defender | Defenders are outnumbered so each counts more |
+| Attacker material | −20 per attacker | |
+| King distance to escape | −10 per step | Closer = better for defender |
+| King open escape routes | +30 per route | Direct lines to corners / edges |
+| Attacker proximity to king | −10 × (5 − dist) | For each attacker within 4 squares |
+| Defender cohesion | +5 per adjacent pair | Adjacent defenders form walls and protect each other |
+| King escape (terminal) | +9000 / −9000 | Win/loss detected inside the search tree |
+| Stalemate (terminal) | ±9000 | Side to move loses if it has no legal moves |
+
+### Move ordering
+
+Before searching, moves are sorted to maximise alpha-beta pruning:
+1. King moves to an escape square (instant high score, searched first)
+2. King moves (any)
+3. Attacker moves toward king (ranked by distance improvement)
+
+This ordering means winning lines are typically found early and large branches can be pruned.
+
+### Transposition table
+
+A `Map<string, number>` keyed by `positionKey(pieces, side) + depth` caches evaluated positions within each `getBestMove` call. This avoids re-evaluating the same position at the same depth when the search tree has transpositions (different move orders reaching the same board state).
+
+### Easy mode
+
+Easy does not use minimax. It scores all moves with the 1-ply heuristic (custodian capture threats, king distance/escape heuristics), picks randomly from any capture opportunities, otherwise picks randomly across all moves.
+
+**1-ply heuristic weights (attacker):**
+
+| Heuristic | Weight |
+|---|---|
+| Custodian capture set-up | +12 |
+| Block an immediate king escape | +150 × escapes blocked |
+| Open escape routes remaining | −60 per route |
+| Move closer to king | +10 per step |
+| Land adjacent to king | +18 |
+| Intercept clear corner path | +80 |
+
+**1-ply heuristic weights (defender):**
+
+| Heuristic | Weight |
+|---|---|
+| King moves toward escape | +12 per step |
+| King opens new escape routes | +35 per new route |
+| King reaches escape square | +10,000 |
+| Non-king defender stays near king | +3 per step |
+| Custodian capture set-up | +12 |
+
+### Repetition safety
+
+Before searching, the AI filters out any move that would create a 3rd repeated board position (a forfeit under the rules). A memoised `repCount` function calls `applyMove` once per candidate move and checks its resulting `positionKey` against the full game history. If all moves would repeat, the filter is lifted and the least-bad option is chosen.
+
+### Integration points
+
+```ts
+// Machine's turn — auto-fires after human move (src/store/gameStore.ts)
+machineMove: (pieceId, toRow, toCol) => ...
+
+// Hint button (src/App.tsx)
+const posHistory = useGameStore.getState().history.map(h => h.posKey)
+const hint = getBestMove(pieces, hintSide, boardSize, center, difficulty,
+  kingEscapeEdge, shieldwall, weakKing, noThrone, posHistory)
+```
+
+Both pass the full `positionHistory` so the repetition filter works correctly.
+
+### Ideas for further improvement
+
+- **Opening book** — the first few moves are unconstrained; a small lookup table of known good openings would improve early play
+- **Deeper search on smaller boards** — Brandub (7×7) could support depth 4–5 without a performance hit
+- **Iterative deepening** — search depth 1, 2, 3 … and return the best move found when a time budget expires, rather than a fixed depth cutoff
+- **Better attacker encirclement** — reward configurations where multiple attackers form a partial ring around the king
