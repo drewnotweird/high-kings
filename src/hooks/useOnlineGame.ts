@@ -17,6 +17,7 @@ type ResyncEvent = { type: 'resync'; seq: number; pieces: unknown[] }
 interface OnlineGameState {
   gameId: string | null
   mySide: 'attacker' | 'defender' | null
+  opponentId: string | null
   seq: number
   disconnectTimer: ReturnType<typeof setTimeout> | null
   channel: RealtimeChannel | null
@@ -29,6 +30,7 @@ export function useOnlineGame(
   const state = useRef<OnlineGameState>({
     gameId: null,
     mySide: null,
+    opponentId: null,
     seq: 0,
     disconnectTimer: null,
     channel: null,
@@ -43,9 +45,10 @@ export function useOnlineGame(
     }
   }, [])
 
-  const joinGameChannel = useCallback((gameId: string, mySide: 'attacker' | 'defender') => {
+  const joinGameChannel = useCallback((gameId: string, mySide: 'attacker' | 'defender', opponentId: string | null) => {
     state.current.gameId = gameId
     state.current.mySide = mySide
+    state.current.opponentId = opponentId
     state.current.seq = 0
 
     const channel = supabase.channel(`game:${gameId}`, { config: { broadcast: { self: false } } })
@@ -69,7 +72,7 @@ export function useOnlineGame(
         })
       })
       .on('broadcast', { event: 'opponent_name' }, ({ payload }: { payload: NameEvent }) => {
-        onStatusChange({ type: 'matched', gameId, opponentName: payload.name, opponentElo: payload.elo ?? null, opponentId: null })
+        onStatusChange({ type: 'matched', gameId, opponentName: payload.name, opponentElo: payload.elo ?? null, opponentId: state.current.opponentId })
       })
       .on('presence', { event: 'leave' }, () => {
         let secondsLeft = 30
@@ -91,7 +94,7 @@ export function useOnlineGame(
           clearInterval(state.current.disconnectTimer)
           state.current.disconnectTimer = null
         }
-        onStatusChange({ type: 'matched', gameId, opponentName: '', opponentElo: null, opponentId: null })
+        onStatusChange({ type: 'matched', gameId, opponentName: '', opponentElo: null, opponentId: state.current.opponentId })
         channel.send({ type: 'broadcast', event: 'opponent_name', payload: { type: 'opponent_name', name: username ?? 'Unknown', elo: elo ?? null } })
       })
       .subscribe(async (status) => {
@@ -102,9 +105,13 @@ export function useOnlineGame(
       })
   }, [machineMove, onStatusChange, userId, username])
 
-  const startGame = useCallback((gameId: string, mySide: 'attacker' | 'defender') => {
-    joinGameChannel(gameId, mySide)
-    onStatusChange({ type: 'matched', gameId, opponentName: '', opponentElo: null, opponentId: null })
+  const startGame = useCallback(async (gameId: string, mySide: 'attacker' | 'defender') => {
+    // Fetch the game record to get the opponent's real user ID so losses record the correct winner
+    let opponentId: string | null = null
+    const { data } = await supabase.from('games').select('attacker_id, defender_id').eq('id', gameId).single()
+    if (data) opponentId = mySide === 'attacker' ? data.defender_id : data.attacker_id
+    joinGameChannel(gameId, mySide, opponentId)
+    onStatusChange({ type: 'matched', gameId, opponentName: '', opponentElo: null, opponentId })
   }, [joinGameChannel, onStatusChange])
 
   const watchGame = useCallback((gameId: string) => {

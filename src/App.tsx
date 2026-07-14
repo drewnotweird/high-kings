@@ -2735,13 +2735,18 @@ function App() {
     sendMove(lastMove.pieceId, lastMove.toRow, lastMove.toCol)
   }, [lastMove, sendMove, onlineStatus.type])
 
-  // End online game when winner decided
+  // End online game when winner decided; refresh ELO after DB trigger runs
   useEffect(() => {
     if (!winner || onlineStatus.type !== 'matched') return
     const opponentId = onlineStatus.opponentId
     const winnerId = winner === playerMode ? userId : opponentId
     endGame(winnerId)
-  }, [winner, endGame, playerMode, userId, onlineStatus])
+    if (!userId) return
+    setTimeout(() => {
+      supabase.from('profiles').select('elo').eq('id', userId).single()
+        .then(({ data }) => { if (data?.elo != null) setElo(data.elo) })
+    }, 2000)
+  }, [winner, endGame, playerMode, userId, onlineStatus, setElo])
 
   // ?ps=true in the URL activates power-saving mode on load
   useEffect(() => {

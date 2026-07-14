@@ -362,7 +362,13 @@ export function getValidMoves(
   return moves
 }
 
-function checkKingCaptured(king: Piece, pieces: Piece[], boardSize: number, center: number, weakKing: boolean, noThrone = false): boolean {
+// moverRow/moverCol: the attacker's destination — the capture only counts if this piece
+// is adjacent to the king. This prevents a pre-existing sandwich (formed when the king
+// walked between two existing attackers on the defender's turn) from being incorrectly
+// claimed by an unrelated attacker move elsewhere on the board.
+function checkKingCaptured(king: Piece, pieces: Piece[], boardSize: number, center: number, weakKing: boolean, noThrone = false, moverRow = -1, moverCol = -1): boolean {
+  const moverAdjacentToKing = Math.abs(moverRow - king.row) + Math.abs(moverCol - king.col) === 1
+
   // Weak king off the throne (or when there is no throne): sandwiched on any axis like a normal piece
   if (weakKing && (noThrone || !isThrone(king.row, king.col, center))) {
     for (const [dr, dc] of DIRS) {
@@ -372,11 +378,18 @@ function checkKingCaptured(king: Piece, pieces: Piece[], boardSize: number, cent
              || isHostile(r1, c1, boardSize, center, pieces)
       const h2 = pieces.find(p => p.row === r2 && p.col === c2)?.type === 'attacker'
              || isHostile(r2, c2, boardSize, center, pieces)
-      if (h1 && h2) return true
+      if (h1 && h2) {
+        // Only claim the capture if the mover is one of the two sandwiching pieces
+        const moverIsH1 = moverRow === r1 && moverCol === c1
+        const moverIsH2 = moverRow === r2 && moverCol === c2
+        if (moverIsH1 || moverIsH2) return true
+      }
     }
     return false
   }
-  // Strong king (or weak king on throne): needs all 4 sides hostile
+  // Strong king (or weak king on throne): needs all 4 sides hostile.
+  // The mover must be adjacent to the king to complete the surround.
+  if (!moverAdjacentToKing) return false
   let surrounded = 0
   for (const [dr, dc] of DIRS) {
     const r = king.row + dr
@@ -515,7 +528,7 @@ export function applyMove(
     return { pieces: remaining, capturedIds, winner: 'defender' }
   }
 
-  if (moverIsAttacker && checkKingCaptured(king, remaining, boardSize, center, weakKing, noThrone)) {
+  if (moverIsAttacker && checkKingCaptured(king, remaining, boardSize, center, weakKing, noThrone, toRow, toCol)) {
     return { pieces: remaining.filter(p => p.type !== 'king'), capturedIds: [...capturedIds, king.id], winner: 'attacker' }
   }
 
