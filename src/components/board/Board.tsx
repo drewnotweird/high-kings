@@ -1,9 +1,11 @@
 import { useMemo, useRef, useEffect, useLayoutEffect, useState } from 'react'
 import { useTexture } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
-import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, Mesh, MeshStandardMaterial, MeshBasicMaterial, PlaneGeometry, Texture } from 'three'
+import { ClampToEdgeWrapping, Shape, ExtrudeGeometry, Vector2, Mesh, MeshStandardMaterial, MeshBasicMaterial, PlaneGeometry, BufferGeometry, CanvasTexture, SRGBColorSpace } from 'three'
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
+import type { ThreeEvent } from '@react-three/fiber'
 import { getBoardConfig, isCorner, isThrone, isValidMove } from '../../game/hnefatafl'
-import { useGameStore } from '../../store/gameStore'
+import { useGameSlice } from '../../store/gameStore'
 import type { ThemeConfig } from '../../lib/themes'
 
 const SQUARE_SIZE = 0.88
@@ -13,6 +15,32 @@ const BEVEL = 0.038
 const TILE_TOP = TILE_HEIGHT + BEVEL
 const TILE_COUNT = 10
 const HALF = SQUARE_SIZE / 2
+
+// Tile atlas layout: cells 0-9 = tile-1..10, cell 10 = tile-11 (corner/throne face)
+const ATLAS_CELL = 256
+const ATLAS_COLS = 4
+const ATLAS_ROWS = 3
+const ATLAS_PAD = 10 // px inset per cell edge — bleed guard for filtering/mipmaps
+const OVERLAY_ORDER = ['corner', 'throne', 'defender', 'attacker'] as const
+
+// Remap a geometry's 0..1 UVs into one padded atlas cell, rotating in 90° steps.
+// Matches the old per-texture `texture.rotation = rotIdx * PI/2` behaviour.
+function remapUVsToAtlasCell(
+  geo: BufferGeometry, cellIdx: number, rotIdx: number, cols: number, rows: number
+) {
+  const uv = geo.attributes.uv
+  const cellCol = cellIdx % cols
+  // Canvas rows count from the top; UV v counts from the bottom (flipY)
+  const cellRow = rows - 1 - Math.floor(cellIdx / cols)
+  const inner = (ATLAS_CELL - 2 * ATLAS_PAD) / ATLAS_CELL
+  const pad = ATLAS_PAD / ATLAS_CELL
+  for (let i = 0; i < uv.count; i++) {
+    let u = Math.min(Math.max(uv.getX(i), 0), 1)
+    let v = Math.min(Math.max(uv.getY(i), 0), 1)
+    for (let r = 0; r < rotIdx; r++) { const t = u; u = v; v = 1 - t }
+    uv.setXY(i, (cellCol + pad + u * inner) / cols, (cellRow + pad + v * inner) / rows)
+  }
+}
 
 function mulberry32(seed: number) {
   return function () {
@@ -70,7 +98,7 @@ function ValidMoveMarker({ x, z, row, col, appearDelay, disappearing = false, di
   const meshRef = useRef<Mesh>(null)
   const glowRef = useRef<Mesh>(null)
   const matRef = useRef<MeshStandardMaterial>(null)
-  const { movePiece, powerSaving } = useGameStore()
+  const { movePiece, powerSaving } = useGameSlice('movePiece', 'powerSaving')
   const phase = getPhase(row, col)
   const birthTime = useRef(0)
   const sinkY = useRef(0)
@@ -266,7 +294,7 @@ function LastMovePathGlow({ path, boardOffset }: { path: [number, number][]; boa
 }
 
 export function Board({ theme, menuPhase }: BoardProps) {
-  const { rules, boardSize: storedBoardSize, pieces, validMoves, cautionMoves, selectedId, selectPiece, movePiece, gameKey, powerSaving, lastMovePath } = useGameStore()
+  const { rules, boardSize: storedBoardSize, pieces, validMoves, cautionMoves, selectedId, selectPiece, movePiece, gameKey, powerSaving, lastMovePath } = useGameSlice('rules', 'boardSize', 'pieces', 'validMoves', 'cautionMoves', 'selectedId', 'selectPiece', 'movePiece', 'gameKey', 'powerSaving', 'lastMovePath')
   const { boardSize, center, attackerStarts, defenderStarts, kingEscapeEdge } = getBoardConfig(rules, storedBoardSize)
   useEffect(() => { clearPhaseCache() }, [gameKey])
   const [hoveredTile, setHoveredTile] = useState<{ x: number; z: number } | null>(null)
@@ -355,34 +383,53 @@ export function Board({ theme, menuPhase }: BoardProps) {
     return map
   }, [boardSize])
 
-  const tilePaths = Array.from({ length: TILE_COUNT }, (_, i) => `${import.meta.env.BASE_URL}textures/tile-${i + 1}.png`)
-  const tileTextures = useTexture(tilePaths)
-  tileTextures.forEach(t => { t.wrapS = t.wrapT = ClampToEdgeWrapping })
+  const tilePaths = Array.from({ length: TILE_COUNT }, (_, i) => `${import.meta.env.BASE_URL}textures/tile-${i + 1}.webp`)
+  const tileTextures = useTexture([...tilePaths, `${import.meta.env.BASE_URL}textures/tile-11.webp`])
 
-  // 4 rotated clones per texture (0°, 90°, 180°, 270°) — clones share the GPU upload
-  const rotatedTileTextures = useMemo<Texture[][]>(() => {
-    return tileTextures.map(t =>
-      [0, 1, 2, 3].map(i => {
-        const clone = t.clone()
-        clone.rotation = i * (Math.PI / 2)
-        clone.center.set(0.5, 0.5)
-        clone.needsUpdate = true
-        return clone
-      })
-    )
-  }, [tileTextures])
-  useEffect(() => () => { rotatedTileTextures.flat().forEach(t => t.dispose()) }, [rotatedTileTextures])
-
-  const cornerTileTexture = useTexture(`${import.meta.env.BASE_URL}textures/tile-11.png`)
-
-  const boardTexture = useTexture(`${import.meta.env.BASE_URL}textures/board-edge.png`)
+  const boardTexture = useTexture(`${import.meta.env.BASE_URL}textures/board-edge.webp`)
 
   const overlays = useTexture({
-    corner:   `${import.meta.env.BASE_URL}textures/tile-corner.png`,
-    throne:   `${import.meta.env.BASE_URL}textures/tile-throne.png`,
-    defender: `${import.meta.env.BASE_URL}textures/tile-defender.png`,
-    attacker: `${import.meta.env.BASE_URL}textures/tile-attacker.png`,
+    corner:   `${import.meta.env.BASE_URL}textures/tile-corner.webp`,
+    throne:   `${import.meta.env.BASE_URL}textures/tile-throne.webp`,
+    defender: `${import.meta.env.BASE_URL}textures/tile-defender.webp`,
+    attacker: `${import.meta.env.BASE_URL}textures/tile-attacker.webp`,
   })
+
+  // Pack the 11 tile textures into one atlas so the whole board top is a single
+  // material / draw call. Per-square variant + rotation is baked into the merged
+  // geometry's UVs (see mergedTileGeo) instead of 44 rotated texture clones.
+  const tileAtlas = useMemo(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = ATLAS_CELL * ATLAS_COLS
+    canvas.height = ATLAS_CELL * ATLAS_ROWS
+    const ctx = canvas.getContext('2d')!
+    tileTextures.forEach((t, i) => {
+      const col = i % ATLAS_COLS
+      const row = Math.floor(i / ATLAS_COLS)
+      ctx.drawImage(t.image as CanvasImageSource, col * ATLAS_CELL, row * ATLAS_CELL, ATLAS_CELL, ATLAS_CELL)
+    })
+    const tex = new CanvasTexture(canvas)
+    tex.colorSpace = SRGBColorSpace
+    tex.wrapS = tex.wrapT = ClampToEdgeWrapping
+    return tex
+  }, [tileTextures])
+
+  const overlayAtlas = useMemo(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = ATLAS_CELL * 2
+    canvas.height = ATLAS_CELL * 2
+    const ctx = canvas.getContext('2d')!
+    OVERLAY_ORDER.forEach((name, i) => {
+      const col = i % 2
+      const row = Math.floor(i / 2)
+      ctx.drawImage(overlays[name].image as CanvasImageSource, col * ATLAS_CELL, row * ATLAS_CELL, ATLAS_CELL, ATLAS_CELL)
+    })
+    const tex = new CanvasTexture(canvas)
+    tex.colorSpace = SRGBColorSpace
+    tex.wrapS = tex.wrapT = ClampToEdgeWrapping
+    return tex
+  }, [overlays])
+  useEffect(() => () => { tileAtlas.dispose(); overlayAtlas.dispose() }, [tileAtlas, overlayAtlas])
 
   const squares = useMemo(() => {
     const attackerSet = new Set(attackerStarts.map(([r, c]) => `${r},${c}`))
@@ -413,6 +460,71 @@ export function Board({ theme, menuPhase }: BoardProps) {
     return result
   }, [boardSize, boardOffset, center, attackerStarts, defenderStarts, tileAssignment, tileRotation, kingEscapeEdge])
 
+  // All board tiles merged into a single geometry (one draw call), with each
+  // square's variant/rotation baked into its UVs against the tile atlas
+  const mergedTileGeo = useMemo(() => {
+    const geos = squares.map(({ x, z, variantIdx, rotIdx, isCornerTile }) => {
+      const g = tileGeometry.clone()
+      remapUVsToAtlasCell(g, isCornerTile ? TILE_COUNT : variantIdx, isCornerTile ? 0 : rotIdx, ATLAS_COLS, ATLAS_ROWS)
+      g.rotateX(-Math.PI / 2)
+      g.translate(x, 0, z)
+      return g
+    })
+    const merged = mergeGeometries(geos)
+    geos.forEach(g => g.dispose())
+    return merged
+  }, [squares, tileGeometry])
+
+  // Corner/throne/start-square markings — one merged transparent plane layer
+  const mergedOverlayGeo = useMemo(() => {
+    const geos = squares.filter(s => s.overlay).map(({ x, z, overlay }) => {
+      const g = new PlaneGeometry(SQUARE_SIZE * 0.96, SQUARE_SIZE * 0.96)
+      remapUVsToAtlasCell(g, OVERLAY_ORDER.indexOf(overlay!), 0, 2, 2)
+      g.rotateX(-Math.PI / 2)
+      g.translate(x, TILE_TOP + 0.003, z)
+      return g
+    })
+    if (geos.length === 0) return null
+    const merged = mergeGeometries(geos)
+    geos.forEach(g => g.dispose())
+    return merged
+  }, [squares])
+
+  useEffect(() => () => { mergedTileGeo.dispose(); mergedOverlayGeo?.dispose() }, [mergedTileGeo, mergedOverlayGeo])
+
+  // Single set of pointer handlers for the whole board — square is derived
+  // from the intersection point instead of 361 per-tile handlers
+  const boardMeshRef = useRef<Mesh>(null)
+  const pointToSquare = (e: ThreeEvent<MouseEvent>) => {
+    const mesh = boardMeshRef.current
+    if (!mesh) return null
+    const local = mesh.worldToLocal(e.point.clone())
+    const col = Math.round(local.x + boardOffset)
+    const row = Math.round(local.z + boardOffset)
+    if (row < 0 || row >= boardSize || col < 0 || col >= boardSize) return null
+    return { row, col, x: col - boardOffset, z: row - boardOffset }
+  }
+
+  const handleBoardClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation()
+    const sq = pointToSquare(e)
+    if (!sq) return
+    if (isValidMove(sq.row, sq.col, validMoves)) {
+      movePiece(sq.row, sq.col)
+    } else {
+      const pieceHere = pieces.find(p => p.row === sq.row && p.col === sq.col && p.type !== 'king')
+      if (pieceHere) selectPiece(pieceHere.id)
+      else if (selectedId) selectPiece(null)
+    }
+  }
+
+  const handleBoardPointerMove = (e: ThreeEvent<PointerEvent>) => {
+    if (powerSaving) return
+    const sq = pointToSquare(e)
+    const next = sq && isValidMove(sq.row, sq.col, validMoves) ? { x: sq.x, z: sq.z } : null
+    setHoveredTile(prev => (prev?.x === next?.x && prev?.z === next?.z) ? prev : next)
+  }
+
   return (
     <group>
       <mesh position={[0, -0.15, 0]} receiveShadow>
@@ -424,64 +536,55 @@ export function Board({ theme, menuPhase }: BoardProps) {
         />
       </mesh>
 
-      {(() => {
-        return squares.map(({ row, col, x, z, variantIdx, rotIdx, overlay, isCornerTile }) => {
-        const validTarget = isValidMove(row, col, validMoves)
-        const cautionTarget = validTarget && isValidMove(row, col, cautionMoves)
+      <mesh
+        ref={boardMeshRef}
+        geometry={mergedTileGeo}
+        receiveShadow
+        onClick={handleBoardClick}
+        onPointerMove={handleBoardPointerMove}
+        onPointerLeave={() => setHoveredTile(null)}
+      >
+        <meshStandardMaterial
+          map={tileAtlas}
+          roughness={theme.boardRoughness}
+          metalness={theme.boardMetalness}
+        />
+      </mesh>
+
+      {mergedOverlayGeo && (
+        <mesh geometry={mergedOverlayGeo}>
+          <meshStandardMaterial
+            map={overlayAtlas}
+            transparent
+            alphaTest={0.1}
+            roughness={0.8}
+            metalness={0}
+            depthWrite={false}
+            polygonOffset
+            polygonOffsetFactor={-1}
+          />
+        </mesh>
+      )}
+
+      {!menuPhase?.match(/hiding|hidden/) && validMoves.map(([row, col]) => {
+        const x = col - boardOffset
+        const z = row - boardOffset
         const dist = selectedPiece
           ? Math.max(Math.abs(row - selectedPiece.row), Math.abs(col - selectedPiece.col))
           : 0
-        const appearDelay = dist * 0.028
         return (
-          <group
+          <ValidMoveMarker
             key={`${row}-${col}`}
-            position={[x, 0, z]}
-            onClick={(e) => {
-              e.stopPropagation()
-              if (validTarget) {
-                movePiece(row, col)
-              } else {
-                const pieceHere = pieces.find(p => p.row === row && p.col === col && p.type !== 'king')
-                if (pieceHere) selectPiece(pieceHere.id)
-                else if (selectedId) selectPiece(null)
-              }
-            }}
-          >
-            <mesh
-              rotation={[-Math.PI / 2, 0, 0]}
-              geometry={tileGeometry}
-              receiveShadow
-              onPointerEnter={(e) => { e.stopPropagation(); if (!powerSaving && isValidMove(row, col, validMoves)) setHoveredTile({ x, z }) }}
-              onPointerLeave={(e) => { e.stopPropagation(); setHoveredTile(null) }}
-            >
-              <meshStandardMaterial
-                map={isCornerTile ? cornerTileTexture : rotatedTileTextures[variantIdx][rotIdx]}
-                roughness={theme.boardRoughness}
-                metalness={theme.boardMetalness}
-              />
-            </mesh>
-
-            {overlay && (
-              <mesh position={[0, TILE_TOP + 0.003, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <planeGeometry args={[SQUARE_SIZE * 0.96, SQUARE_SIZE * 0.96]} />
-                <meshStandardMaterial
-                  map={overlays[overlay]}
-                  transparent
-                  alphaTest={0.1}
-                  roughness={0.8}
-                  metalness={0}
-                  depthWrite={false}
-                  polygonOffset
-                  polygonOffsetFactor={-1}
-                />
-              </mesh>
-            )}
-
-            {validTarget && !menuPhase?.match(/hiding|hidden/) && <ValidMoveMarker x={0} z={0} row={row} col={col} appearDelay={appearDelay} caution={cautionTarget} onHover={() => setHoveredTile({ x, z })} onUnhover={() => setHoveredTile(null)} tileHovered={hoveredTile?.x === x && hoveredTile?.z === z} dimmed={hoveredTile !== null && !(hoveredTile.x === x && hoveredTile.z === z)} />}
-          </group>
+            x={x} z={z} row={row} col={col}
+            appearDelay={dist * 0.028}
+            caution={isValidMove(row, col, cautionMoves)}
+            onHover={() => setHoveredTile({ x, z })}
+            onUnhover={() => setHoveredTile(null)}
+            tileHovered={hoveredTile?.x === x && hoveredTile?.z === z}
+            dimmed={hoveredTile !== null && !(hoveredTile.x === x && hoveredTile.z === z)}
+          />
         )
-      })
-      })()}
+      })}
 
       <LastMovePathGlow path={lastMovePath} boardOffset={boardOffset} />
 

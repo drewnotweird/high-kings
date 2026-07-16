@@ -4,7 +4,7 @@ import { useTexture } from '@react-three/drei'
 import { Mesh, Vector2, MeshPhysicalMaterial, MeshStandardMaterial } from 'three'
 import { getBoardConfig } from '../../game/hnefatafl'
 import type { Piece as PieceData } from '../../game/hnefatafl'
-import { useGameStore } from '../../store/gameStore'
+import { useGameSlice } from '../../store/gameStore'
 import type { ThemeConfig } from '../../lib/themes'
 const W = 1.35
 const REST_Y = 0.15
@@ -33,7 +33,7 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
   const landTime = useRef(0)
   const menuOpacity = useRef(1)
 
-  const { rules, boardSize: storedBoardSize, powerSaving, captorIds, undoTrigger, currentTurn, playerMode, winner, roleSelectOpen } = useGameStore()
+  const { rules, boardSize: storedBoardSize, powerSaving, captorIds, undoTrigger, currentTurn, playerMode, winner, roleSelectOpen } = useGameSlice('rules', 'boardSize', 'powerSaving', 'captorIds', 'undoTrigger', 'currentTurn', 'playerMode', 'winner', 'roleSelectOpen')
   const boardOffset = (getBoardConfig(rules, storedBoardSize).boardSize - 1) / 2
   const x = piece.col - boardOffset
   const z = piece.row - boardOffset
@@ -96,8 +96,8 @@ export function Piece({ piece, theme: _theme, isSelected, dropDelay, dropStartMs
   )
 
   const prefix = isKing ? 'piece-king' : isDefender ? 'piece-light' : 'piece-dark'
-  const texture = useTexture(`${import.meta.env.BASE_URL}textures/${prefix}.png`)
-  const roughnessMap = useTexture(`${import.meta.env.BASE_URL}textures/${prefix}-roughness.png`)
+  const texture = useTexture(`${import.meta.env.BASE_URL}textures/${prefix}.webp`)
+  const roughnessMap = useTexture(`${import.meta.env.BASE_URL}textures/${prefix}-roughness.webp`)
 
   const points = useMemo(() => {
     if (isKing) {

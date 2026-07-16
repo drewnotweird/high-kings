@@ -11,5 +11,19 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     outDir: 'dist',
+    // Split heavyweight vendors into their own long-lived chunks so game-code
+    // changes don't re-download three.js et al. (rolldown's advancedChunks)
+    rollupOptions: {
+      output: {
+        advancedChunks: {
+          groups: [
+            { name: 'three', test: /node_modules\/(three|@react-three)\// },
+            { name: 'react', test: /node_modules\/(react|react-dom|scheduler)\// },
+            { name: 'supabase', test: /node_modules\/@supabase\// },
+            { name: 'motion', test: /node_modules\/(framer-motion|motion-dom|motion-utils)\// },
+          ],
+        },
+      },
+    },
   },
 }))

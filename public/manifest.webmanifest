@@ -1,0 +1,15 @@
+{
+  "name": "High Kings — Hnefatafl",
+  "short_name": "High Kings",
+  "description": "The ancient Viking strategy board game — 11 variants, 3D board, AI opponent, online multiplayer.",
+  "start_url": "/highkings/",
+  "scope": "/highkings/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0800",
+  "theme_color": "#0a0800",
+  "icons": [
+    { "src": "/highkings/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/highkings/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

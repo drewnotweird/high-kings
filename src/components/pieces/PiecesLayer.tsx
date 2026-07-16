@@ -7,7 +7,7 @@ import {
 } from 'three'
 import { getBoardConfig } from '../../game/hnefatafl'
 import type { Piece as PieceData } from '../../game/hnefatafl'
-import { useGameStore } from '../../store/gameStore'
+import { useGameSlice } from '../../store/gameStore'
 import type { MenuPhase } from './Piece'
 
 const W = 1.35
@@ -59,7 +59,7 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
   const {
     rules, boardSize: storedBoardSize, powerSaving, captorIds, undoTrigger,
     currentTurn, playerMode, winner, selectedId, selectPiece, roleSelectOpen,
-  } = useGameStore()
+  } = useGameSlice('rules', 'boardSize', 'powerSaving', 'captorIds', 'undoTrigger', 'currentTurn', 'playerMode', 'winner', 'selectedId', 'selectPiece', 'roleSelectOpen')
 
   const boardOffset = (getBoardConfig(rules, storedBoardSize).boardSize - 1) / 2
 
@@ -71,10 +71,10 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
   const haloMatRef     = useRef<MeshStandardMaterial>(null)
 
   // Textures
-  const attackerTex   = useTexture(`${import.meta.env.BASE_URL}textures/piece-dark.png`)
-  const attackerRough = useTexture(`${import.meta.env.BASE_URL}textures/piece-dark-roughness.png`)
-  const defenderTex   = useTexture(`${import.meta.env.BASE_URL}textures/piece-light.png`)
-  const defenderRough = useTexture(`${import.meta.env.BASE_URL}textures/piece-light-roughness.png`)
+  const attackerTex   = useTexture(`${import.meta.env.BASE_URL}textures/piece-dark.webp`)
+  const attackerRough = useTexture(`${import.meta.env.BASE_URL}textures/piece-dark-roughness.webp`)
+  const defenderTex   = useTexture(`${import.meta.env.BASE_URL}textures/piece-light.webp`)
+  const defenderRough = useTexture(`${import.meta.env.BASE_URL}textures/piece-light-roughness.webp`)
 
   // Shared geometry — same profile for all normal pieces
   const geometry = useMemo(() => new LatheGeometry(NORMAL_POINTS, 32), [])

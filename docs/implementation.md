@@ -1,6 +1,6 @@
 # High Kings — Implementation Notes
 
-Last updated: 2026-07-05 (session 4)
+Last updated: 2026-07-16 (performance & discoverability overhaul)
 
 ---
 
@@ -24,35 +24,50 @@ Last updated: 2026-07-05 (session 4)
 
 ```
 src/
-  App.tsx                      — root component; all overlay UI and online orchestration
+  App.tsx                      — root component; game orchestration, online flow, URL params (~560 lines)
   main.tsx                     — React root mount
+
+  styles/
+    ui.css                     — all UI chrome CSS (was the fireCSS template string in App.tsx)
 
   game/
     hnefatafl.ts               — all game logic (rules, moves, captures, config)
-    ai.ts                      — single-ply AI with alpha-beta-style pruning
+    ai.ts                      — AI engine: iterative-deepening minimax + alpha-beta (see README)
+    aiWorker.ts                — Web Worker host for getBestMove
+    aiClient.ts                — requestBestMove(params): Promise<AiMove|null>
+    variants.ts                — BOARD_SIZE_RULES / ALL_RULES / slug helpers for ?rules= deep links
 
   store/
-    gameStore.ts               — Zustand store; single source of truth
+    gameStore.ts               — Zustand store (persist middleware); useGameSlice selector helper
 
   hooks/
     useOnlineGame.ts           — online match hook (startGame, watchGame, stopWatching, sendMove, endGame)
     useLobby.ts                — lobby state, Realtime subscriptions, host/cancel/accept, active games list
+    useTabVisible.ts           — document.visibilitychange → pauses canvas frame loops
 
   components/
     board/
       Scene.tsx                — R3F Canvas, lights, camera, menuPhase state machine
-      Board.tsx                — 3D tile grid, valid-move orbs, tile click handling
+      Board.tsx                — merged tile geometry + texture atlas, valid-move orbs, board click handling
       Board2D.tsx              — SVG power-saving fallback board
     pieces/
       Piece.tsx                — individual mesh for the King only
       PiecesLayer.tsx          — InstancedMesh for all attacker/defender pieces
     ui/
-      AuthModal.tsx            — sign in / sign up / username prompt modal
+      buttons.tsx              — icon buttons (aria-labelled), Toggle, Cycler, Mist/Ember sprites
+      MenuOverlay.tsx          — setup menu (settings panel)
+      overlays.tsx             — ScorePanel, WinnerOverlay, RoleSelectOverlay, RepetitionWarning, GuestLoginModal
+      ScrollPage.tsx           — parchment scroll chrome + CreditsScroll
+      ProfileScroll.tsx        — profile page (lazy)
+      HowToPlayScroll.tsx      — rules page + SVG illustrations (lazy)
+      LeaderboardScroll.tsx    — ELO rankings (lazy)
+      AvatarDevSandbox.tsx     — ?dev=avatar sandbox (lazy, dev only)
+      AuthModal.tsx            — sign in / sign up / username prompt modal (lazy)
       AvatarDisplay.tsx        — renders composed avatar SVG from AvatarConfig
       AvatarMaker.tsx          — avatar editor UI (layer-by-layer selector)
-      LobbyPanel.tsx           — game lobby UI (host challenge, open challenges list)
+      LobbyPanel.tsx           — game lobby UI (lazy)
       ThemeSwitcher.tsx        — theme switcher component
-      DefeatFire.tsx           — fire effect on the losing side's score card
+      DefeatFire.tsx           — fire effect on defeat (own Canvas; frame loop pauses when tab hidden)
 
   lib/
     avatarConfig.ts            — AvatarConfig type, counts, SVG imports, layer arrays
@@ -148,20 +163,18 @@ Pure functions, no side effects.
 - **King capture** — strong king needs all 4 sides sealed. Weak king sandwiched like a normal piece once off the throne.
 - **Passive capture** — `checkKingCaptured` is only called when `moverIsAttacker` is true. The king moving himself into a surrounded position does not trigger a loss (Ard Rí fix).
 
-### AI (ai.ts)
+### AI (ai.ts / aiWorker.ts / aiClient.ts)
 
-Single-ply scoring. Each candidate move scored by:
-- Custodian capture opportunities (+12 per potential capture)
-- King escape: +10000 if this IS the escape; otherwise reward/penalise escape proximity
-- Attacker: block king escape routes (-60 per open route), move toward king, intercept corner paths
-- Defender: keep non-king pieces near king
+Iterative-deepening minimax with alpha-beta pruning and a transposition table — full documentation lives in the README's "AI — Architecture & Contribution Guide" section.
+
+The search runs in a **Web Worker** (`aiWorker.ts`). Callers use `requestBestMove(params)` from `aiClient.ts`, which returns a promise. Because the search is async, every caller **re-checks game state on resolve** (turn, winner, gameKey) before applying the move — the game may have been reset or undone while the worker ran.
 
 Difficulty:
-- **Easy** — grabs obvious captures if available, otherwise random
-- **Medium** — full evaluation + high noise (±20) → makes real strategic mistakes
-- **Hard** — near-optimal with tiny noise (±1.5)
+- **Easy** — 1-ply heuristic; grabs obvious captures, otherwise random
+- **Medium** — depth 2–3 (by board size) + noise
+- **Hard** — depth 2–5 (by board size), 800ms budget
 
-**Important:** always filter `dyingPieces` out of `pieces` before calling `getBestMove` — dying pieces are still in the store's `pieces` array during their animation.
+**Important:** always filter `dyingPieces` out of `pieces` before calling `requestBestMove` — dying pieces are still in the store's `pieces` array during their animation.
 
 ---
 
@@ -410,20 +423,19 @@ Transitions use `setTimeout` keyed to `HIDE_MS = 410ms`.
 
 ### Board.tsx
 
-Tile grid rendered as individual `<mesh>` elements. Each tile has a randomly assigned texture variant + UV rotation. Valid move targets glow orange. `ValidMoveMarker` orbs animate in/out with a ripple effect (`leavingMarkers`).
+The whole tile grid is **one merged `BufferGeometry`** (single mesh, single material, one draw call). At mount, the 11 tile textures are drawn into a canvas **texture atlas** (`tileAtlas`, 4×3 cells with a 10px bleed pad per cell); each square's texture variant and 90° rotation are baked into its UVs by `remapUVsToAtlasCell` when the merged geometry is built. Overlay markings (corner/throne/start squares) are a second merged plane layer against a 2×2 overlay atlas. The geometry rebuilds only when `boardSize`/rules change.
 
-**Tile click — piece selection:**
+Pointer handling is a **single set of handlers on the merged mesh** — the square is derived from the intersection point:
+
 ```tsx
-onClick = () => {
-  if (validTarget) movePiece(row, col)
-  else {
-    const pieceHere = pieces.find(p => p.row === row && p.col === col && p.type !== 'king')
-    if (pieceHere) selectPiece(pieceHere.id)
-    else if (selectedId) selectPiece(null)
-  }
-}
+const local = boardMeshRef.current.worldToLocal(e.point.clone())
+const col = Math.round(local.x + boardOffset)
+const row = Math.round(local.z + boardOffset)
 ```
-This is the correct approach for InstancedMesh — R3F v9's `instanceId` on pointer events is unreliable.
+
+`handleBoardClick` then applies the old per-tile logic (valid target → `movePiece`; piece → `selectPiece`; empty → deselect). This also remains the piece-selection path for InstancedMesh pieces — R3F v9's `instanceId` on pointer events is unreliable.
+
+`ValidMoveMarker` orbs are still individual animated meshes (only rendered for the selected piece's valid moves) with their own `onClick`/hover handlers that `stopPropagation` so they win over the board mesh.
 
 ### PiecesLayer.tsx
 
@@ -477,7 +489,7 @@ SpotLight target mesh lerps toward King's position each frame. `angle = 0.18 + b
 
 Copenhagen, Fetlar, and Historical each have two distinct starting layouts per board size. The 13×13 layout (Parlett reconstruction) has 32 attackers + 16 defenders.
 
-`BOARD_SIZE_RULES` in `App.tsx` maps each board size to its valid rulesets.
+`BOARD_SIZE_RULES` in `src/game/variants.ts` maps each board size to its valid rulesets; the same module exports `variantSlug`/`rulesFromSlug` for `?rules=` deep links.
 
 ---
 
@@ -537,37 +549,62 @@ Game state (Zustand) is shared — switching mid-game preserves all piece positi
 
 ---
 
-## Textures
+## Textures & Images
 
-All textures in `public/textures/` are **hand-edited source files**. **Never run `npm run gen-textures`** — it overwrites them.
+All textures in `public/textures/` are **hand-edited source files**, stored as **WebP**. **Never run `npm run gen-textures`** — it overwrites them.
 
-- `piece-dark.png` / `piece-dark-roughness.png` — attacker
-- `piece-light.png` / `piece-light-roughness.png` — defender
-- `piece-king.png` / `piece-king-roughness.png` — king
-- `tile-1.png` … `tile-10.png` — board tile variants
-- `tile-11.png` — corner / throne tile
-- `tile-corner.png`, `tile-throne.png`, `tile-defender.png`, `tile-attacker.png` — overlay markers
-- `board-edge.png` — board base texture
+- `piece-dark.webp` / `piece-dark-roughness.webp` — attacker
+- `piece-light.webp` / `piece-light-roughness.webp` — defender
+- `piece-king.webp` / `piece-king-roughness.webp` — king
+- `tile-1.webp` … `tile-10.webp` — board tile variants
+- `tile-11.webp` — corner / throne tile
+- `tile-corner.webp`, `tile-throne.webp`, `tile-defender.webp`, `tile-attacker.webp` — overlay markers
+- `board-edge.webp` — board base texture
 
-Tile texture rotation: `mulberry32(seed)` PRNG assigns stable random rotation per tile (0–3). Applied as `texture.rotation` with `texture.center.set(0.5, 0.5)`.
+All other `public/` images are WebP too (`node scripts/convert-webp.mjs` converts new additions in place; it skips `og-highkings.jpg` — link previews want jpg/png). MedievalSharp is self-hosted in `public/fonts/`.
+
+Tile texture rotation: `mulberry32(seed)` PRNG assigns a stable variant + rotation (0–3) per square. Both are baked into the merged geometry's UVs against the tile atlas (see Board.tsx section) — there are no per-tile texture clones.
 
 ---
 
 ## Hint System
 
 Two-stage:
-1. First press — AI evaluates best move for human side (alive pieces only), calls `selectPiece`, stores full move in `hintMove.current`
-2. Second press — executes stored move
+1. First press — `requestBestMove` (async, worker) evaluates the human side's best move; on resolve it re-checks turn/winner, stores the move in `hintMove.current`, and calls `selectPiece`
+2. Second press — executes the stored move
 
-`hintMove.current` cleared on every turn change or game reset. Always filter `dyingPieces` before calling `getBestMove`.
+`hintMove.current` cleared on every turn change or game reset. Always filter `dyingPieces` before calling `requestBestMove`.
+
+---
+
+## Persistence
+
+`gameStore` uses zustand's `persist` middleware (localStorage key `highkings`, version 1):
+- **Settings always persist** — musicEnabled, cameraLocked, difficulty, rules, boardSize, powerSaving, playerMode, theme
+- **In-progress games persist** — pieces, currentTurn, scores, and the last 20 history entries, but only while `winner === null`. Finished games boot fresh. History is capped so Alea Evangelii can't blow the localStorage quota.
+
+Separate localStorage flag `highkings-onboarded` gates the first-visit "How to play" nudge.
+
+URL params (checked once on mount, after rehydration): `?ps=true` forces power saving; `?rules=<slug>` (+ optional `&board=<n>`) deep-links a variant and resets the board — slug helpers live in `src/game/variants.ts`.
+
+---
+
+## Discoverability
+
+- `index.html` — canonical URL, JSON-LD `VideoGame` schema, PWA manifest link
+- `public/guide/index.html` — static crawlable rules/variants page with `?rules=` play links (nginx serves it at `/highkings/guide/`; Vite dev only serves it at the full `/guide/index.html` path)
+- `public/sitemap.xml` — lists `/` and `/guide/` (submit in Google Search Console)
+- `public/manifest.webmanifest` + `icon-192/512.png` — installable PWA (no service worker yet)
 
 ---
 
 ## Deploy
 
-GitHub Actions on push to `main`. Builds with Vite, uploads via FTP to Fasthosts.
+GitHub Actions on push to `main` (`.github/workflows/deploy.yml`). Builds with Vite, uploads `dist/` via FTP to Fasthosts.
 
 Base URL: `/highkings/` (set in `vite.config.ts`).
+
+`npm run build:compressed` additionally emits `.gz`/`.br` files — not used on Fasthosts (no `gzip_static`), kept for a possible future host.
 
 Live: https://drewnotweird.co.uk/highkings
 
@@ -592,7 +629,11 @@ Live: https://drewnotweird.co.uk/highkings
 - **Online game results need a separate recorder** — the vs-machine effect doesn't fire for online games. A dedicated `useEffect` watching `winner + onlineStatus.type === 'matched'` inserts with `opponent_type: 'human'`.
 - **Spectator resync** — spectator joins channel → sends `resync_request` → active player responds with full `pieces` + seq → spectator calls `setPieces()`. Without this the spectator sees an empty board.
 - **`setPieces` in gameStore** — added to support spectator board initialisation. Sets `pieces`, clears `dyingPieces`, `selectedId`, `validMoves`.
-- **Alea Evangelii AI** — 19×19 with 96 pieces, hard mode is slow on main thread. No web worker yet.
+- **AI runs in a Web Worker** — `requestBestMove` is async; every caller must re-check turn/winner/gameKey when the promise resolves before applying the move.
+- **Selector-less `useGameStore()` is banned** — it re-renders on every store change (including animation ticks). Use `useGameSlice('a', 'b')` (shallow-compared) instead.
+- **Texture atlas bleed** — atlas cells have a 10px pad; UVs are clamped to 0..1 before remapping so extrude side-wall UVs can't sample neighbouring cells. If tiles ever show seams at distance, increase `ATLAS_PAD`.
+- **Persist partialize is conditional** — game-state keys are only written while `winner === null`; don't add transient fields (selectedId, dyingPieces, validMoves) to the persisted set.
+- **Frame loops pause when the tab is hidden** — `frameloop={tabVisible ? 'always' : 'never'}` on both Canvases. Anything that must progress while hidden needs to be timer-based, not `useFrame`-based.
 - **Avatar SVG layer composition** — SVG files in `src/assets/avatars/` are imported with Vite `?raw`. The `inner()` helper strips the outer `<svg>` wrapper so content can be injected via `dangerouslySetInnerHTML`. Hair and facial-hair layers must have no `fill` attribute — they inherit `fill={hairColor}` from the parent `<g>`.
 - **Avatar `sceneFadeIn` animation conflict** — never put `animation: 'sceneFadeIn ... forwards'` on an element whose opacity also needs to be dynamically controlled. The `forwards` fill locks opacity at 1 and overrides inline style changes. Use transition-only for those elements.
 - **Stale online games** — `loadActiveGames` in `useLobby.ts` marks `games` rows older than 4 hours with `status: 'active'` as `'abandoned'` via a fire-and-forget `.then()` update. This fires each time the lobby loads.

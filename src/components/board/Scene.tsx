@@ -5,10 +5,11 @@ import { PointLight, DirectionalLight, SpotLight, AmbientLight, Group, Vector3, 
 import { Board } from './Board'
 import { Piece, type MenuPhase } from '../pieces/Piece'
 import { PiecesLayer } from '../pieces/PiecesLayer'
-import { useGameStore } from '../../store/gameStore'
+import { useGameSlice } from '../../store/gameStore'
 import { getBoardConfig } from '../../game/hnefatafl'
 import { themes } from '../../lib/themes'
 import { IntroStartContext } from '../../contexts/intro'
+import { useTabVisible } from '../../hooks/useTabVisible'
 
 const DUST_DURATION = 1.5
 
@@ -175,7 +176,7 @@ const BOARD_START_Y = -20
 
 function FadingLights({ menuOpen, powerSaving }: { menuOpen: boolean; powerSaving: boolean }) {
   const introStartMs = useContext(IntroStartContext)
-  const { pieces, rules, boardSize: storedBoardSize } = useGameStore()
+  const { pieces, rules, boardSize: storedBoardSize } = useGameSlice('pieces', 'rules', 'boardSize')
   const boardSize = getBoardConfig(rules, storedBoardSize).boardSize
   const ambientRef = useRef<AmbientLight>(null)
   const moonRef = useRef<DirectionalLight>(null)
@@ -333,7 +334,7 @@ function LightningBolt({ tx, tz, onDone }: { tx: number; tz: number; onDone: () 
 }
 
 function LightningFlash() {
-  const { undoTrigger } = useGameStore()
+  const { undoTrigger } = useGameSlice('undoTrigger')
   const lightRef = useRef<PointLight>(null)
   const t = useRef(-1)
 
@@ -359,7 +360,7 @@ function LightningFlash() {
 }
 
 function CaptureFlashLight() {
-  const { dyingPieces } = useGameStore()
+  const { dyingPieces } = useGameSlice('dyingPieces')
   const lightRef = useRef<PointLight>(null)
   const flashT = useRef(-1)
   const FLASH_DURATION = 0.75
@@ -472,7 +473,7 @@ function defaultCamPos(boardSize: number): Vector3 {
 }
 
 function CameraReset({ menuOpen }: { menuOpen: boolean }) {
-  const { rules, boardSize: storedBoardSize } = useGameStore()
+  const { rules, boardSize: storedBoardSize } = useGameSlice('rules', 'boardSize')
   const boardSize = getBoardConfig(rules, storedBoardSize).boardSize
   useFrame(({ camera, controls }) => {
     if (!menuOpen) return
@@ -495,7 +496,7 @@ const BOARD_RETURN_MS = 1000
 
 function CameraLock({ locked }: { locked: boolean }) {
   const { size } = useThree()
-  const { rules, boardSize: storedBoardSize } = useGameStore()
+  const { rules, boardSize: storedBoardSize } = useGameSlice('rules', 'boardSize')
   const boardSize = getBoardConfig(rules, storedBoardSize).boardSize
   // Compute camera position and target so the board best-fits the usable viewport,
   // with the board centre shifted down 80px to leave room for the logo.
@@ -545,7 +546,7 @@ interface SceneInnerProps {
 }
 
 function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
-  const { pieces, dyingPieces, captureDelayMs, clearDyingPieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules, boardSize: storedBoardSize, undoTrigger, lastMoveTarget } = useGameStore()
+  const { pieces, dyingPieces, captureDelayMs, clearDyingPieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules, boardSize: storedBoardSize, undoTrigger, lastMoveTarget } = useGameSlice('pieces', 'dyingPieces', 'captureDelayMs', 'clearDyingPieces', 'selectedId', 'theme', 'selectPiece', 'cameraLocked', 'powerSaving', 'rules', 'boardSize', 'undoTrigger', 'lastMoveTarget')
   const theme = themes[themeName]
   const [menuPhase, setMenuPhase] = useState<MenuPhase>('idle')
 
@@ -716,12 +717,12 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
 }
 
 const UI_ASSETS = [
-  'wood-top.jpg', 'wood-bottom.jpg',
-  'wood-top-left.jpg', 'wood-top-middle.jpg', 'wood-top-right.jpg',
-  'wood-bottom-left.jpg', 'wood-bottom-middle.jpg', 'wood-bottom-right.jpg',
-  'pagescroll.png', 'topscroll.png',
-  'logo.png', 'credits-banner.jpg',
-  'blue-piece.png', 'white-piece.png',
+  'wood-top.webp', 'wood-bottom.webp',
+  'wood-top-left.webp', 'wood-top-middle.webp', 'wood-top-right.webp',
+  'wood-bottom-left.webp', 'wood-bottom-middle.webp', 'wood-bottom-right.webp',
+  'pagescroll.webp', 'topscroll.webp',
+  'logo.webp', 'credits-banner.webp',
+  'blue-piece.webp', 'white-piece.webp',
   'icons/close.svg', 'icons/arrow-up.svg', 'icons/arrow-down.svg',
   'icons/hint.svg', 'icons/menu.svg', 'icons/profile.svg',
   'icons/login.svg', 'icons/undo.svg',
@@ -804,7 +805,7 @@ function LoadingOverlay({ onDone }: { onDone: () => void }) {
       transition: phase === 'fading' ? 'opacity 1s ease-out' : 'none',
     }}>
       <img
-        src={`${import.meta.env.BASE_URL}loader.gif`}
+        src={`${import.meta.env.BASE_URL}loader.webp`}
         alt="Loading…"
         style={{ width: 64, height: 64, objectFit: 'contain' }}
       />
@@ -821,7 +822,8 @@ export function Scene({ onIntroStart, menuOpen, onNewGame }: {
   const [dropStartMs, setDropStartMs] = useState<number | null>(null)
   const [dropKey, setDropKey] = useState(0)
   const [screenFlashKey, setScreenFlashKey] = useState(0)
-  const { gameKey, undoTrigger, rules, boardSize: storedBoardSize } = useGameStore()
+  const tabVisible = useTabVisible()
+  const { gameKey, undoTrigger, rules, boardSize: storedBoardSize } = useGameSlice('gameKey', 'undoTrigger', 'rules', 'boardSize')
   const initBoardSize = getBoardConfig(rules, storedBoardSize).boardSize
   const initCamPos = defaultCamPos(initBoardSize)
   const prevGameKey = useRef(0)
@@ -848,6 +850,7 @@ export function Scene({ onIntroStart, menuOpen, onNewGame }: {
           camera={{ position: [initCamPos.x, initCamPos.y, initCamPos.z], fov: 45 }}
           dpr={[1, 1.5]}
           gl={{ antialias: false, alpha: true }}
+          frameloop={tabVisible ? 'always' : 'never'}
         >
           <Suspense fallback={null}>
             <SceneInner menuOpen={!!menuOpen} dropStartMs={dropStartMs} dropKey={dropKey} />

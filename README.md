@@ -12,8 +12,9 @@ Hnefatafl is an asymmetric strategy game. The defender escorts the King to a cor
 
 - **Vite + React + TypeScript**
 - **React Three Fiber** — 3D board, pieces, lighting, animations
-- **Zustand** — game state
+- **Zustand** — game state, persisted to localStorage (settings + in-progress game survive refresh)
 - **Supabase** — auth, database, realtime
+- **Web Worker** — AI search runs off the main thread (no frame drops during the machine's turn)
 
 ## Features
 
@@ -28,6 +29,9 @@ Hnefatafl is an asymmetric strategy game. The defender escorts the King to a cor
 - Smooth 3D piece movement with arc lift and custodial capture explosions
 - Spotlight follows the King; beam width scales with board size
 - Power-saving mode — switches to a lightweight 2D SVG board (no WebGL)
+- Settings and in-progress local games persist across refresh (localStorage)
+- Variant deep links — `?rules=brandub`, `?rules=alea-evangelii&board=19`, etc. (slugs in `src/game/variants.ts`)
+- First-visit nudge offers the Rules scroll to newcomers
 
 ### Online multiplayer
 - Account-based (email/password) — guest play still works offline
@@ -63,6 +67,15 @@ Hnefatafl is an asymmetric strategy game. The defender escorts the King to a cor
 | Tyr | 15×15 | Strong | Corners | No |
 | Alea Evangelii | 19×19 | Strong | Corners | No |
 
+## Performance
+
+- All public images are WebP (`node scripts/convert-webp.mjs` re-runs the conversion)
+- Board tiles render as a single merged geometry with a runtime texture atlas — one draw call for the whole board top
+- Pieces are two InstancedMeshes; the King is the only individual mesh
+- Vendor code (three.js, React, Supabase) is split into separate long-cached chunks; overlay panels lazy-load
+- Both WebGL canvases pause their frame loops when the tab is hidden
+- SEO: static guide page at `/guide/`, JSON-LD, sitemap, PWA manifest
+
 ## Development
 
 ```bash
@@ -70,13 +83,18 @@ npm install
 npm run dev
 ```
 
+Other scripts:
+- `npm run build` — type-check + production build
+- `npm run build:compressed` — build plus precompressed `.gz`/`.br` files (only useful on hosts with `gzip_static`/`brotli_static`)
+- `node scripts/convert-webp.mjs` — convert any new `public/` images to WebP in place
+
 ## Deploy
 
-GitHub Actions → FTP to Fasthosts shared hosting on push to `main`.
+GitHub Actions → FTP to Fasthosts shared hosting on push to `main` (`.github/workflows/deploy.yml`).
 
 ## Critical
 
-**Do not run `npm run gen-textures`** — all textures in `public/textures/` are hand-edited source files.
+**Do not run `npm run gen-textures`** — all textures in `public/textures/` are hand-edited source files (now stored as `.webp`).
 
 ---
 
@@ -87,8 +105,10 @@ GitHub Actions → FTP to Fasthosts shared hosting on push to `main`.
 | File | Role |
 |---|---|
 | `src/game/ai.ts` | Entire AI engine — search, evaluation, move ordering, repetition safety |
+| `src/game/aiWorker.ts` | Web Worker host — runs `getBestMove` off the main thread |
+| `src/game/aiClient.ts` | Promise wrapper (`requestBestMove`) used by App.tsx |
 | `src/game/hnefatafl.ts` | Game rules — `getValidMoves`, `applyMove`, `positionKey`, `hasMoves` |
-| `src/store/gameStore.ts` | Calls `getBestMove` in `machineMove` and the Hint button handler |
+| `src/App.tsx` | Calls `requestBestMove` for the machine's turn and the Hint button |
 
 ### How the AI works
 
@@ -185,15 +205,19 @@ Before searching, the AI filters out any move that would create a 3rd repeated b
 
 ### Integration points
 
-```ts
-// Machine's turn — auto-fires after human move (src/store/gameStore.ts)
-machineMove: (pieceId, toRow, toCol) => ...
+The search runs in a **Web Worker** so the 800ms budget never blocks rendering. Callers go through the promise API and must re-check game state when the promise resolves (the position may have changed while the search ran):
 
-// Hint button (src/App.tsx)
-const posHistory = useGameStore.getState().history.map(h => h.posKey)
-const hint = getBestMove(pieces, hintSide, boardSize, center, difficulty,
-  kingEscapeEdge, shieldwall, weakKing, noThrone, posHistory)
+```ts
+// Machine's turn and the Hint button (src/App.tsx)
+import { requestBestMove } from './game/aiClient'
+
+requestBestMove({ pieces: alivePieces, side, boardSize, center, difficulty,
+  kingEscapeEdge, shieldwall, weakKing, noThrone, positionHistory }).then(move => {
+  const { currentTurn, winner, gameKey } = useGameStore.getState()
+  if (winner || currentTurn !== side /* || game was reset */) return
+  if (move) machineMove(move.pieceId, move.toRow, move.toCol)
+})
 ```
 
-Both pass the full `positionHistory` so the repetition filter works correctly.
+Both call sites pass the full `positionHistory` so the repetition filter works correctly, and both filter `dyingPieces` out of `pieces` first.
 

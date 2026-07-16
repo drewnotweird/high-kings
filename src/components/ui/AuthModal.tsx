@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { useGameStore } from '../../store/gameStore'
+import { useGameSlice, useGameStore } from '../../store/gameStore'
 
 type AuthScreen = 'login' | 'signup' | 'confirm' | 'username' | 'forgot'
 
@@ -15,7 +15,7 @@ export function AuthModal({ onClose, initialScreen = 'login' }: {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [forgotSent, setForgotSent] = useState(false)
-  const { setAuth, setUsername: storeSetUsername } = useGameStore()
+  const { setAuth, setUsername: storeSetUsername } = useGameSlice('setAuth', 'setUsername')
 
   const clearError = () => setError(null)
 

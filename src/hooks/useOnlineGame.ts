@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { useGameStore } from '../store/gameStore'
+import { useGameSlice, useGameStore } from '../store/gameStore'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export type OnlineStatus =
@@ -26,7 +26,7 @@ interface OnlineGameState {
 export function useOnlineGame(
   onStatusChange: (status: OnlineStatus) => void,
 ) {
-  const { machineMove, setPieces, userId, username, elo } = useGameStore()
+  const { machineMove, setPieces, userId, username, elo } = useGameSlice('machineMove', 'setPieces', 'userId', 'username', 'elo')
   const state = useRef<OnlineGameState>({
     gameId: null,
     mySide: null,

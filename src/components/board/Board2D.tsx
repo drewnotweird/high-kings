@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useGameStore } from '../../store/gameStore'
+import { useGameSlice } from '../../store/gameStore'
 import { getBoardConfig, isCorner, isThrone } from '../../game/hnefatafl'
 import type { PieceType } from '../../game/hnefatafl'
 
@@ -44,7 +44,7 @@ const BURST_CSS = `
 `
 
 export function Board2D({ menuOpen }: { menuOpen: boolean }) {
-  const { pieces, dyingPieces: storeDyingPieces, clearDyingPieces, selectedId, selectPiece, movePiece, validMoves, cautionMoves, gameKey, rules, boardSize: storedBoardSize, roleSelectOpen } = useGameStore()
+  const { pieces, dyingPieces: storeDyingPieces, clearDyingPieces, selectedId, selectPiece, movePiece, validMoves, cautionMoves, gameKey, rules, boardSize: storedBoardSize, roleSelectOpen } = useGameSlice('pieces', 'dyingPieces', 'clearDyingPieces', 'selectedId', 'selectPiece', 'movePiece', 'validMoves', 'cautionMoves', 'gameKey', 'rules', 'boardSize', 'roleSelectOpen')
   const { boardSize, center } = getBoardConfig(rules, storedBoardSize)
   const TOTAL = boardSize * CELL + PAD * 2
 

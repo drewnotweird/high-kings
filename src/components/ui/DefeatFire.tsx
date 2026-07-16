@@ -1,5 +1,6 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
+import { useTabVisible } from '../../hooks/useTabVisible'
 import * as THREE from 'three'
 
 const vertexShader = `
@@ -101,6 +102,7 @@ function FirePlane() {
 }
 
 export function DefeatFire() {
+  const tabVisible = useTabVisible()
   return (
     // Bottom half only; CSS blur softens the toon bands into realistic-looking fire
     <div style={{
@@ -114,7 +116,7 @@ export function DefeatFire() {
         style={{ width: '100%', height: '100%' }}
         gl={{ alpha: true, antialias: false }}
         dpr={Math.min(window.devicePixelRatio, 1.5)}
-        frameloop="always"
+        frameloop={tabVisible ? 'always' : 'never'}
       >
         <FirePlane />
       </Canvas>

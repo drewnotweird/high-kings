@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How to Play Hnefatafl — Rules &amp; All 11 Variants | High Kings</title>
+  <meta name="description" content="Complete Hnefatafl rules: movement, custodial capture, king escape, plus all 11 variants — Copenhagen, Fetlar, Tablut, Brandub, Tawlbwrdd, Alea Evangelii and more. Play each one free in your browser." />
+  <link rel="canonical" href="https://drewnotweird.co.uk/highkings/guide/" />
+  <link rel="icon" type="image/png" href="/highkings/favicon.png" />
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    @font-face {
+      font-family: 'MedievalSharp';
+      src: url('/highkings/fonts/medievalsharp-latin.woff2') format('woff2');
+      font-display: swap;
+    }
+    body {
+      background: radial-gradient(ellipse at 50% 20%, #2a1200 0%, #0a0800 60%, #000 100%);
+      color: #e8d8b8;
+      font-family: Georgia, 'Times New Roman', serif;
+      line-height: 1.65;
+    }
+    main { max-width: 720px; margin: 0 auto; padding: 48px 20px 80px; }
+    h1, h2, h3 { font-family: 'MedievalSharp', Georgia, serif; color: #e8c060; line-height: 1.2; }
+    h1 { font-size: 2.2rem; margin-bottom: 12px; }
+    h2 { font-size: 1.5rem; margin: 40px 0 12px; border-bottom: 1px solid rgba(200,169,110,0.3); padding-bottom: 6px; }
+    h3 { font-size: 1.15rem; margin: 28px 0 8px; }
+    p { margin: 0 0 14px; }
+    .tag { color: #a08050; font-size: 0.9rem; font-style: italic; margin-bottom: 8px; }
+    a { color: #e8a040; }
+    .play-btn {
+      display: inline-block; margin: 4px 0 8px; padding: 8px 18px;
+      background: linear-gradient(135deg, #c8880a, #a06808); color: #1a0e00;
+      font-family: 'MedievalSharp', Georgia, serif; font-size: 1rem;
+      text-decoration: none; border-radius: 6px;
+    }
+    .play-btn:hover { filter: brightness(1.15); }
+    .hero-cta { text-align: center; margin: 24px 0 8px; }
+    .hero-cta .play-btn { font-size: 1.2rem; padding: 12px 32px; }
+    ul { margin: 0 0 14px 22px; }
+    li { margin-bottom: 6px; }
+    footer { margin-top: 56px; font-size: 0.85rem; color: #907850; text-align: center; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>How to Play Hnefatafl</h1>
+  <p class="tag">The Viking board game of raid and defence · a complete guide to the rules and all eleven variants playable in High Kings</p>
+
+  <p>Before chess took hold of Europe, there was <strong>Hnefatafl</strong> — the strategy game of the Norse world. It was played from Ireland to Ukraine for close to a thousand years, on ships, in halls, and in burial hoards, until chess arrived from the south and slowly eclipsed it. High Kings is a free browser version of the game: real-time 3D board, an AI opponent with three difficulty levels, and online multiplayer with ELO ranking.</p>
+
+  <div class="hero-cta"><a class="play-btn" href="/highkings/">Play High Kings free</a></div>
+
+  <h2>The core rules</h2>
+  <p>Hnefatafl is asymmetric. One side plays the <strong>Attackers</strong>, who surround the board and outnumber the enemy. The other plays the <strong>Defenders</strong>, who guard a <strong>King</strong> they must escort to safety. Every variant below shares these rules:</p>
+  <ul>
+    <li><strong>The board</strong> — a square grid. The centre square is the <strong>Throne</strong>, where the King begins. The corner squares are <strong>escape squares</strong>. Only the King may stand on either.</li>
+    <li><strong>Movement</strong> — every piece moves like a chess rook: any number of squares in a straight line, horizontally or vertically. No diagonals, no jumping.</li>
+    <li><strong>Capture</strong> — sandwich an enemy piece between two of your own on a straight line and it is removed. Moving <em>into</em> a sandwich voluntarily is safe; the trap only springs when you close it.</li>
+    <li><strong>Hostile squares</strong> — an empty corner (or empty Throne) counts as one half of a sandwich, so a single piece can capture against it.</li>
+    <li><strong>Capturing the King</strong> — the King falls only when all four sides are sealed by attackers or hostile squares (except in "weak king" variants, where two attackers suffice once he leaves the Throne).</li>
+    <li><strong>Winning</strong> — the Defenders win when the King reaches an escape square; the Attackers win when they capture him. Repeating the same position three times forfeits the game.</li>
+  </ul>
+
+  <h2>The eleven variants</h2>
+
+  <h3>Copenhagen</h3>
+  <p class="tag">11×11 or 13×13 · the modern competitive standard</p>
+  <p>Adds the <strong>shieldwall capture</strong>: a line of defenders pressed against the board edge can be wiped out in one move by flanking both ends. Strong King, corner escape.</p>
+  <a class="play-btn" href="/highkings/?rules=copenhagen">Play Copenhagen</a>
+
+  <h3>Fetlar</h3>
+  <p class="tag">11×11 or 13×13 · the Shetland tournament ruleset</p>
+  <p>Copenhagen's board and forces without the shieldwall — captures are always one at a time. Strong King, corner escape.</p>
+  <a class="play-btn" href="/highkings/?rules=fetlar">Play Fetlar</a>
+
+  <h3>Historical</h3>
+  <p class="tag">11×11 or 13×13 · reconstructed from period sources</p>
+  <p>A <strong>weak King</strong>: once he steps off the Throne, two attackers can sandwich him like any other piece. Corner escape, no shieldwall.</p>
+  <a class="play-btn" href="/highkings/?rules=historical">Play Historical</a>
+
+  <h3>Tawlbwrdd</h3>
+  <p class="tag">11×11 · the Welsh board</p>
+  <p><strong>Edge escape</strong> — the King wins by reaching any square on the board edge, not just the corners. Shieldwall captures, strong King.</p>
+  <a class="play-btn" href="/highkings/?rules=tawlbwrdd">Play Tawlbwrdd</a>
+
+  <h3>Linnaeus Tablut</h3>
+  <p class="tag">9×9 · recorded by Carl Linnaeus in Lapland, 1732</p>
+  <p>The best-documented historical ruleset. Weak King, edge escape — fast and aggressive.</p>
+  <a class="play-btn" href="/highkings/?rules=linnaeus-tablut">Play Linnaeus Tablut</a>
+
+  <h3>Saami Tablut</h3>
+  <p class="tag">9×9 · the living tradition</p>
+  <p>Linnaeus rules with a broader defensive diamond — a more open, tactical opening game.</p>
+  <a class="play-btn" href="/highkings/?rules=saami-tablut">Play Saami Tablut</a>
+
+  <h3>Brandub</h3>
+  <p class="tag">7×7 · the Irish variant</p>
+  <p>Four defenders, eight attackers, weak King, corner escape. On a board this small every move matters.</p>
+  <a class="play-btn" href="/highkings/?rules=brandub">Play Brandub</a>
+
+  <h3>Ard Rí</h3>
+  <p class="tag">7×7 · the Irish High King</p>
+  <p>Eight defenders and twelve attackers packed onto the smallest board, strong King. Tight, brutal fighting.</p>
+  <a class="play-btn" href="/highkings/?rules=ard-ri">Play Ard Rí</a>
+
+  <h3>Tyr</h3>
+  <p class="tag">15×15 · modern design by Aage Nielsen</p>
+  <p>Weak King, edge escape, and no special Throne — the centre square is ordinary. The largest competitive board.</p>
+  <a class="play-btn" href="/highkings/?rules=tyr">Play Tyr</a>
+
+  <h3>Simple Tyr</h3>
+  <p class="tag">11×11 · Tyr rules on a standard board</p>
+  <p>The Tyr family's rules at a friendlier scale — a good entry point.</p>
+  <a class="play-btn" href="/highkings/?rules=simple-tyr">Play Simple Tyr</a>
+
+  <h3>Alea Evangelii</h3>
+  <p class="tag">19×19 · the epic</p>
+  <p>72 attackers, 24 defenders, one King, on a 19×19 grid recorded in a 10th-century English manuscript. The King's journey to a corner is a true odyssey.</p>
+  <a class="play-btn" href="/highkings/?rules=alea-evangelii">Play Alea Evangelii</a>
+
+  <h2>A little history</h2>
+  <p>Tafl games descend from the Roman <em>ludus latrunculorum</em> and spread with the Vikings wherever they sailed. Game boards and pieces have been found in graves from Birka in Sweden to Dublin, and the game appears in the Norse sagas as a mark of a cultured warrior. The word <em>hnefatafl</em> means roughly "board of the fist-piece" — the King. Each culture the game touched left its own version: <em>tablut</em> in Lapland, <em>tawlbwrdd</em> in Wales, <em>brandub</em> in Ireland, <em>alea evangelii</em> in Anglo-Saxon England. All eleven are faithful reconstructions playable in High Kings.</p>
+
+  <div class="hero-cta"><a class="play-btn" href="/highkings/">Start playing</a></div>
+
+  <footer>
+    <p>High Kings — made by Jason Frame, Lewis MacKenzie &amp; Andrew Nicolson · <a href="/highkings/">Play the game</a></p>
+  </footer>
+</main>
+</body>
+</html>

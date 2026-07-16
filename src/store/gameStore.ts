@@ -1,4 +1,6 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import { useShallow } from 'zustand/react/shallow'
 import { createInitialPieces, getBoardConfig, getValidMoves, applyMove, hasMoves, positionKey } from '../game/hnefatafl'
 import type { Piece } from '../game/hnefatafl'
 
@@ -103,7 +105,22 @@ interface GameStore {
   ) => void
 }
 
-export const useGameStore = create<GameStore>((set) => ({
+// Subscribe to a subset of the store with shallow comparison. Prefer this over
+// selector-less useGameStore() — that subscribes to EVERY state change and
+// re-renders the component on each animation tick / move / capture.
+export function useGameSlice<K extends keyof GameStore>(...keys: K[]): Pick<GameStore, K> {
+  return useGameStore(useShallow(s => {
+    const out = {} as Pick<GameStore, K>
+    for (const k of keys) out[k] = s[k]
+    return out
+  }))
+}
+
+// How many undo snapshots survive a refresh — keeps localStorage well under
+// quota on big boards (full history lives in memory during the session)
+const PERSISTED_HISTORY = 20
+
+export const useGameStore = create<GameStore>()(persist((set) => ({
   pieces: createInitialPieces(getBoardConfig('Copenhagen', 11)),
   dyingPieces: [],
   captorIds: [],
@@ -383,4 +400,25 @@ export const useGameStore = create<GameStore>((set) => ({
   }}),
 
   setSetting: (key, value) => set({ [key]: value }),
+}), {
+  name: 'highkings',
+  version: 1,
+  partialize: (s) => ({
+    // Settings always persist
+    musicEnabled: s.musicEnabled,
+    cameraLocked: s.cameraLocked,
+    difficulty: s.difficulty,
+    rules: s.rules,
+    boardSize: s.boardSize,
+    powerSaving: s.powerSaving,
+    playerMode: s.playerMode,
+    theme: s.theme,
+    // In-progress local game survives a refresh; finished games start fresh
+    ...(s.winner === null ? {
+      pieces: s.pieces.filter(p => !s.dyingPieces.some(d => d.id === p.id)),
+      currentTurn: s.currentTurn,
+      scores: s.scores,
+      history: s.history.slice(-PERSISTED_HISTORY),
+    } : {}),
+  }),
 }))
