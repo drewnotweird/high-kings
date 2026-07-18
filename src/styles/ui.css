@@ -193,6 +193,29 @@ body, button, input, select {
 @media (min-width: 1024px) {
   .ui-col { gap: 4vw; }
 }
+/* Hide/show toggle for the top HUD (logo + button columns) */
+.hud-toggle {
+  position: absolute;
+  left: 50%;
+  top: 148px;
+  transform: translateX(-50%);
+  z-index: 16;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hud-toggle--collapsed { top: 10px; }
+.hud-toggle__icon {
+  width: 14px; height: 14px;
+  opacity: 0.65;
+  filter: drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 0 4px rgba(0,0,0,0.9));
+  transition: opacity 0.2s ease;
+}
+.hud-toggle:hover .hud-toggle__icon { opacity: 1; }
 .profile-scroll__play-online-btn { background: linear-gradient(135deg, #c8880a, #a06808); border: none; color: #fff8e8; font-family: inherit; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; padding: 10px 28px; cursor: pointer; border-radius: 4px; margin: 16px auto 8px; display: block; transition: opacity 0.2s; }
 .profile-scroll__play-online-btn:hover { opacity: 0.85; }
 /* Avatar */

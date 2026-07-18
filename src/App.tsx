@@ -37,6 +37,7 @@ function App() {
   const [setupAnimating, setSetupAnimating] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuVisible, setMenuVisible] = useState(false)
+  const [hudMinimized, setHudMinimized] = useState(() => localStorage.getItem('highkings-hud-minimized') === '1')
   const [showCredits, setShowCredits] = useState(false)
   const [showHowToPlay, setShowHowToPlay] = useState(false)
   const [showLeaderboard, setShowLeaderboard] = useState(false)
@@ -290,6 +291,10 @@ function App() {
     if (openRules) setShowHowToPlay(true)
   }
 
+  useEffect(() => {
+    localStorage.setItem('highkings-hud-minimized', hudMinimized ? '1' : '0')
+  }, [hudMinimized])
+
   // Track when the sceneFadeIn animation completes so buttons start visibly disabled
   useEffect(() => {
     const t = setTimeout(() => setUiVisible(true), powerSaving ? 0 : 2000)
@@ -418,6 +423,12 @@ function App() {
           transition: 'opacity 0.4s ease',
           pointerEvents: !vis || setupAnimating ? 'none' : undefined,
         }
+        // Slides the logo + button columns up off-screen and fades them out when minimized
+        const hudMinimizeStyle: React.CSSProperties = {
+          transform: hudMinimized ? 'translateY(-160%)' : 'translateY(0)',
+          transition: 'transform 0.5s cubic-bezier(0.65,0,0.35,1), opacity 0.4s ease',
+          ...(hudMinimized ? { opacity: 0, pointerEvents: 'none' as const } : {}),
+        }
         const isOnline = onlineStatus.type === 'matched'
         const isSpectating = onlineStatus.type === 'spectating'
         const myName = username ?? 'You'
@@ -439,12 +450,22 @@ function App() {
           </div>
 
           {/* Logo */}
-          <div className="absolute top-1 md:top-[calc(3vw-10px)] left-1/2 -translate-x-1/2 z-10 pointer-events-none" style={panelStyle}>
+          <div className="absolute top-1 md:top-[calc(3vw-10px)] left-1/2 -translate-x-1/2 z-10 pointer-events-none" style={{ ...panelStyle, ...hudMinimizeStyle }}>
             <img src={`${import.meta.env.BASE_URL}logo.webp`} alt="High Kings" className="h-32 w-auto select-none" />
           </div>
 
+          {/* Minimise/restore toggle for the logo + button HUD */}
+          <button
+            className={`hud-toggle${hudMinimized ? ' hud-toggle--collapsed' : ''}`}
+            aria-label={hudMinimized ? 'Show menu' : 'Hide menu'}
+            onClick={() => setHudMinimized(m => !m)}
+            style={{ ...baseStyle(), transition: 'top 0.5s cubic-bezier(0.65,0,0.35,1), opacity 0.4s ease' }}
+          >
+            <img className="hud-toggle__icon" src={`${import.meta.env.BASE_URL}icons/${hudMinimized ? 'arrow-down' : 'arrow-up'}.svg`} alt="" />
+          </button>
+
           {/* Top-left column: Login, [Leaderboard desktop], Hint */}
-          <div className="ui-col ui-col--left" style={baseStyle()}>
+          <div className="ui-col ui-col--left" style={{ ...baseStyle(), ...hudMinimizeStyle }}>
             <ProfileButton loggedIn={!!userId} onClick={() => userId ? setShowProfile(true) : setShowAuth(true)} />
             <GamesButton onClick={() => {
               if (!userId) { setShowAuth(true); return }
@@ -476,7 +497,7 @@ function App() {
           </div>
 
           {/* Top-right column: Setup, Rules, Makers, Undo */}
-          <div className="ui-col ui-col--right" style={baseStyle()}>
+          <div className="ui-col ui-col--right" style={{ ...baseStyle(), ...hudMinimizeStyle }}>
             <MenuButton isOpen={false} onClick={() => setMenuOpen(o => !o)} />
             <HowToPlayButton onClick={() => setShowHowToPlay(true)} />
             <CreditsButton onClick={() => setShowCredits(true)} />
