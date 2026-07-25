@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { useShallow } from 'zustand/react/shallow'
 import { createInitialPieces, getBoardConfig, getValidMoves, applyMove, hasMoves, positionKey } from '../game/hnefatafl'
-import type { Piece, BoardConfig } from '../game/hnefatafl'
+import type { Piece, BoardConfig, WinReason } from '../game/hnefatafl'
 
 // Extract posKeys from history for easy AI/repetition lookups
 function historyKeys(history: { posKey: string }[]): string[] {
@@ -57,6 +57,7 @@ interface GameStore {
   validMoves: [number, number][]
   cautionMoves: [number, number][]  // valid moves that would create a 2nd repetition
   winner: PlayerSide | null
+  winReason: WinReason | null
   repetitionWarning: { pieceId: string; toRow: number; toCol: number } | null
   theme: Theme
   currentTurn: PlayerSide
@@ -130,6 +131,7 @@ function freshBoardState(config: BoardConfig) {
     validMoves: [],
     cautionMoves: [],
     winner: null,
+    winReason: null,
     repetitionWarning: null,
     currentTurn: (config.attackerFirst ? 'attacker' : 'defender') as PlayerSide,
     scores: { attacker: 0, defender: 0 },
@@ -160,6 +162,7 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
   validMoves: [],
   cautionMoves: [],
   winner: null,
+  winReason: null,
   repetitionWarning: null,
   theme: 'natural',
   currentTurn: 'defender',
@@ -270,6 +273,7 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
         defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
       },
       winner: result.winner ?? stalemateWinner,
+      winReason: result.winner ? result.winReason : (stalemateWinner ? 'stalemate' : null),
       history: [...s.history, snapshot],
       lastMoveTarget: { row: toRow, col: toCol },
       lastMove: { pieceId: s.selectedId!, fromRow: movedPiece.row, fromCol: movedPiece.col, toRow, toCol },
@@ -306,6 +310,7 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
         defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
       },
       winner: nextTurn,  // the mover forfeits; opponent wins
+      winReason: 'repetition' as WinReason,
       history: [...s.history, snapshot],
       lastMoveTarget: { row: toRow, col: toCol },
       lastMove: { pieceId: warningPieceId, fromRow: movedPiece.row, fromCol: movedPiece.col, toRow, toCol },
@@ -358,6 +363,9 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
         defender: s.scores.defender + (s.currentTurn === 'defender' ? capturedPieces.length : 0),
       },
       winner: result.winner ?? stalemateWinner ?? repetitionWinner,
+      winReason: result.winner
+        ? result.winReason
+        : stalemateWinner ? 'stalemate' : repetitionWinner ? 'repetition' : null,
       history: [...s.history, snapshot],
       lastMovePath: computeMovePath(movedPiece.row, movedPiece.col, toRow, toCol),
     }
@@ -384,6 +392,7 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
       cautionMoves: [],
       repetitionWarning: null,
       winner: null,
+      winReason: null,
       lastMovePath: [],
       undoTrigger: s.undoTrigger + 1,
     }

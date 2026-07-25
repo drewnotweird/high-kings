@@ -155,7 +155,9 @@ Pure functions, no side effects.
 
 **`getValidMoves(piece, pieces, boardSize, center, noThrone?)`** — returns `[row,col][]` of legal squares.
 
-**`applyMove(pieces, id, row, col, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone)`** — moves piece, checks captures, checks win. Returns `{ pieces, capturedIds, winner }`.
+**`applyMove(pieces, id, row, col, boardSize, center, kingEscapeEdge, shieldwall, weakKing, noThrone)`** — moves piece, checks captures, checks win. Returns `{ pieces, capturedIds, winner, winReason }`.
+
+**Win reasons.** `WinReason` is `'king-escaped' | 'king-captured' | 'attackers-eliminated' | 'stalemate' | 'repetition'`. The first three are decided inside `applyMove`; `stalemate` and `repetition` are decided by the store, which owns turn order and history. The store mirrors `winner` with a `winReason` field, and `WinnerOverlay` renders it as a one-line explanation ("The King reached safety", "Attackers had no legal moves", …). Never infer the reason from the winning side — a defender win can be either a king escape *or* every attacker being eliminated.
 
 **Capture rules:**
 - **Custodial** — piece sandwiched between two enemies (or one enemy + hostile square) after a move. Hostile squares: corners, empty throne (if noThrone is false).

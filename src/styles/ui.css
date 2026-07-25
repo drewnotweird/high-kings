@@ -1241,3 +1241,14 @@ body, button, input, select {
   border: none;
 }
 .onboard-nudge__btn:hover { filter: brightness(1.15); }
+
+/* Winner overlay — why the game ended */
+.winner-overlay__reason {
+  margin: 6px 0 0;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  color: #8a7a5c;
+  font-style: italic;
+  max-width: 320px;
+  text-align: center;
+}

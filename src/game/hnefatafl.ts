@@ -402,10 +402,20 @@ function checkKingCaptured(king: Piece, pieces: Piece[], boardSize: number, cent
   return surrounded === 4
 }
 
+// Why a game ended. The first three are decided inside applyMove; 'stalemate'
+// and 'repetition' are decided by the store, which owns turn order and history.
+export type WinReason =
+  | 'king-escaped'
+  | 'king-captured'
+  | 'attackers-eliminated'
+  | 'stalemate'
+  | 'repetition'
+
 export interface MoveResult {
   pieces: Piece[]
   capturedIds: string[]
   winner: 'attacker' | 'defender' | null
+  winReason: WinReason | null
 }
 
 // Shieldwall: a contiguous line of 2+ enemy pieces along an edge is captured when
@@ -519,25 +529,25 @@ export function applyMove(
 
   // Win checks
   const king = remaining.find(p => p.type === 'king')
-  if (!king) return { pieces: remaining, capturedIds, winner: 'attacker' }
+  if (!king) return { pieces: remaining, capturedIds, winner: 'attacker', winReason: 'king-captured' }
 
   const kingEscaped = kingEscapeEdge
     ? (king.row === 0 || king.row === boardSize - 1 || king.col === 0 || king.col === boardSize - 1)
     : isCorner(king.row, king.col, boardSize)
   if (kingEscaped) {
-    return { pieces: remaining, capturedIds, winner: 'defender' }
+    return { pieces: remaining, capturedIds, winner: 'defender', winReason: 'king-escaped' }
   }
 
   if (moverIsAttacker && checkKingCaptured(king, remaining, boardSize, center, weakKing, noThrone, toRow, toCol)) {
-    return { pieces: remaining.filter(p => p.type !== 'king'), capturedIds: [...capturedIds, king.id], winner: 'attacker' }
+    return { pieces: remaining.filter(p => p.type !== 'king'), capturedIds: [...capturedIds, king.id], winner: 'attacker', winReason: 'king-captured' }
   }
 
   // If all attackers are eliminated, the king cannot be captured — defenders win
   if (!remaining.some(p => p.type === 'attacker')) {
-    return { pieces: remaining, capturedIds, winner: 'defender' }
+    return { pieces: remaining, capturedIds, winner: 'defender', winReason: 'attackers-eliminated' }
   }
 
-  return { pieces: remaining, capturedIds, winner: null }
+  return { pieces: remaining, capturedIds, winner: null, winReason: null }
 }
 
 // Whether a given square is a valid destination for the currently selected piece

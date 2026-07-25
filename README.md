@@ -30,6 +30,7 @@ Hnefatafl is an asymmetric strategy game. The defender escorts the King to a cor
 - Spotlight follows the King; beam width scales with board size
 - Power-saving mode — switches to a lightweight 2D SVG board (no WebGL)
 - Settings and in-progress local games persist across refresh (localStorage)
+- Win screen states *why* the game ended — king escaped/captured, attackers eliminated, no legal moves, or repetition forfeit
 - Variant deep links — `?rules=brandub`, `?rules=alea-evangelii&board=19`, etc. (slugs in `src/game/variants.ts`)
 - First-visit nudge offers the Rules scroll to newcomers
 

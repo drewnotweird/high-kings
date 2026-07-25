@@ -51,7 +51,7 @@ function App() {
   const [lobbyDraft, setLobbyDraft] = useState<{ rules: Rules; boardSize: number; side: 'attacker' | 'defender' } | null>(null)
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({ type: 'idle' })
   const pendingLobby = useRef<{ rules: Rules; boardSize: number; side: 'attacker' | 'defender' } | null>(null)
-  const { currentTurn, resetGame, powerSaving, setSetting, pieces, dyingPieces, winner, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, elo, setElo, setAuth, setAuthReady, lastMove, repetitionWarning, confirmRepetitionMove, cancelRepetitionMove } = useGameSlice('currentTurn', 'resetGame', 'powerSaving', 'setSetting', 'pieces', 'dyingPieces', 'winner', 'playerMode', 'setPlayerMode', 'machineMove', 'difficulty', 'rules', 'boardSize', 'selectedId', 'selectPiece', 'movePiece', 'history', 'undoMove', 'gameKey', 'roleSelectOpen', 'setRoleSelectOpen', 'userId', 'username', 'elo', 'setElo', 'setAuth', 'setAuthReady', 'lastMove', 'repetitionWarning', 'confirmRepetitionMove', 'cancelRepetitionMove')
+  const { currentTurn, resetGame, powerSaving, setSetting, pieces, dyingPieces, winner, winReason, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, elo, setElo, setAuth, setAuthReady, lastMove, repetitionWarning, confirmRepetitionMove, cancelRepetitionMove } = useGameSlice('currentTurn', 'resetGame', 'powerSaving', 'setSetting', 'pieces', 'dyingPieces', 'winner', 'winReason', 'playerMode', 'setPlayerMode', 'machineMove', 'difficulty', 'rules', 'boardSize', 'selectedId', 'selectPiece', 'movePiece', 'history', 'undoMove', 'gameKey', 'roleSelectOpen', 'setRoleSelectOpen', 'userId', 'username', 'elo', 'setElo', 'setAuth', 'setAuthReady', 'lastMove', 'repetitionWarning', 'confirmRepetitionMove', 'cancelRepetitionMove')
 
   // Merge matched status instead of replacing — prevents broadcasts overwriting DB-fetched names/ELOs
   const handleOnlineStatusChange = useCallback((status: OnlineStatus) => {
@@ -529,6 +529,7 @@ function App() {
       {displayWinner && !winnerDismissed && (
         <WinnerOverlay
           winner={displayWinner as 'attacker' | 'defender'}
+          winReason={winReason}
           playerMode={playerMode}
           powerSaving={powerSaving}
           onNewGame={() => { resetGame(); startSetupAnim() }}

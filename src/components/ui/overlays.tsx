@@ -1,4 +1,5 @@
 import type { PlayerSide, GameMode } from '../../store/gameStore'
+import type { WinReason } from '../../game/hnefatafl'
 import { Ember } from './buttons'
 import { DefeatFire } from './DefeatFire'
 
@@ -80,8 +81,9 @@ export function RepetitionWarning({ onConfirm, onCancel }: { onConfirm: () => vo
   )
 }
 
-export function WinnerOverlay({ winner, playerMode, powerSaving, onNewGame, onDismiss }: {
+export function WinnerOverlay({ winner, winReason, playerMode, powerSaving, onNewGame, onDismiss }: {
   winner: 'attacker' | 'defender'
+  winReason: WinReason | null
   playerMode: GameMode
   powerSaving: boolean
   onNewGame: () => void
@@ -92,6 +94,15 @@ export function WinnerOverlay({ winner, playerMode, powerSaving, onNewGame, onDi
   const title = playerMode === '2player' ? 'Victory' : isPlayer ? 'Victory' : 'Defeat'
   const label = winner === 'defender' ? 'Defenders Win' : 'Attackers Win'
   const subtitle = playerMode !== '2player' ? (isPlayer ? 'You Win' : 'You Lose') : null
+  // Name the losing side for the two endings players find least obvious
+  const loser = winner === 'defender' ? 'Attackers' : 'Defenders'
+  const reason = winReason && {
+    'king-escaped': 'The King reached safety',
+    'king-captured': 'The King was captured',
+    'attackers-eliminated': 'Every attacker was eliminated',
+    'stalemate': `${loser} had no legal moves`,
+    'repetition': `${loser} repeated the position three times`,
+  }[winReason]
   return (
     <div className={`winner-overlay${isDefeat ? ' winner-overlay--defeat' : ''}`}>
       {!powerSaving && isDefeat && <DefeatFire />}
@@ -113,6 +124,7 @@ export function WinnerOverlay({ winner, playerMode, powerSaving, onNewGame, onDi
         <p className="winner-overlay__title">{title}</p>
         {subtitle && <p className={`winner-overlay__name winner-overlay__name--${winner}`}>{subtitle}</p>}
         <p style={{ margin: 0, fontSize: 13, letterSpacing: 2, textTransform: 'uppercase', color: '#a09070' }}>{label}</p>
+        {reason && <p className="winner-overlay__reason">{reason}</p>}
         <button className="menu-overlay__item" style={{ maxWidth: 280 }} onClick={onNewGame}>New Game</button>
         <button className="winner-overlay__dismiss" onClick={onDismiss}>
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
