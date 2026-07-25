@@ -583,6 +583,19 @@ Two-stage:
 - **Settings always persist** — musicEnabled, cameraLocked, difficulty, rules, boardSize, powerSaving, playerMode, theme
 - **In-progress games persist** — pieces, currentTurn, scores, and the last 20 history entries, but only while `winner === null`. Finished games boot fresh. History is capped so Alea Evangelii can't blow the localStorage quota.
 
+**Board/settings reconciliation (`merge`).** Because pieces are conditional but settings are not, rehydration can restore a variant with no board to go with it. zustand's default shallow merge would then leave the store's *initial* pieces — the 11×11 Copenhagen set — sitting on whatever variant the settings restored. The custom `merge` closes this:
+
+```ts
+const merged = { ...current, ...saved }
+const config = getBoardConfig(merged.rules, merged.boardSize)
+if (saved.pieces && piecesMatchConfig(merged.pieces, config)) return merged
+return { ...merged, ...freshBoardState(config) }   // rebuild for the restored variant
+```
+
+Presence of `saved.pieces` is the decisive test: pieces and settings are written in the same atomic `partialize` call, so a saved board always belongs to the saved settings. `piecesMatchConfig` (one king, all coordinates in bounds, count within the config's total) is a secondary guard against hand-edited or corrupted storage — on its own it is *not* sufficient, since an 11×11 set is comfortably in bounds on a 13×13, 15×15 or 19×19 board.
+
+`freshBoardState(config)` is the shared starting-board factory used by `merge`, `resetGame`, and `resetPiecesOnly`, so all three set `currentTurn` from `config.attackerFirst` identically.
+
 Separate localStorage flag `highkings-onboarded` gates the first-visit "How to play" nudge.
 
 URL params (checked once on mount, after rehydration): `?ps=true` forces power saving; `?rules=<slug>` (+ optional `&board=<n>`) deep-links a variant and resets the board — slug helpers live in `src/game/variants.ts`.
@@ -632,7 +645,8 @@ Live: https://drewnotweird.co.uk/highkings
 - **AI runs in a Web Worker** — `requestBestMove` is async; every caller must re-check turn/winner/gameKey when the promise resolves before applying the move.
 - **Selector-less `useGameStore()` is banned** — it re-renders on every store change (including animation ticks). Use `useGameSlice('a', 'b')` (shallow-compared) instead.
 - **Texture atlas bleed** — atlas cells have a 10px pad; UVs are clamped to 0..1 before remapping so extrude side-wall UVs can't sample neighbouring cells. If tiles ever show seams at distance, increase `ATLAS_PAD`.
-- **Persist partialize is conditional** — game-state keys are only written while `winner === null`; don't add transient fields (selectedId, dyingPieces, validMoves) to the persisted set.
+- **Persist partialize is conditional** — game-state keys are only written while `winner === null`; don't add transient fields (selectedId, dyingPieces, validMoves) to the persisted set. Because it's conditional, anything derived from `pieces` must be reconciled in `merge` (see Persistence) — the store's initial state is an 11×11 Copenhagen board, and it leaks onto other variants if a rehydrate restores settings without pieces.
+- **Don't reconcile rehydrated state in `onRehydrateStorage`** — localStorage is synchronous, so rehydration runs *during* store creation and the callback can't touch `useGameStore` yet (TDZ). Use the `merge` option instead.
 - **Frame loops pause when the tab is hidden** — `frameloop={tabVisible ? 'always' : 'never'}` on both Canvases. Anything that must progress while hidden needs to be timer-based, not `useFrame`-based.
 - **Avatar SVG layer composition** — SVG files in `src/assets/avatars/` are imported with Vite `?raw`. The `inner()` helper strips the outer `<svg>` wrapper so content can be injected via `dangerouslySetInnerHTML`. Hair and facial-hair layers must have no `fill` attribute — they inherit `fill={hairColor}` from the parent `<g>`.
 - **Avatar `sceneFadeIn` animation conflict** — never put `animation: 'sceneFadeIn ... forwards'` on an element whose opacity also needs to be dynamically controlled. The `forwards` fill locks opacity at 1 and overrides inline style changes. Use transition-only for those elements.

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { useShallow } from 'zustand/react/shallow'
 import { createInitialPieces, getBoardConfig, getValidMoves, applyMove, hasMoves, positionKey } from '../game/hnefatafl'
-import type { Piece } from '../game/hnefatafl'
+import type { Piece, BoardConfig } from '../game/hnefatafl'
 
 // Extract posKeys from history for easy AI/repetition lookups
 function historyKeys(history: { posKey: string }[]): string[] {
@@ -119,6 +119,37 @@ export function useGameSlice<K extends keyof GameStore>(...keys: K[]): Pick<Game
 // How many undo snapshots survive a refresh — keeps localStorage well under
 // quota on big boards (full history lives in memory during the session)
 const PERSISTED_HISTORY = 20
+
+// A starting board for `config` — the fields every reset path shares.
+function freshBoardState(config: BoardConfig) {
+  return {
+    pieces: createInitialPieces(config),
+    dyingPieces: [],
+    captorIds: [],
+    selectedId: null,
+    validMoves: [],
+    cautionMoves: [],
+    winner: null,
+    repetitionWarning: null,
+    currentTurn: (config.attackerFirst ? 'attacker' : 'defender') as PlayerSide,
+    scores: { attacker: 0, defender: 0 },
+    history: [],
+    lastMoveTarget: null,
+    undoTrigger: 0,
+  }
+}
+
+// Could `pieces` have come from this board? Guards the rehydrate path, where
+// restored settings and restored pieces are written separately.
+function piecesMatchConfig(pieces: Piece[], config: BoardConfig): boolean {
+  if (!Array.isArray(pieces) || pieces.length === 0) return false
+  if (pieces.length > config.attackerStarts.length + config.defenderStarts.length + 1) return false
+  if (pieces.filter(p => p.type === 'king').length !== 1) return false
+  return pieces.every(p =>
+    p.row >= 0 && p.row < config.boardSize &&
+    p.col >= 0 && p.col < config.boardSize
+  )
+}
 
 export const useGameStore = create<GameStore>()(persist((set) => ({
   pieces: createInitialPieces(getBoardConfig('Copenhagen', 11)),
@@ -358,51 +389,39 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
     }
   }),
 
-  resetGame: () => set((s) => {
-    const config = getBoardConfig(s.rules, s.boardSize)
-    return {
-    pieces: createInitialPieces(config),
-    dyingPieces: [],
-    captorIds: [],
-    selectedId: null,
-    validMoves: [],
-    cautionMoves: [],
-    winner: null,
-    repetitionWarning: null,
-    currentTurn: config.attackerFirst ? 'attacker' : 'defender',
-    scores: { attacker: 0, defender: 0 },
+  resetGame: () => set((s) => ({
+    ...freshBoardState(getBoardConfig(s.rules, s.boardSize)),
     gameKey: s.gameKey + 1,
-    history: [],
-    lastMoveTarget: null,
     lastMove: null,
     lastMovePath: [],
-    undoTrigger: 0,
-  }}),
+  })),
 
   setPieces: (pieces) => set({ pieces, dyingPieces: [], selectedId: null, validMoves: [], cautionMoves: [] }),
 
-  resetPiecesOnly: () => set((s) => {
-    const config = getBoardConfig(s.rules, s.boardSize)
-    return {
-    pieces: createInitialPieces(config),
-    dyingPieces: [],
-    captorIds: [],
-    selectedId: null,
-    validMoves: [],
-    cautionMoves: [],
-    winner: null,
-    repetitionWarning: null,
-    currentTurn: config.attackerFirst ? 'attacker' : 'defender',
-    scores: { attacker: 0, defender: 0 },
-    history: [],
-    lastMoveTarget: null,
-    undoTrigger: 0,
-  }}),
+  resetPiecesOnly: () => set((s) => freshBoardState(getBoardConfig(s.rules, s.boardSize))),
 
   setSetting: (key, value) => set({ [key]: value }),
 }), {
   name: 'highkings',
   version: 1,
+  // Keep the restored board and the restored rules/boardSize in step.
+  //
+  // A saved board is written atomically with the settings, so whenever `pieces`
+  // is present it already belongs to those settings. When it's absent — the game
+  // had finished, so partialize skipped it — the store keeps its initial 11×11
+  // Copenhagen pieces, which would otherwise end up on whatever variant the
+  // settings restore. Rebuild for the restored config in that case.
+  //
+  // Done here rather than in onRehydrateStorage: localStorage is synchronous, so
+  // rehydration runs during store creation and that callback can't reach
+  // useGameStore yet (TDZ).
+  merge: (persisted, current) => {
+    const saved = (persisted ?? {}) as Partial<GameStore>
+    const merged = { ...current, ...saved }
+    const config = getBoardConfig(merged.rules, merged.boardSize)
+    if (saved.pieces && piecesMatchConfig(merged.pieces, config)) return merged
+    return { ...merged, ...freshBoardState(config) }
+  },
   partialize: (s) => ({
     // Settings always persist
     musicEnabled: s.musicEnabled,
