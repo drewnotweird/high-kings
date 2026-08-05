@@ -381,10 +381,19 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
 
   undoMove: () => set((s) => {
     if (s.history.length === 0) return s
-    const prev = s.history[s.history.length - 1]
+    // Rewind to the human's last turn so they can play something different.
+    // History records every move (repetition detection needs the full position
+    // list), so against the machine a single pop would land on the machine's
+    // turn and it would just replay its move.
+    let idx = s.history.length - 1
+    if (s.playerMode !== '2player') {
+      while (idx >= 0 && s.history[idx].currentTurn !== s.playerMode) idx--
+      if (idx < 0) return s  // machine has opened but the human hasn't moved yet
+    }
+    const prev = s.history[idx]
     return {
       ...prev,
-      history: s.history.slice(0, -1),
+      history: s.history.slice(0, idx),
       dyingPieces: [],
       captorIds: [],
       selectedId: null,

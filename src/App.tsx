@@ -431,6 +431,8 @@ function App() {
         }
         const isOnline = onlineStatus.type === 'matched'
         const isSpectating = onlineStatus.type === 'spectating'
+        // Undo rewinds to the human's last turn, so it needs a human move to rewind to
+        const canUndo = history.some(h => h.currentTurn === playerMode)
         const myName = username ?? 'You'
         const opponentName = isOnline ? (onlineStatus.opponentName || '…') : undefined
         const opponentElo = isOnline ? (onlineStatus.opponentElo ?? undefined) : undefined
@@ -501,8 +503,8 @@ function App() {
             <MenuButton isOpen={false} onClick={() => setMenuOpen(o => !o)} />
             <HowToPlayButton onClick={() => setShowHowToPlay(true)} />
             <CreditsButton onClick={() => setShowCredits(true)} />
-            <div style={{ opacity: isOnline || isSpectating || playerMode === '2player' ? 0 : hasMoved && history.length > 0 ? 1 : 0, pointerEvents: (isOnline || isSpectating || playerMode === '2player' || !hasMoved || history.length === 0) ? 'none' : undefined, transition: 'opacity 0.6s' }}>
-              <UndoButton onClick={() => { if (history.length === 0 || setupAnimating) return; undoMove() }} />
+            <div style={{ opacity: isOnline || isSpectating || playerMode === '2player' ? 0 : hasMoved && canUndo ? 1 : 0, pointerEvents: (isOnline || isSpectating || playerMode === '2player' || !hasMoved || !canUndo) ? 'none' : undefined, transition: 'opacity 0.6s' }}>
+              <UndoButton onClick={() => { if (!canUndo || setupAnimating) return; undoMove() }} />
             </div>
           </div>
         </>
