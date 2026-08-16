@@ -35,7 +35,8 @@ src/
     ai.ts                      — AI engine: iterative-deepening minimax + alpha-beta (see README)
     aiWorker.ts                — Web Worker host for getBestMove
     aiClient.ts                — requestBestMove(params): Promise<AiMove|null>
-    variants.ts                — BOARD_SIZE_RULES / ALL_RULES / slug helpers for ?rules= deep links
+    variants.ts                — BOARD_SIZE_RULES / ALL_RULES / slug helpers for ?rules= deep
+                                 links; VARIANT_BLURB + variantFacts() for the setup screen
 
   store/
     gameStore.ts               — Zustand store (persist middleware); useGameSlice selector helper
@@ -54,8 +55,10 @@ src/
       Piece.tsx                — individual mesh for the King only
       PiecesLayer.tsx          — InstancedMesh for all attacker/defender pieces
     ui/
-      buttons.tsx              — icon buttons (aria-labelled), Toggle, Cycler, Mist/Ember sprites
-      MenuOverlay.tsx          — setup menu (settings panel)
+      buttons.tsx              — icon buttons (aria-labelled), Toggle, SegmentedControl,
+                                 BoardSizeIcon, Mist/Ember sprites
+      MenuOverlay.tsx          — setup screen (segmented controls, board-size diagrams,
+                                 variant cards with derived rule badges, sticky action bar)
       overlays.tsx             — ScorePanel, WinnerOverlay, RoleSelectOverlay, RepetitionWarning, GuestLoginModal
       ScrollPage.tsx           — parchment scroll chrome + CreditsScroll
       ProfileScroll.tsx        — profile page (lazy)
@@ -481,13 +484,15 @@ SpotLight target mesh lerps toward King's position each frame. `angle = 0.18 + b
 | Fetlar | 11×11 or 13×13 | Strong | Corners | No |
 | Historical | 11×11 or 13×13 | Weak | Corners | No |
 | Tawlbwrdd | 11×11 | Strong | Edge | Yes |
-| Simple Tyr | 11×11 | Strong | Corners | No |
+| Simple Tyr | 11×11 | Weak | Edge | No |
 | Linnaeus Tablut | 9×9 | Weak | Edge | No |
 | Saami Tablut | 9×9 | Weak | Edge | No |
 | Brandub | 7×7 | Weak | Corners | No |
 | Ard Rí | 7×7 | Strong | Corners | No |
-| Tyr | 15×15 | Strong | Corners | No |
+| Tyr | 15×15 | Weak | Edge | No |
 | Alea Evangelii | 19×19 | Strong | Corners | No |
+
+Tyr and Simple Tyr additionally have no throne and move attackers first. The setup screen derives these facts from the board config at runtime (`variantFacts` in `src/game/variants.ts`), so what it shows can't drift from what the engine plays.
 
 Copenhagen, Fetlar, and Historical each have two distinct starting layouts per board size. The 13×13 layout (Parlett reconstruction) has 32 attackers + 16 defenders.
 

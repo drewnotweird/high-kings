@@ -163,22 +163,46 @@ export function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
   )
 }
 
-export function Cycler<T extends string>({ options, value, onChange, isDisabled }: {
-  options: T[]
+export function SegmentedControl<T extends string>({ options, value, onChange, labels, ariaLabel }: {
+  options: readonly T[]
   value: T
   onChange: (v: T) => void
-  isDisabled?: (v: T) => boolean
+  labels?: Partial<Record<T, string>>
+  ariaLabel?: string
 }) {
-  const enabled = isDisabled ? options.filter(o => !isDisabled(o)) : options
-  const ei = enabled.indexOf(value)
-  const prev = () => { if (enabled.length > 0) onChange(enabled[(ei - 1 + enabled.length) % enabled.length]) }
-  const next = () => { if (enabled.length > 0) onChange(enabled[(ei + 1) % enabled.length]) }
-  const valueDisabled = isDisabled?.(value) ?? false
   return (
-    <div className="settings-cycler">
-      <button className="settings-cycler__arrow" aria-label="Previous option" onClick={prev} disabled={enabled.length <= 1}>&#8249;</button>
-      <span className="settings-cycler__value" style={{ opacity: valueDisabled ? 0.35 : 1 }}>{value}</span>
-      <button className="settings-cycler__arrow" aria-label="Next option" onClick={next} disabled={enabled.length <= 1}>&#8250;</button>
+    <div className="segmented" role="group" aria-label={ariaLabel}>
+      {options.map(o => (
+        <button
+          key={o}
+          type="button"
+          className={`segmented__option${value === o ? ' segmented__option--on' : ''}`}
+          aria-pressed={value === o}
+          onClick={() => onChange(o)}
+        >
+          {labels?.[o] ?? o}
+        </button>
+      ))}
     </div>
+  )
+}
+
+// Scale diagram of a board: grid lines plus the corner escapes and throne, so
+// the difference between a 7x7 and a 19x19 is visible at a glance.
+export function BoardSizeIcon({ size }: { size: number }) {
+  const last = size - 1
+  const mid = Math.floor(size / 2)
+  const lines = Array.from({ length: size + 1 }, (_, i) => i)
+  return (
+    <svg className="board-size-icon" viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+      {([[0, 0], [0, last], [last, 0], [last, last]] as const).map(([r, c]) => (
+        <rect key={`c${r}-${c}`} className="board-size-icon__corner" x={c} y={r} width={1} height={1} />
+      ))}
+      <rect className="board-size-icon__throne" x={mid} y={mid} width={1} height={1} />
+      <g className="board-size-icon__grid">
+        {lines.map(i => <line key={`h${i}`} x1={0} y1={i} x2={size} y2={i} vectorEffect="non-scaling-stroke" />)}
+        {lines.map(i => <line key={`v${i}`} x1={i} y1={0} x2={i} y2={size} vectorEffect="non-scaling-stroke" />)}
+      </g>
+    </svg>
   )
 }

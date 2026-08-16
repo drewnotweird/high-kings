@@ -60,13 +60,15 @@ Hnefatafl is an asymmetric strategy game. The defender escorts the King to a cor
 | Fetlar | 11×11 or 13×13 | Strong | Corners | No |
 | Historical | 11×11 or 13×13 | Weak | Corners | No |
 | Tawlbwrdd | 11×11 | Strong | Edge | Yes |
-| Simple Tyr | 11×11 | Strong | Corners | No |
+| Simple Tyr | 11×11 | Weak | Edge | No |
 | Linnaeus Tablut | 9×9 | Weak | Edge | No |
 | Saami Tablut | 9×9 | Weak | Edge | No |
 | Brandub | 7×7 | Weak | Corners | No |
 | Ard Rí | 7×7 | Strong | Corners | No |
-| Tyr | 15×15 | Strong | Corners | No |
+| Tyr | 15×15 | Weak | Edge | No |
 | Alea Evangelii | 19×19 | Strong | Corners | No |
+
+Tyr and Simple Tyr additionally have no throne and move attackers first. The setup screen derives these facts from the board config at runtime (`variantFacts` in `src/game/variants.ts`), so what it shows can't drift from what the engine plays.
 
 ## Performance
 

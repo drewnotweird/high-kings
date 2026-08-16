@@ -1,3 +1,4 @@
+import { getBoardConfig } from './hnefatafl'
 import type { Rules } from '../store/gameStore'
 
 export const BOARD_SIZE_RULES: Record<number, Rules[]> = {
@@ -31,3 +32,47 @@ export function defaultSizeFor(rules: Rules): number {
   return 11
 }
 
+
+// --- Setup-screen metadata -------------------------------------------------
+
+// A one-line character sketch per variant. Facts (king strength, escape type…)
+// are derived from the board config below rather than repeated here, so they
+// can never drift from the actual rules.
+export const VARIANT_BLURB: Record<Rules, string> = {
+  'Copenhagen': 'The modern tournament standard.',
+  'Fetlar': 'Copenhagen without shieldwalls — captures come one at a time.',
+  'Historical': 'Reconstructed from period sources. The King is vulnerable once he leaves the throne.',
+  'Tawlbwrdd': 'The Welsh board. The King runs for any edge, not just the corners.',
+  'Simple Tyr': 'Tyr rules at a friendlier size — a good way in to the family.',
+  'Linnaeus Tablut': 'Recorded in Lapland in 1732. Fast and aggressive.',
+  'Saami Tablut': 'Tablut with a wider defensive diamond, for a more open opening.',
+  'Brandub': 'A tiny, sharp Irish duel where every move counts.',
+  'Ard Rí': 'The Irish High King — a dense brawl on the smallest board.',
+  'Tyr': 'The largest competitive board, with no throne to lean on.',
+  'Alea Evangelii': 'An epic reconstruction from a 10th-century manuscript.',
+}
+
+export interface VariantFacts {
+  king: string
+  escape: string
+  extras: string[]
+  attackers: number
+  defenders: number
+}
+
+// Reads the real board config so the setup screen always describes what the
+// engine will actually play.
+export function variantFacts(rules: Rules, boardSize: number): VariantFacts {
+  const c = getBoardConfig(rules, boardSize)
+  const extras: string[] = []
+  if (c.shieldwall) extras.push('Shieldwall')
+  if (c.noThrone) extras.push('No throne')
+  if (c.attackerFirst) extras.push('Attackers move first')
+  return {
+    king: c.weakKing ? 'Weak King' : 'Strong King',
+    escape: c.kingEscapeEdge ? 'Edge escape' : 'Corner escape',
+    extras,
+    attackers: c.attackerStarts.length,
+    defenders: c.defenderStarts.length,
+  }
+}
