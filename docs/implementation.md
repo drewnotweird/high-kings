@@ -667,6 +667,27 @@ the screen title (`.credits-page__title, .setup__title`) and the dismiss control
 Don't style a new overlay's title or close button from scratch — reuse those, and
 pick the surface by asking whether the screen is for reading or deciding.
 
+## Accessibility
+
+Audited against WCAG 2.1 AA. Rules to keep it there:
+
+- **Contrast** — every text/background pair must clear 4.5:1 (3:1 for >=24px).
+  Watch gradients especially: a gradient gives you a *range* of contrast, and
+  the selected segment and primary buttons both used to pass at one end and
+  fail at the other. Prefer flat fills for anything carrying small text.
+- **Focus** — a global `:focus-visible` ring lives at the end of `ui.css`.
+  Don't remove outlines. If a control sits inside an `overflow: hidden`
+  container (like `.segmented`), give it `outline-offset: -3px` so the ring
+  draws inside rather than being clipped.
+- **Touch targets** — 44x44 minimum. Where the visual can't grow (the
+  power-saving pill is 40x22), extend the hit area with an `::after` overlay
+  rather than resizing the control.
+- **Motion** — `prefers-reduced-motion` is honoured for CSS animations via a
+  blanket rule, and `usePrefersReducedMotion()` gates the 3D effects a media
+  query can't reach (capture explosions, the undo lightning bolt). The undo
+  screen-flash pulses twice in 0.45s, close to the WCAG 2.3.1 flash threshold,
+  so it must stay behind that gate.
+
 ## Known Gotchas
 
 - **Never run `npm run gen-textures`** — overwrites hand-edited textures.

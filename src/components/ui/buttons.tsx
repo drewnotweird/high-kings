@@ -155,9 +155,9 @@ export function LeaderboardButton({ onClick }: { onClick: () => void }) {
   )
 }
 
-export function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
+export function Toggle({ on, onClick, label }: { on: boolean; onClick: () => void; label?: string }) {
   return (
-    <button className={`settings-toggle settings-toggle--${on ? 'on' : 'off'}`} role="switch" aria-checked={on} aria-label="Toggle" onClick={onClick}>
+    <button className={`settings-toggle settings-toggle--${on ? 'on' : 'off'}`} role="switch" aria-checked={on} aria-label={label ?? 'Toggle'} onClick={onClick}>
       <span className="settings-toggle__knob" />
     </button>
   )

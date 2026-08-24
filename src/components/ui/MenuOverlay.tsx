@@ -112,7 +112,7 @@ export function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onOnlineMa
               <h3 className="setup__section-title">Display</h3>
               <div className="setup__field setup__field--inline">
                 <span className="setup__field-label">Power saving</span>
-                <Toggle on={draft.powerSaving} onClick={() => setDraft(d => ({ ...d, powerSaving: !d.powerSaving, cameraLocked: !d.powerSaving ? true : d.cameraLocked }))} />
+                <Toggle label="Power saving" on={draft.powerSaving} onClick={() => setDraft(d => ({ ...d, powerSaving: !d.powerSaving, cameraLocked: !d.powerSaving ? true : d.cameraLocked }))} />
               </div>
               <p className="setup__field-hint">Swaps the 3D board for a light 2D one.</p>
               <div className="setup__field" style={{ opacity: draft.powerSaving ? 0.3 : 1, pointerEvents: draft.powerSaving ? 'none' : undefined }}>

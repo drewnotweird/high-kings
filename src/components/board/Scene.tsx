@@ -10,6 +10,7 @@ import { getBoardConfig } from '../../game/hnefatafl'
 import { themes } from '../../lib/themes'
 import { IntroStartContext } from '../../contexts/intro'
 import { useTabVisible } from '../../hooks/useTabVisible'
+import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion'
 
 const DUST_DURATION = 1.5
 
@@ -549,13 +550,14 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
   const { pieces, dyingPieces, captureDelayMs, clearDyingPieces, selectedId, theme: themeName, selectPiece, cameraLocked, powerSaving, rules, boardSize: storedBoardSize, undoTrigger, lastMoveTarget } = useGameSlice('pieces', 'dyingPieces', 'captureDelayMs', 'clearDyingPieces', 'selectedId', 'theme', 'selectPiece', 'cameraLocked', 'powerSaving', 'rules', 'boardSize', 'undoTrigger', 'lastMoveTarget')
   const theme = themes[themeName]
   const [menuPhase, setMenuPhase] = useState<MenuPhase>('idle')
+  const reducedMotion = usePrefersReducedMotion()
 
   // Capture dust clouds — fire when dyingPieces are set, delay until mover arrives
   const [dustClouds, setDustClouds] = useState<{ key: number; x: number; z: number }[]>([])
   const [bolts, setBolts] = useState<{ key: number; tx: number; tz: number }[]>([])
 
   useEffect(() => {
-    if (powerSaving || !lastMoveTarget) return
+    if (powerSaving || reducedMotion || !lastMoveTarget) return
     const { boardSize } = getBoardConfig(rules, storedBoardSize)
     const offset = (boardSize - 1) / 2
     setBolts(prev => [...prev, {
@@ -566,7 +568,7 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
   }, [undoTrigger])
 
   useEffect(() => {
-    if (powerSaving || dyingPieces.length === 0) return
+    if (powerSaving || reducedMotion || dyingPieces.length === 0) return
     const { boardSize } = getBoardConfig(rules, storedBoardSize)
     const boardOffset = (boardSize - 1) / 2
     const clouds = dyingPieces.map(p => ({

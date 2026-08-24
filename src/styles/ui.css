@@ -258,6 +258,8 @@ h1, h2, h3,
 }
 /* Hide/show toggle for the top HUD (logo + button columns) */
 .hud-toggle {
+  min-width: 44px;
+  min-height: 44px;
   position: absolute;
   left: 50%;
   top: 148px;
@@ -344,6 +346,7 @@ h1, h2, h3,
   width: 100%;
 }
 .menu-overlay__item {
+  min-height: 44px;
   background: rgba(0,0,0,0.8);
   border: 1px solid rgba(200,160,40,0.4);
   border-radius: 6px;
@@ -361,13 +364,13 @@ h1, h2, h3,
 }
 .menu-overlay__item:hover { border-color: rgba(200,160,40,0.9); background: rgba(30,15,0,0.9); }
 .menu-overlay__item--primary {
-  background: linear-gradient(135deg, #a07820, #5a3e08, #a07820);
+  background: linear-gradient(135deg, #8a6410, #5a3e08, #8a6410);
   border-color: #c89a30;
   color: var(--ink-bright);
   font-weight: bold;
   text-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
-.menu-overlay__item--primary:hover { background: linear-gradient(135deg, #e0b840, #a07018, #e0b840); border-color: #f0d060; }
+.menu-overlay__item--primary:hover { background: linear-gradient(135deg, #a67c16, #6d4c0a, #a67c16); border-color: #f0d060; }
 .menu-overlay__item--primary:disabled { background: rgba(200,160,40,0.15); color: var(--ink); text-shadow: none; }
 .menu-overlay__row { display: flex; gap: 8px; width: 100%; }
 .menu-overlay__item--half { flex: 1; }
@@ -548,6 +551,7 @@ h1, h2, h3,
   border: none;
   cursor: pointer;
   font-family: inherit;
+  min-height: 44px;
   padding: 6px 10px;
   display: flex;
   flex-direction: row;
@@ -1385,6 +1389,7 @@ h1, h2, h3,
 }
 .segmented__option {
   flex: 1;
+  min-height: 44px;
   background: none;
   border: none;
   border-right: 1px solid rgba(200,169,110,0.2);
@@ -1402,8 +1407,9 @@ h1, h2, h3,
 .segmented__option:hover { background: rgba(200,169,110,0.1); color: var(--ink); }
 .segmented__option--on,
 .segmented__option--on:hover {
-  background: linear-gradient(135deg, #c8880a, #a06808);
+  background: var(--gold);
   color: var(--on-brand);
+  font-weight: 700;
 }
 
 /* Board size picker */
@@ -1486,3 +1492,39 @@ h1, h2, h3,
   background: linear-gradient(to top, #000 calc(100% - 20px), rgba(0,0,0,0));
 }
 .setup__footer .setup__actions { width: 100%; }
+
+
+/* ---- Accessibility ------------------------------------------------------ */
+
+/* Visible keyboard focus. There was none anywhere before this, so keyboard
+   users had no way to tell where they were (WCAG 2.4.7). */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.credits-page__paper :focus-visible { outline-color: var(--parch-ink); }
+/* .segmented clips its children, which would swallow an outset ring — draw
+   this one inside the button instead. */
+.segmented__option:focus-visible { outline-offset: -3px; }
+
+/* The power-saving switch is a 40x22 pill; extend its hit area to 44x44
+   without changing how it looks (WCAG 2.5.5). */
+.settings-toggle { position: relative; }
+.settings-toggle::after {
+  content: '';
+  position: absolute;
+  inset: -11px -2px;
+}
+
+/* Respect reduced-motion. This app is heavy on motion — drifting embers, fire
+   flicker, and a full-screen lightning flash on undo that pulses twice in
+   0.45s, which is close to the WCAG 2.3.1 flash threshold. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
