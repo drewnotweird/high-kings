@@ -704,6 +704,11 @@ natively. A `cursor` lives in the store and both renderers draw it, which keeps
   `activateCursor()` in the store mirrors exactly what a click on that square does.
 - The board sits in a focusable `role="application"` region and is the **first
   tab stop**, so a keyboard player reaches the game immediately.
+- The cursor is only drawn while `keyboardMode` is on — set when focus arrives
+  via `:focus-visible` or any board key is pressed, cleared on blur or pointer
+  down. Mouse players never see it. It doubles as the board's focus indicator,
+  which is why `.board-region` has no outline: the region fills the viewport, so
+  an outline would draw a box around the whole screen.
 - Two `aria-live` regions, not one: completed moves in the first, turn and cursor
   status in the second. Sharing a region means a move announcement gets
   overwritten the moment the cursor moves.

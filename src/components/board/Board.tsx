@@ -294,7 +294,7 @@ function LastMovePathGlow({ path, boardOffset }: { path: [number, number][]; boa
 }
 
 export function Board({ theme, menuPhase }: BoardProps) {
-  const { rules, boardSize: storedBoardSize, pieces, validMoves, cautionMoves, selectedId, selectPiece, movePiece, gameKey, powerSaving, lastMovePath, cursor } = useGameSlice('rules', 'boardSize', 'pieces', 'validMoves', 'cautionMoves', 'selectedId', 'selectPiece', 'movePiece', 'gameKey', 'powerSaving', 'lastMovePath', 'cursor')
+  const { rules, boardSize: storedBoardSize, pieces, validMoves, cautionMoves, selectedId, selectPiece, movePiece, gameKey, powerSaving, lastMovePath, cursor, keyboardMode } = useGameSlice('rules', 'boardSize', 'pieces', 'validMoves', 'cautionMoves', 'selectedId', 'selectPiece', 'movePiece', 'gameKey', 'powerSaving', 'lastMovePath', 'cursor', 'keyboardMode')
   const { boardSize, center, attackerStarts, defenderStarts, kingEscapeEdge } = getBoardConfig(rules, storedBoardSize)
   useEffect(() => { clearPhaseCache() }, [gameKey])
   const [hoveredTile, setHoveredTile] = useState<{ x: number; z: number } | null>(null)
@@ -588,8 +588,9 @@ export function Board({ theme, menuPhase }: BoardProps) {
 
       <LastMovePathGlow path={lastMovePath} boardOffset={boardOffset} />
 
-      {/* Keyboard cursor — a ring on the square the arrow keys are pointing at */}
-      <mesh
+      {/* Keyboard cursor — a ring on the square the arrow keys are pointing at,
+          drawn only while the board is being driven by keyboard */}
+      {keyboardMode && <mesh
         position={[cursor.col - boardOffset, TILE_TOP + 0.006, cursor.row - boardOffset]}
         rotation={[-Math.PI / 2, 0, Math.PI / 4]}
         renderOrder={3}
@@ -597,7 +598,7 @@ export function Board({ theme, menuPhase }: BoardProps) {
         {/* 4-segment ring is a diamond; the 45deg spin squares it to the tile */}
         <ringGeometry args={[SQUARE_SIZE * 0.52, SQUARE_SIZE * 0.62, 4]} />
         <meshBasicMaterial color="#e8c060" transparent opacity={0.9} depthTest={false} />
-      </mesh>
+      </mesh>}
 
       {!powerSaving && (
         <TileHoverGlow

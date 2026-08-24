@@ -56,6 +56,7 @@ function App() {
 
   const boardInteractive = !menuOpen && !roleSelectOpen && onlineStatus.type !== 'spectating'
   const { onKeyDown: onBoardKeyDown, status: boardStatus, moveText, turnLabel } = useBoardKeyboard(boardInteractive)
+  const setKeyboardMode = useGameStore(s => s.setKeyboardMode)
 
   // Merge matched status instead of replacing — prevents broadcasts overwriting DB-fetched names/ELOs
   const handleOnlineStatusChange = useCallback((status: OnlineStatus) => {
@@ -392,6 +393,10 @@ function App() {
           aria-roledescription="Hnefatafl board"
           tabIndex={boardInteractive ? 0 : -1}
           onKeyDown={onBoardKeyDown}
+          // Show the cursor when focus arrives from the keyboard, not from a click
+          onFocus={e => setKeyboardMode(e.currentTarget.matches(':focus-visible'))}
+          onBlur={() => setKeyboardMode(false)}
+          onPointerDown={() => setKeyboardMode(false)}
           style={{ position: 'absolute', inset: 0, pointerEvents: onlineStatus.type === 'spectating' ? 'none' : undefined }}
         >
           {powerSaving

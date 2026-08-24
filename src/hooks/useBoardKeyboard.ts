@@ -14,14 +14,16 @@ const ARROWS: Record<string, [number, number]> = {
 // live region announces whatever changes, so there's nothing to store.
 export function useBoardKeyboard(enabled: boolean) {
   const { cursor, pieces, validMoves, selectedId, currentTurn, winner, winReason,
-          rules, boardSize: storedSize, lastMoveText, moveCursor, activateCursor, selectPiece } =
+          rules, boardSize: storedSize, lastMoveText, moveCursor, activateCursor, selectPiece, setKeyboardMode } =
     useGameSlice('cursor', 'pieces', 'validMoves', 'selectedId', 'currentTurn', 'winner', 'winReason',
-                 'rules', 'boardSize', 'lastMoveText', 'moveCursor', 'activateCursor', 'selectPiece')
+                 'rules', 'boardSize', 'lastMoveText', 'moveCursor', 'activateCursor', 'selectPiece', 'setKeyboardMode')
 
   const { boardSize, center, kingEscapeEdge } = getBoardConfig(rules, storedSize)
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (!enabled) return
+    // Any board key means the player is on the keyboard — reveal the cursor
+    if (ARROWS[e.key] || e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') setKeyboardMode(true)
     const delta = ARROWS[e.key]
     if (delta) {
       e.preventDefault()

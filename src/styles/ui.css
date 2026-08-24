@@ -1544,5 +1544,7 @@ h1, h2, h3,
   white-space: nowrap;
   border: 0;
 }
-/* The board takes focus as a whole; ring it rather than nothing */
-.board-region:focus-visible { outline: 2px solid var(--gold); outline-offset: -4px; }
+/* The board fills the viewport, so an outline round it would be a box round the
+   whole screen. The keyboard cursor drawn on the board is the focus indicator
+   instead — it appears precisely when focus arrives from the keyboard. */
+.board-region:focus-visible { outline: none; }

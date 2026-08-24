@@ -44,7 +44,7 @@ const BURST_CSS = `
 `
 
 export function Board2D({ menuOpen }: { menuOpen: boolean }) {
-  const { pieces, dyingPieces: storeDyingPieces, clearDyingPieces, selectedId, selectPiece, movePiece, validMoves, cautionMoves, cursor, gameKey, rules, boardSize: storedBoardSize, roleSelectOpen } = useGameSlice('pieces', 'dyingPieces', 'clearDyingPieces', 'selectedId', 'selectPiece', 'movePiece', 'validMoves', 'cautionMoves', 'cursor', 'gameKey', 'rules', 'boardSize', 'roleSelectOpen')
+  const { pieces, dyingPieces: storeDyingPieces, clearDyingPieces, selectedId, selectPiece, movePiece, validMoves, cautionMoves, cursor, keyboardMode, gameKey, rules, boardSize: storedBoardSize, roleSelectOpen } = useGameSlice('pieces', 'dyingPieces', 'clearDyingPieces', 'selectedId', 'selectPiece', 'movePiece', 'validMoves', 'cautionMoves', 'cursor', 'keyboardMode', 'gameKey', 'rules', 'boardSize', 'roleSelectOpen')
   const { boardSize, center } = getBoardConfig(rules, storedBoardSize)
   const TOTAL = boardSize * CELL + PAD * 2
 
@@ -215,8 +215,8 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
           strokeWidth={1.2}
         />
 
-        {/* Keyboard cursor */}
-        <rect
+        {/* Keyboard cursor — hidden until the board is being driven by keyboard */}
+        {keyboardMode && <rect
           className="board2d__cursor"
           x={cx(cursor.col) + 2} y={cy(cursor.row) + 2}
           width={CELL - 4} height={CELL - 4}
@@ -225,7 +225,7 @@ export function Board2D({ menuOpen }: { menuOpen: boolean }) {
           stroke="var(--gold)"
           strokeWidth={2.5}
           pointerEvents="none"
-        />
+        />}
 
         {/* Valid move targets */}
         {validMoves.map(([r, c]) => {

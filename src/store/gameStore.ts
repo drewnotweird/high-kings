@@ -92,6 +92,8 @@ interface GameStore {
   setTheme: (theme: Theme) => void
   cursor: { row: number; col: number }
   lastMoveText: string  // narration for the aria-live region
+  keyboardMode: boolean  // board cursor is only drawn while navigating by keyboard
+  setKeyboardMode: (on: boolean) => void
   moveCursor: (dRow: number, dCol: number) => void
   setCursor: (row: number, col: number) => void
   activateCursor: () => void
@@ -171,6 +173,7 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
   cautionMoves: [],
   cursor: { row: 5, col: 5 },
   lastMoveText: '',
+  keyboardMode: false,
   winner: null,
   winReason: null,
   repetitionWarning: null,
@@ -204,6 +207,8 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
   setAvatar: (avatar) => set({ avatar }),
 
   setTheme: (theme) => set({ theme }),
+
+  setKeyboardMode: (on) => set({ keyboardMode: on }),
 
   setCursor: (row, col) => set((s) => {
     const { boardSize } = getBoardConfig(s.rules, s.boardSize)
