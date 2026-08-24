@@ -675,6 +675,11 @@ Audited against WCAG 2.1 AA. Rules to keep it there:
   Watch gradients especially: a gradient gives you a *range* of contrast, and
   the selected segment and primary buttons both used to pass at one end and
   fail at the other. Prefer flat fills for anything carrying small text.
+- **Gold surfaces** — use `--brand-fill` (#8a6410) with `--ink-bright` text.
+  There is a narrow window here: lighter golds fail 4.5:1 against cream, and
+  golds dark enough for the standard `--ink` cream drop the fill below 3:1
+  against the panel, so the selected state stops reading as selected (1.4.11).
+  `--brand` (#c8880a) is for borders and markers only — never behind text.
 - **Focus** — a global `:focus-visible` ring lives at the end of `ui.css`.
   Don't remove outlines. If a control sits inside an `overflow: hidden`
   container (like `.segmented`), give it `outline-offset: -3px` so the ring

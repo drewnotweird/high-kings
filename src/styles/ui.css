@@ -28,8 +28,12 @@
   /* Accents */
   --gold:       #e8c060;  /* headings, selected */
   --gold-dim:   #c8a060;  /* rules, icons */
-  --brand:      #c8880a;  /* active fill */
-  --on-brand:   #1a0e00;  /* text on gold fills */
+  --brand:      #c8880a;  /* accent: borders, markers — non-text use */
+  --brand-fill: #8a6410;  /* gold surface that carries --ink-bright text.
+                             Lighter golds fail 4.5:1 against cream; darker
+                             ones drop the fill below 3:1 against the panel
+                             and the selected state stops reading as selected. */
+  --on-brand:   #1a0e00;  /* text on bright gold, where cream can't be used */
 
   /* Ink on parchment scrolls */
   --parch-ink:   #2e1606;
@@ -364,7 +368,7 @@ h1, h2, h3,
 }
 .menu-overlay__item:hover { border-color: rgba(200,160,40,0.9); background: rgba(30,15,0,0.9); }
 .menu-overlay__item--primary {
-  background: linear-gradient(135deg, #8a6410, #5a3e08, #8a6410);
+  background: linear-gradient(135deg, var(--brand-fill), #5a3e08, var(--brand-fill));
   border-color: #c89a30;
   color: var(--ink-bright);
   font-weight: bold;
@@ -1407,8 +1411,8 @@ h1, h2, h3,
 .segmented__option:hover { background: rgba(200,169,110,0.1); color: var(--ink); }
 .segmented__option--on,
 .segmented__option--on:hover {
-  background: var(--gold);
-  color: var(--on-brand);
+  background: var(--brand-fill);
+  color: var(--ink-bright);
   font-weight: 700;
 }
 
