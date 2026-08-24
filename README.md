@@ -33,6 +33,8 @@ Hnefatafl is an asymmetric strategy game. The defender escorts the King to a cor
 - Win screen states *why* the game ended — king escaped/captured, attackers eliminated, no legal moves, or repetition forfeit
 - Variant deep links — `?rules=brandub`, `?rules=alea-evangelii&board=19`, etc. (slugs in `src/game/variants.ts`)
 - First-visit nudge offers the Rules scroll to newcomers
+- Full keyboard play — arrows move a board cursor, Enter selects and moves,
+  Escape cancels; moves and captures are announced for screen readers
 
 ### Online multiplayer
 - Account-based (email/password) — guest play still works offline

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { useShallow } from 'zustand/react/shallow'
 import { createInitialPieces, getBoardConfig, getValidMoves, applyMove, hasMoves, positionKey } from '../game/hnefatafl'
+import { describeMove } from '../game/notation'
 import type { Piece, BoardConfig, WinReason } from '../game/hnefatafl'
 
 // Extract posKeys from history for easy AI/repetition lookups
@@ -89,6 +90,11 @@ interface GameStore {
   setElo: (elo: number) => void
   setAvatar: (avatar: import('../lib/avatarConfig').AvatarConfig) => void
   setTheme: (theme: Theme) => void
+  cursor: { row: number; col: number }
+  lastMoveText: string  // narration for the aria-live region
+  moveCursor: (dRow: number, dCol: number) => void
+  setCursor: (row: number, col: number) => void
+  activateCursor: () => void
   selectPiece: (id: string | null) => void
   movePiece: (toRow: number, toCol: number) => void
   confirmRepetitionMove: () => void
@@ -134,6 +140,8 @@ function freshBoardState(config: BoardConfig) {
     winReason: null,
     repetitionWarning: null,
     currentTurn: (config.attackerFirst ? 'attacker' : 'defender') as PlayerSide,
+    cursor: { row: config.center, col: config.center },
+    lastMoveText: '',
     scores: { attacker: 0, defender: 0 },
     history: [],
     lastMoveTarget: null,
@@ -161,6 +169,8 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
   selectedId: null,
   validMoves: [],
   cautionMoves: [],
+  cursor: { row: 5, col: 5 },
+  lastMoveText: '',
   winner: null,
   winReason: null,
   repetitionWarning: null,
@@ -194,6 +204,34 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
   setAvatar: (avatar) => set({ avatar }),
 
   setTheme: (theme) => set({ theme }),
+
+  setCursor: (row, col) => set((s) => {
+    const { boardSize } = getBoardConfig(s.rules, s.boardSize)
+    const clamp = (v: number) => Math.min(Math.max(v, 0), boardSize - 1)
+    return { cursor: { row: clamp(row), col: clamp(col) } }
+  }),
+
+  moveCursor: (dRow, dCol) => set((s) => {
+    const { boardSize } = getBoardConfig(s.rules, s.boardSize)
+    const clamp = (v: number) => Math.min(Math.max(v, 0), boardSize - 1)
+    return { cursor: { row: clamp(s.cursor.row + dRow), col: clamp(s.cursor.col + dCol) } }
+  }),
+
+  // Enter/Space on the cursor square. Mirrors what a click on that square does:
+  // commit a move if it's a valid target, otherwise pick up a piece, otherwise
+  // drop the current selection.
+  activateCursor: () => {
+    const s = useGameStore.getState()
+    if (s.winner) return
+    const { row, col } = s.cursor
+    if (s.selectedId && s.validMoves.some(([r, c]) => r === row && c === col)) {
+      s.movePiece(row, col)
+      return
+    }
+    const here = s.pieces.find(p => p.row === row && p.col === col)
+    if (here) s.selectPiece(here.id === s.selectedId ? null : here.id)
+    else if (s.selectedId) s.selectPiece(null)
+  },
 
   selectPiece: (id) => set((s) => {
     if (s.winner) return s
@@ -276,6 +314,7 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
       winReason: result.winner ? result.winReason : (stalemateWinner ? 'stalemate' : null),
       history: [...s.history, snapshot],
       lastMoveTarget: { row: toRow, col: toCol },
+      lastMoveText: describeMove({ row: movedPiece.row, col: movedPiece.col }, { row: toRow, col: toCol }, movedPiece, capturedPieces, boardSize),
       lastMove: { pieceId: s.selectedId!, fromRow: movedPiece.row, fromCol: movedPiece.col, toRow, toCol },
       lastMovePath: [],
     }
@@ -313,6 +352,7 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
       winReason: 'repetition' as WinReason,
       history: [...s.history, snapshot],
       lastMoveTarget: { row: toRow, col: toCol },
+      lastMoveText: describeMove({ row: movedPiece.row, col: movedPiece.col }, { row: toRow, col: toCol }, movedPiece, capturedPieces, boardSize),
       lastMove: { pieceId: warningPieceId, fromRow: movedPiece.row, fromCol: movedPiece.col, toRow, toCol },
       lastMovePath: [],
     }
@@ -367,6 +407,7 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
         ? result.winReason
         : stalemateWinner ? 'stalemate' : repetitionWinner ? 'repetition' : null,
       history: [...s.history, snapshot],
+      lastMoveText: describeMove({ row: movedPiece.row, col: movedPiece.col }, { row: toRow, col: toCol }, movedPiece, capturedPieces, boardSize),
       lastMovePath: computeMovePath(movedPiece.row, movedPiece.col, toRow, toCol),
     }
   }),
@@ -402,6 +443,7 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
       repetitionWarning: null,
       winner: null,
       winReason: null,
+      lastMoveText: '',
       lastMovePath: [],
       undoTrigger: s.undoTrigger + 1,
     }
@@ -437,6 +479,9 @@ export const useGameStore = create<GameStore>()(persist((set) => ({
     const saved = (persisted ?? {}) as Partial<GameStore>
     const merged = { ...current, ...saved }
     const config = getBoardConfig(merged.rules, merged.boardSize)
+    // The cursor is ephemeral UI state and isn't persisted, so the initial
+    // value would otherwise leak onto a restored board of a different size.
+    merged.cursor = { row: config.center, col: config.center }
     if (saved.pieces && piecesMatchConfig(merged.pieces, config)) return merged
     return { ...merged, ...freshBoardState(config) }
   },

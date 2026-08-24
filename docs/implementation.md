@@ -693,6 +693,28 @@ Audited against WCAG 2.1 AA. Rules to keep it there:
   screen-flash pulses twice in 0.45s, close to the WCAG 2.3.1 flash threshold,
   so it must stay behind that gate.
 
+## Keyboard play
+
+The board is a canvas (or an SVG in power-saving mode), so it can't be navigated
+natively. A `cursor` lives in the store and both renderers draw it, which keeps
+3D and 2D in step for free.
+
+- `useBoardKeyboard` owns the key handling. Arrows move the cursor, shift+arrow
+  jumps to the edge, Enter/Space picks up and places a piece, Escape drops it.
+  `activateCursor()` in the store mirrors exactly what a click on that square does.
+- The board sits in a focusable `role="application"` region and is the **first
+  tab stop**, so a keyboard player reaches the game immediately.
+- Two `aria-live` regions, not one: completed moves in the first, turn and cursor
+  status in the second. Sharing a region means a move announcement gets
+  overwritten the moment the cursor moves.
+- The hook derives every string during render — no effects, no stored message.
+  Move narration is built in the store (`lastMoveText`) where from/to/captures
+  are already known, which is both more accurate than diffing and avoids
+  setState-in-effect.
+- Announce **both sides' moves**. `machineMove` deliberately doesn't set
+  `lastMove` (it would echo back as an outgoing online move), so anything keyed
+  off `lastMove` silently skips the opponent's reply.
+
 ## Known Gotchas
 
 - **Never run `npm run gen-textures`** — overwrites hand-edited textures.

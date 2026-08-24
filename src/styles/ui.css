@@ -1532,3 +1532,17 @@ h1, h2, h3,
     scroll-behavior: auto !important;
   }
 }
+
+/* Screen-reader-only text (board instructions and the move announcer) */
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+/* The board takes focus as a whole; ring it rather than nothing */
+.board-region:focus-visible { outline: 2px solid var(--gold); outline-offset: -4px; }

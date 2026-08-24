@@ -10,6 +10,7 @@ import type { PlayerSide, Rules } from './store/gameStore'
 import { requestBestMove } from './game/aiClient'
 import { getBoardConfig } from './game/hnefatafl'
 import { rulesFromSlug, defaultSizeFor, BOARD_SIZE_RULES, ALL_BOARD_SIZES } from './game/variants'
+import { useBoardKeyboard } from './hooks/useBoardKeyboard'
 import { supabase } from './lib/supabase'
 import {
   Mist, mists, Ember, embers,
@@ -52,6 +53,9 @@ function App() {
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({ type: 'idle' })
   const pendingLobby = useRef<{ rules: Rules; boardSize: number; side: 'attacker' | 'defender' } | null>(null)
   const { currentTurn, resetGame, powerSaving, setSetting, pieces, dyingPieces, winner, winReason, playerMode, setPlayerMode, machineMove, difficulty, rules, boardSize, selectedId, selectPiece, movePiece, history, undoMove, gameKey, roleSelectOpen, setRoleSelectOpen, userId, username, elo, setElo, setAuth, setAuthReady, lastMove, repetitionWarning, confirmRepetitionMove, cancelRepetitionMove } = useGameSlice('currentTurn', 'resetGame', 'powerSaving', 'setSetting', 'pieces', 'dyingPieces', 'winner', 'winReason', 'playerMode', 'setPlayerMode', 'machineMove', 'difficulty', 'rules', 'boardSize', 'selectedId', 'selectPiece', 'movePiece', 'history', 'undoMove', 'gameKey', 'roleSelectOpen', 'setRoleSelectOpen', 'userId', 'username', 'elo', 'setElo', 'setAuth', 'setAuthReady', 'lastMove', 'repetitionWarning', 'confirmRepetitionMove', 'cancelRepetitionMove')
+
+  const boardInteractive = !menuOpen && !roleSelectOpen && onlineStatus.type !== 'spectating'
+  const { onKeyDown: onBoardKeyDown, status: boardStatus, moveText, turnLabel } = useBoardKeyboard(boardInteractive)
 
   // Merge matched status instead of replacing — prevents broadcasts overwriting DB-fetched names/ELOs
   const handleOnlineStatusChange = useCallback((status: OnlineStatus) => {
@@ -380,7 +384,16 @@ function App() {
       </>}
 
       <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: onlineStatus.type === 'spectating' ? 'none' : undefined }}>
+        <div
+          className="board-region"
+          role="application"
+          aria-label="Game board"
+          aria-describedby="board-help"
+          aria-roledescription="Hnefatafl board"
+          tabIndex={boardInteractive ? 0 : -1}
+          onKeyDown={onBoardKeyDown}
+          style={{ position: 'absolute', inset: 0, pointerEvents: onlineStatus.type === 'spectating' ? 'none' : undefined }}
+        >
           {powerSaving
             ? <Board2D menuOpen={menuOpen} />
             : <Scene
@@ -523,6 +536,14 @@ function App() {
       {import.meta.env.DEV && new URLSearchParams(window.location.search).get('dev') === 'avatar' && (
         <AvatarDevSandbox />
       )}
+      <p id="board-help" className="visually-hidden">
+        Arrow keys move the cursor, shift and an arrow jumps to the edge.
+        Enter or space selects a piece and then moves it. Escape clears the selection.
+      </p>
+      {/* Two regions: one narrates the cursor, the other completed moves — so a
+          move announcement isn't overwritten by the cursor description */}
+      <p className="visually-hidden" aria-live="polite" aria-atomic="true">{moveText}</p>
+      <p className="visually-hidden" aria-live="polite" aria-atomic="true">{turnLabel}. {boardStatus}</p>
       <ThemeSwitcher />
       {showProfile && <ProfileScroll onClose={() => setShowProfile(false)} onSignIn={() => setShowAuth(true)} onPlayOnline={() => { setShowProfile(false); setLobbyDraft({ rules, boardSize: boardSize as never, side: playerMode === 'attacker' ? 'attacker' : 'defender' }); setShowLobby(true) }} />}
       {showHowToPlay && <HowToPlayScroll onClose={() => setShowHowToPlay(false)} />}
