@@ -1522,8 +1522,9 @@ h1, h2, h3,
 }
 
 /* Respect reduced-motion. This app is heavy on motion — drifting embers, fire
-   flicker, and a full-screen lightning flash on undo that pulses twice in
-   0.45s, which is close to the WCAG 2.3.1 flash threshold. */
+   flicker, and a full-screen lightning flash on undo. That flash passes WCAG
+   2.3.1 (two pulses, fired once per undo), but large-area flashes are worth
+   suppressing here regardless. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

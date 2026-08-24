@@ -690,8 +690,12 @@ Audited against WCAG 2.1 AA. Rules to keep it there:
 - **Motion** — `prefers-reduced-motion` is honoured for CSS animations via a
   blanket rule, and `usePrefersReducedMotion()` gates the 3D effects a media
   query can't reach (capture explosions, the undo lightning bolt). The undo
-  screen-flash pulses twice in 0.45s, close to the WCAG 2.3.1 flash threshold,
-  so it must stay behind that gate.
+  screen-flash is a full-viewport, high-contrast pulse (two peaks in 0.45s).
+  It *passes* WCAG 2.3.1 — that counts flashes within any one-second window and
+  this fires once per undo — but it's kept behind the reduced-motion gate for
+  comfort, since large-area flashes bother some people well below the formal
+  threshold. Deliberately spamming undo could stack pulses past three a second;
+  rate-limiting the trigger would close that if it ever matters.
 
 ## Keyboard play
 
