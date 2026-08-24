@@ -530,17 +530,24 @@ h1, h2, h3,
   width: 20px;
   height: 20px;
 }
-.credits-page__title {
-  font-family: 'MedievalSharp', cursive;
+/* Screen title — identical on the parchment scrolls and the dark panels, so
+   the two surfaces read as one family rather than two products. */
+.credits-page__title,
+.setup__title {
+  font-family: var(--font-display);
   font-size: var(--fs-h2);
   letter-spacing: 3px;
   text-transform: uppercase;
   color: var(--ink);
+  margin: 0;
+  text-align: center;
 }
-.credits-page__close-bar-btn {
+.credits-page__close-bar-btn,
+.overlay-dismiss {
   background: none;
   border: none;
   cursor: pointer;
+  font-family: inherit;
   padding: 6px 10px;
   display: flex;
   flex-direction: row;
@@ -549,13 +556,16 @@ h1, h2, h3,
   opacity: 0.85;
   transition: opacity 0.15s;
 }
-.credits-page__close-bar-btn:hover { opacity: 1; }
-.credits-page__close-bar-btn img {
+.credits-page__close-bar-btn:hover,
+.overlay-dismiss:hover { opacity: 1; }
+.credits-page__close-bar-btn img,
+.overlay-dismiss img {
   width: 20px;
   height: 20px;
 }
-.credits-page__close-bar-btn span {
-  font-family: 'MedievalSharp', cursive;
+.credits-page__close-bar-btn span,
+.overlay-dismiss span {
+  font-family: var(--font-display);
   font-size: var(--fs-small);
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -1327,14 +1337,6 @@ h1, h2, h3,
   gap: 14px;
   box-sizing: border-box;
 }
-.setup__title {
-  margin: 0;
-  text-align: center;
-  font-size: var(--fs-body);
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--gold);
-}
 .setup__grid { display: flex; flex-direction: column; gap: 14px; }
 .setup__col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .setup__section {
@@ -1463,7 +1465,6 @@ h1, h2, h3,
 /* Desktop: two columns, wider panel, bigger board diagrams */
 @media (min-width: 860px) {
   .setup { max-width: 860px; padding: 24px; gap: 18px; }
-  .setup__title { font-size: var(--fs-h3); }
   .setup__grid { flex-direction: row; align-items: flex-start; gap: 18px; }
   .setup__col { flex: 1; }
   .setup__col:last-child { flex: 1.15; }

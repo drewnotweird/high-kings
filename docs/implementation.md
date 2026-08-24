@@ -649,6 +649,24 @@ separate products.
   being readable below ~16px, especially with letter-spacing, so it is never used
   for body copy, labels or badges.
 
+## Overlay surfaces
+
+Two surfaces, split by **purpose** — this is deliberate, not accidental:
+
+| Surface | Used for | Screens |
+|---|---|---|
+| Parchment scroll (`ScrollPage`) | things you **read** | Rules, Makers, Profile, Ranks |
+| Dark panel | things you **decide** | Setup, Lobby, and the small dialogs |
+
+Setup stays a dark panel because selected states read far better as gold-fill-on-dark
+than on cream, the board-size diagrams are light-on-dark by nature, and the board-flip
+is the transition into it. What makes the two feel like one family is shared chrome:
+the screen title (`.credits-page__title, .setup__title`) and the dismiss control
+(`.credits-page__close-bar-btn, .overlay-dismiss`) are single rules covering both.
+
+Don't style a new overlay's title or close button from scratch — reuse those, and
+pick the surface by asking whether the screen is for reading or deciding.
+
 ## Known Gotchas
 
 - **Never run `npm run gen-textures`** — overwrites hand-edited textures.

@@ -199,9 +199,9 @@ export function MenuOverlay({ isOpen, isVisible, onResume, onNewGame, onOnlineMa
             style={{ opacity: restartValid ? 1 : 0.35, cursor: restartValid ? 'pointer' : 'default' }}
           >{draft.play === 'Online' ? 'Find Match' : 'New Game'}</button>
         </div>
-        <button className="ui-button ui-button--menu setup__cancel" onClick={handleCancel}>
-          <img className="ui-button__icon" src={`${import.meta.env.BASE_URL}icons/close.svg`} alt="" />
-          <span className="ui-button__label">Cancel</span>
+        <button className="overlay-dismiss setup__cancel" onClick={handleCancel}>
+          <img src={`${import.meta.env.BASE_URL}icons/close.svg`} alt="" />
+          <span>Cancel</span>
         </button>
         </div>
       </div>
