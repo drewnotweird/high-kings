@@ -630,6 +630,25 @@ Live: https://drewnotweird.co.uk/highkings
 
 ---
 
+## Design tokens & typography
+
+`src/styles/ui.css` opens with a `:root` token block. Use it rather than adding
+raw values — before it existed the stylesheet had 27 font sizes and 42 text
+colours (including five near-identical golds), which made the overlays feel like
+separate products.
+
+- **Type scale** — `--fs-micro` (11px) through `--fs-h1` (28px). 11px is the
+  floor; nothing smaller is readable in this UI. Responsive scroll-page headings
+  still use `clamp()`.
+- **Ink ramps** — `--ink`/`--ink-2`/`--ink-dim`/`--ink-faint` on the dark
+  overlays, `--parch-ink*` on the parchment scrolls. Every muted tone is pinned
+  at >=4.5:1 against its own surface.
+- **Two faces** — `--font-display` (MedievalSharp) for titles, headings, variant
+  names and the primary buttons; `--font-ui` (Alegreya Sans, self-hosted in
+  `public/fonts/`) for everything else. MedievalSharp is a display type and stops
+  being readable below ~16px, especially with letter-spacing, so it is never used
+  for body copy, labels or badges.
+
 ## Known Gotchas
 
 - **Never run `npm run gen-textures`** — overwrites hand-edited textures.
