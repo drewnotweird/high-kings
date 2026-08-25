@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { supabase } from '../../lib/supabase'
+import { getSupabase } from '../../lib/supabase'
 import { useGameSlice, useGameStore } from '../../store/gameStore'
 
 type AuthScreen = 'login' | 'signup' | 'confirm' | 'username' | 'forgot'
@@ -21,7 +21,7 @@ export function AuthModal({ onClose, initialScreen = 'login' }: {
 
   const handleLogin = async () => {
     setLoading(true); setError(null)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await (await getSupabase()).auth.signInWithPassword({ email, password })
     setLoading(false)
     if (error) { setError(error.message); return }
     // onAuthStateChange in App.tsx handles profile fetch and setAuth
@@ -30,7 +30,7 @@ export function AuthModal({ onClose, initialScreen = 'login' }: {
 
   const handleSignup = async () => {
     setLoading(true); setError(null)
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await (await getSupabase()).auth.signUp({
       email,
       password,
       options: { emailRedirectTo: window.location.origin + import.meta.env.BASE_URL },
@@ -48,7 +48,7 @@ export function AuthModal({ onClose, initialScreen = 'login' }: {
     setLoading(true); setError(null)
     const { userId } = useGameStore.getState()
     if (!userId) { setError('Session lost — please sign in again'); setLoading(false); return }
-    const { error } = await supabase.from('profiles').upsert({ id: userId, username: trimmed })
+    const { error } = await (await getSupabase()).from('profiles').upsert({ id: userId, username: trimmed })
     if (error) {
       setError(error.message.includes('unique') ? 'That name is taken' : error.message)
       setLoading(false); return
@@ -60,7 +60,7 @@ export function AuthModal({ onClose, initialScreen = 'login' }: {
 
   const handleForgot = async () => {
     setLoading(true); setError(null)
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await (await getSupabase()).auth.resetPasswordForEmail(email, {
       redirectTo: window.location.origin + import.meta.env.BASE_URL,
     })
     if (error) { setError(error.message); setLoading(false); return }

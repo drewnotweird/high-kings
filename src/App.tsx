@@ -11,7 +11,7 @@ import { requestBestMove } from './game/aiClient'
 import { getBoardConfig } from './game/hnefatafl'
 import { rulesFromSlug, defaultSizeFor, BOARD_SIZE_RULES, ALL_BOARD_SIZES } from './game/variants'
 import { useBoardKeyboard } from './hooks/useBoardKeyboard'
-import { supabase } from './lib/supabase'
+import { getSupabase, hasStoredSession, whenSupabaseReady } from './lib/supabase'
 import {
   Mist, mists, Ember, embers,
   HintButton, UndoButton, MenuButton, ProfileButton, GamesButton,
@@ -83,7 +83,8 @@ function App() {
     setShowLobby(false)
     setMenuOpen(false)
     // Fetch both players' names + ELOs directly from DB — avoids broadcast timing issues
-    const { data } = await supabase
+    const sb = await getSupabase()
+    const { data } = await sb
       .from('games')
       .select('attacker_id, defender_id, attacker:attacker_id(username, elo), defender:defender_id(username, elo)')
       .eq('id', gameId)
@@ -108,40 +109,54 @@ function App() {
     setMenuOpen(false)
   }, [setSetting, resetGame, watchGame])
 
-  // Restore session on mount, listen for auth changes
+  // Restore session on mount, listen for auth changes.
+  // A browser that has never signed in has no stored session, so it skips
+  // loading Supabase at all; the listener below attaches if anything else
+  // (sign-in, lobby, leaderboard) pulls the client in later.
   useEffect(() => {
-    const authTimeout = setTimeout(() => setAuthReady(true), 5000)
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      clearTimeout(authTimeout)
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles').select('username, elo, avatar').eq('id', session.user.id).single()
-        setAuth(session.user.id, profile?.username ?? null, profile?.elo ?? null, profile?.avatar ?? null)
-      }
+    if (!hasStoredSession()) {
       setAuthReady(true)
-    }).catch(() => { clearTimeout(authTimeout); setAuthReady(true) })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') { setAuth(null, null); return }
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles').select('username, elo, avatar').eq('id', session.user.id).single()
-        const resolvedUsername = profile?.username ?? null
-        setAuth(session.user.id, resolvedUsername, profile?.elo ?? null, profile?.avatar ?? null)
-        // After email confirmation, username will be null — prompt them to choose one
-        if (event === 'SIGNED_IN' && !resolvedUsername) {
-          setShowUsernamePrompt(true)
+    } else {
+      const authTimeout = setTimeout(() => setAuthReady(true), 5000)
+      getSupabase()
+        .then(sb => sb.auth.getSession().then(async ({ data: { session } }) => {
+          clearTimeout(authTimeout)
+          if (session?.user) {
+            const { data: profile } = await sb
+              .from('profiles').select('username, elo, avatar').eq('id', session.user.id).single()
+            setAuth(session.user.id, profile?.username ?? null, profile?.elo ?? null, profile?.avatar ?? null)
+          }
+          setAuthReady(true)
+        }))
+        .catch(() => { clearTimeout(authTimeout); setAuthReady(true) })
+    }
+
+    let unsubscribe = () => {}
+    const cancel = whenSupabaseReady(sb => {
+      const { data: { subscription } } = sb.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_OUT') { setAuth(null, null); return }
+        if (session?.user) {
+          const { data: profile } = await sb
+            .from('profiles').select('username, elo, avatar').eq('id', session.user.id).single()
+          const resolvedUsername = profile?.username ?? null
+          setAuth(session.user.id, resolvedUsername, profile?.elo ?? null, profile?.avatar ?? null)
+          // After email confirmation, username will be null — prompt them to choose one
+          if (event === 'SIGNED_IN' && !resolvedUsername) {
+            setShowUsernamePrompt(true)
+          }
+          // If the user just authenticated to open the lobby, open it now
+          if (pendingLobby.current) {
+            const pending = pendingLobby.current
+            pendingLobby.current = null
+            setShowGuestLogin(false)
+            setLobbyDraft(pending)
+            setShowLobby(true)
+          }
         }
-        // If the user just authenticated to open the lobby, open it now
-        if (pendingLobby.current) {
-          const pending = pendingLobby.current
-          pendingLobby.current = null
-          setShowGuestLogin(false)
-          setLobbyDraft(pending)
-          setShowLobby(true)
-        }
-      }
+      })
+      unsubscribe = () => subscription.unsubscribe()
     })
-    return () => subscription.unsubscribe()
+    return () => { cancel(); unsubscribe() }
   }, [])
 
   // Stable hint move — computed once per hint session, cleared on turn change or new game
@@ -181,26 +196,26 @@ function App() {
   useEffect(() => {
     if (!winner || !userId || playerMode === '2player' || onlineStatus.type === 'matched' || difficulty === 'easy') return
     const result = winner === playerMode ? 'win' : 'loss'
-    supabase.from('game_results').insert({
+    getSupabase().then(sb => sb.from('game_results').insert({
       user_id: userId,
       opponent_type: 'machine',
       result,
       rules,
       board_size: boardSize,
-    }).then(({ error }) => { if (error) console.error('game_results insert (machine):', error.message) })
+    }).then(({ error }) => { if (error) console.error('game_results insert (machine):', error.message) }))
   }, [winner, userId, playerMode, rules, boardSize, onlineStatus.type])
 
   // Record online game result
   useEffect(() => {
     if (!winner || !userId || onlineStatus.type !== 'matched') return
     const result = winner === playerMode ? 'win' : 'loss'
-    supabase.from('game_results').insert({
+    getSupabase().then(sb => sb.from('game_results').insert({
       user_id: userId,
       opponent_type: 'human',
       result,
       rules,
       board_size: boardSize,
-    }).then(({ error }) => { if (error) console.error('game_results insert (human):', error.message) })
+    }).then(({ error }) => { if (error) console.error('game_results insert (human):', error.message) }))
   }, [winner, userId, playerMode, rules, boardSize, onlineStatus.type])
 
   // Broadcast moves in online games
@@ -217,8 +232,8 @@ function App() {
     endGame(winnerId)
     if (!userId) return
     setTimeout(() => {
-      supabase.from('profiles').select('elo').eq('id', userId).single()
-        .then(({ data }) => { if (data?.elo != null) setElo(data.elo) })
+      getSupabase().then(sb => sb.from('profiles').select('elo').eq('id', userId).single()
+        .then(({ data }) => { if (data?.elo != null) setElo(data.elo) }))
     }, 2000)
   }, [winner, endGame, playerMode, userId, onlineStatus, setElo])
 

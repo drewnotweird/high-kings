@@ -76,7 +76,8 @@ src/
     avatarConfig.ts            — AvatarConfig type, counts, SVG imports, layer arrays
     themes.ts                  — ThemeConfig definitions
     textures.ts                — texture-gen helpers (dev only)
-    supabase.ts                — Supabase client singleton
+    supabase.ts                — lazy Supabase accessor: getSupabase() /
+                                 hasStoredSession() / whenSupabaseReady()
 
   assets/
     avatars/
@@ -723,6 +724,27 @@ natively. A `cursor` lives in the store and both renderers draw it, which keeps
 - Announce **both sides' moves**. `machineMove` deliberately doesn't set
   `lastMove` (it would echo back as an outgoing online move), so anything keyed
   off `lastMove` silently skips the opponent's reply.
+
+## Supabase is loaded on demand
+
+Supabase is ~51KB gzipped and most visitors are guests who never sign in or play
+online, so it is **not** in the entry graph. Rules:
+
+- Never `import { supabase }` — there is no such export. Use
+  `await getSupabase()`, which dynamically imports and memoises the client.
+- `hasStoredSession()` checks localStorage for `sb-<ref>-auth-token`. App.tsx
+  only restores a session (and so only pays the download) when that key exists;
+  a first-time visitor skips it entirely.
+- `whenSupabaseReady(cb)` attaches the auth listener whenever a client appears,
+  whoever pulled it in — so signing in from a cold guest session still wires up
+  `onAuthStateChange`.
+- Do **not** add Supabase back to `advancedChunks` in `vite.config.ts`. Naming it
+  as a group makes Vite emit a `<link rel="modulepreload">` for it in index.html,
+  which downloads it on every visit and undoes all of this. The chunk is named
+  `dist-*.js` as a result, which is ugly but correct.
+- Realtime channels are created inside `getSupabase().then(...)`, so
+  `state.current.channel` is assigned a microtask later than it used to be.
+  Nothing reads it synchronously after the call — keep it that way.
 
 ## Known Gotchas
 

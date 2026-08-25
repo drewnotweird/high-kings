@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabase'
+import { getSupabase } from '../../lib/supabase'
 import { useGameSlice } from '../../store/gameStore'
 import { randomAvatar } from '../../lib/avatarConfig'
 import { AvatarDisplay } from './AvatarDisplay'
@@ -19,7 +19,7 @@ export function ProfileScroll({ onClose, onSignIn, onPlayOnline }: { onClose: ()
 
   useEffect(() => {
     if (!userId) return
-    supabase
+    getSupabase().then(sb => sb
       .from('game_results')
       .select('opponent_type, result, rules, board_size')
       .eq('user_id', userId)
@@ -34,10 +34,10 @@ export function ProfileScroll({ onClose, onSignIn, onPlayOnline }: { onClose: ()
           else grouped.set(key, { ...row, count: 1 })
         }
         setStats([...grouped.values()])
-      })
+      }))
   }, [userId])
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
+    await (await getSupabase()).auth.signOut()
     setAuth(null, null)
     onClose()
   }
@@ -47,7 +47,7 @@ export function ProfileScroll({ onClose, onSignIn, onPlayOnline }: { onClose: ()
     if (!trimmed || trimmed.length < 3) { setNameError('Must be at least 3 characters'); return }
     if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) { setNameError('Letters, numbers and underscores only'); return }
     setNameSaving(true); setNameError(null)
-    const { error } = await supabase.from('profiles').upsert({ id: userId, username: trimmed })
+    const { error } = await (await getSupabase()).from('profiles').upsert({ id: userId, username: trimmed })
     if (error) {
       setNameError(error.message.includes('unique') ? 'That name is taken' : error.message)
       setNameSaving(false); return
@@ -55,14 +55,14 @@ export function ProfileScroll({ onClose, onSignIn, onPlayOnline }: { onClose: ()
     setUsername(trimmed)
     // Save avatar separately (column may not exist until migration 005 is run)
     const newAvatar = avatar ?? randomAvatar()
-    await supabase.from('profiles').update({ avatar: newAvatar }).eq('id', userId)
+    await (await getSupabase()).from('profiles').update({ avatar: newAvatar }).eq('id', userId)
     if (!avatar) setAvatar(newAvatar)
     setNameSaving(false)
     setEditingName(false)
   }
   const handleSaveAvatar = async (newConfig: import('../../lib/avatarConfig').AvatarConfig) => {
     if (!userId) return
-    await supabase.from('profiles').update({ avatar: newConfig }).eq('id', userId)
+    await (await getSupabase()).from('profiles').update({ avatar: newConfig }).eq('id', userId)
       .then(({ error }) => { if (error) console.error('avatar save:', error.message) })
     setAvatar(newConfig)
     setEditingAvatar(false)

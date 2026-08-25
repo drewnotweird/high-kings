@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabase'
+import { getSupabase } from '../../lib/supabase'
 import { useGameSlice } from '../../store/gameStore'
 import { ScrollPage } from './ScrollPage'
 
@@ -11,7 +11,7 @@ export function LeaderboardScroll({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase
+    getSupabase().then(sb => sb
       .from('profiles')
       .select('id, username, elo')
       .not('username', 'is', null)
@@ -20,7 +20,7 @@ export function LeaderboardScroll({ onClose }: { onClose: () => void }) {
       .then(({ data }) => {
         if (data) setRows(data.map((r, i) => ({ ...r, rank: i + 1 })))
         setLoading(false)
-      }, () => setLoading(false))
+      }, () => setLoading(false)))
   }, [])
 
   const myRank = rows.find(r => r.id === userId)?.rank ?? null

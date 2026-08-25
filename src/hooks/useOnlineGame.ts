@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
-import { supabase } from '../lib/supabase'
+import { getSupabase } from '../lib/supabase'
 import { useGameSlice, useGameStore } from '../store/gameStore'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
@@ -40,7 +40,8 @@ export function useOnlineGame(
     if (state.current.disconnectTimer) clearInterval(state.current.disconnectTimer)
     state.current.disconnectTimer = null
     if (state.current.channel) {
-      supabase.removeChannel(state.current.channel)
+      const ch = state.current.channel
+      getSupabase().then(sb => sb.removeChannel(ch))
       state.current.channel = null
     }
   }, [])
@@ -51,7 +52,8 @@ export function useOnlineGame(
     state.current.opponentId = opponentId
     state.current.seq = 0
 
-    const channel = supabase.channel(`game:${gameId}`, { config: { broadcast: { self: false } } })
+    getSupabase().then(sb => {
+    const channel = sb.channel(`game:${gameId}`, { config: { broadcast: { self: false } } })
     state.current.channel = channel
 
     channel
@@ -82,7 +84,7 @@ export function useOnlineGame(
           if (secondsLeft <= 0) {
             clearInterval(state.current.disconnectTimer!)
             state.current.disconnectTimer = null
-            supabase.from('games').update({ status: 'abandoned', winner_id: userId, ended_at: new Date().toISOString() }).eq('id', gameId)
+            getSupabase().then(sb => sb.from('games').update({ status: 'abandoned', winner_id: userId, ended_at: new Date().toISOString() }).eq('id', gameId))
             onStatusChange({ type: 'ended' })
           } else {
             onStatusChange({ type: 'opponent_disconnected', secondsLeft })
@@ -97,18 +99,19 @@ export function useOnlineGame(
         onStatusChange({ type: 'matched', gameId, opponentName: '', opponentElo: null, opponentId: state.current.opponentId })
         channel.send({ type: 'broadcast', event: 'opponent_name', payload: { type: 'opponent_name', name: username ?? 'Unknown', elo: elo ?? null } })
       })
-      .subscribe(async (status) => {
+      .subscribe(async (status: string) => {
         if (status === 'SUBSCRIBED') {
           await channel.track({ userId, username })
           channel.send({ type: 'broadcast', event: 'opponent_name', payload: { type: 'opponent_name', name: username ?? 'Unknown', elo: elo ?? null } })
         }
       })
+    })
   }, [machineMove, onStatusChange, userId, username])
 
   const startGame = useCallback(async (gameId: string, mySide: 'attacker' | 'defender') => {
     // Fetch the game record to get the opponent's real user ID so losses record the correct winner
     let opponentId: string | null = null
-    const { data } = await supabase.from('games').select('attacker_id, defender_id').eq('id', gameId).single()
+    const { data } = await (await getSupabase()).from('games').select('attacker_id, defender_id').eq('id', gameId).single()
     if (data) opponentId = mySide === 'attacker' ? data.defender_id : data.attacker_id
     joinGameChannel(gameId, mySide, opponentId)
     onStatusChange({ type: 'matched', gameId, opponentName: '', opponentElo: null, opponentId })
@@ -120,7 +123,8 @@ export function useOnlineGame(
     state.current.mySide = null
     state.current.seq = 0
 
-    const channel = supabase.channel(`game:${gameId}`, { config: { broadcast: { self: false } } })
+    getSupabase().then(sb => {
+    const channel = sb.channel(`game:${gameId}`, { config: { broadcast: { self: false } } })
     state.current.channel = channel
 
     channel
@@ -132,11 +136,12 @@ export function useOnlineGame(
         if (payload.pieces) setPieces(payload.pieces as any)
         state.current.seq = payload.seq
       })
-      .subscribe((status) => {
+      .subscribe((status: string) => {
         if (status === 'SUBSCRIBED') {
           channel.send({ type: 'broadcast', event: 'resync_request', payload: { type: 'resync_request' } })
         }
       })
+    })
 
     onStatusChange({ type: 'spectating', gameId })
   }, [cleanup, machineMove, setPieces, onStatusChange])
@@ -153,12 +158,13 @@ export function useOnlineGame(
 
   const endGame = useCallback((winnerId: string | null) => {
     if (!state.current.gameId) return
-    supabase.from('games').update({
+    const gid = state.current.gameId
+    getSupabase().then(sb => sb.from('games').update({
       status: 'completed',
       winner_id: winnerId,
       ended_at: new Date().toISOString(),
-    }).eq('id', state.current.gameId).eq('status', 'active')
-      .then(({ error }) => { if (error) console.error('endGame update failed:', error.message) })
+    }).eq('id', gid).eq('status', 'active')
+      .then(({ error }) => { if (error) console.error('endGame update failed:', error.message) }))
     cleanup()
     onStatusChange({ type: 'ended' })
   }, [cleanup, onStatusChange])
