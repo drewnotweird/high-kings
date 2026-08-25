@@ -746,6 +746,34 @@ online, so it is **not** in the entry graph. Rules:
   `state.current.channel` is assigned a microtask later than it used to be.
   Nothing reads it synchronously after the call — keep it that way.
 
+## Engine performance
+
+Minimax probes individual squares thousands of times per move, so `hnefatafl.ts`
+indexes a position by square rather than rescanning the piece array:
+
+- `squareIndex(pieces, boardSize)` builds a `Map` keyed by `row * boardSize + col`.
+  `applyMove` builds one per call and shares it with `isHostile` and
+  `checkKingCaptured`.
+- `getValidMoves` uses a numeric `Set` for occupancy. It previously built a
+  `Set` of `"row,col"` **strings**, allocating one string per piece per call and
+  another per probe — that was the single biggest cost in the search.
+
+Measured on the initial position, median of 3 with the JIT warmed:
+
+| | before | after |
+|---|---|---|
+| `getValidMoves` ×300 (11×11) | 77 ms | 6.7 ms |
+| `applyMove` ×8400 (11×11) | 95 ms | 21 ms |
+| `getValidMoves` ×300 (19×19) | 583 ms | 37 ms |
+| `applyMove` ×25200 (19×19) | 436 ms | 62 ms |
+
+**Benchmark these warm.** Cold-JIT numbers are several times slower and will
+tell you an optimisation made things worse when it didn't.
+
+Any change here must be behaviour-preserving. The check used was a seeded
+60-ply playthrough of all 12 variants, fingerprinting every move list, capture
+and win — the digests must be unchanged.
+
 ## Known Gotchas
 
 - **Never run `npm run gen-textures`** — overwrites hand-edited textures.

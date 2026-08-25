@@ -320,11 +320,14 @@ function maxDepthFor(difficulty: 'easy' | 'medium' | 'hard', boardSize: number):
     if (boardSize <= 9) return 2
     return 2
   }
-  // hard
-  if (boardSize <= 7) return 5
-  if (boardSize <= 9) return 4
-  if (boardSize <= 13) return 3
-  return 2
+  // hard. Indexed move generation made the engine several times faster, so
+  // these caps were raised to spend the headroom. Iterative deepening makes
+  // that safe: if a depth doesn't finish inside the 800ms budget, the last
+  // completed depth's move is used.
+  if (boardSize <= 7) return 6
+  if (boardSize <= 9) return 5
+  if (boardSize <= 13) return 4
+  return 3
 }
 
 export function getBestMove(

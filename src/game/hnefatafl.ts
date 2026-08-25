@@ -319,14 +319,23 @@ export function createInitialPieces(config: BoardConfig): Piece[] {
 
 const DIRS = [[-1,0],[1,0],[0,-1],[0,1]] as const
 
+// Minimax probes individual squares thousands of times per move, so the engine
+// indexes a position by square rather than rescanning the piece array. Keys are
+// row * boardSize + col — numeric, so no string is built per lookup.
+function squareIndex(pieces: Piece[], boardSize: number): Map<number, Piece> {
+  const grid = new Map<number, Piece>()
+  for (const p of pieces) grid.set(p.row * boardSize + p.col, p)
+  return grid
+}
+
 function isFriendly(a: Piece, b: Piece): boolean {
   return (a.type === 'attacker') === (b.type === 'attacker')
 }
 
 // A square that acts as a phantom captor for custodian captures
-function isHostile(row: number, col: number, boardSize: number, center: number, pieces: Piece[], noThrone = false): boolean {
+function isHostile(row: number, col: number, boardSize: number, center: number, grid: Map<number, Piece>, noThrone = false): boolean {
   if (isCorner(row, col, boardSize)) return true
-  if (!noThrone && isThrone(row, col, center)) return !pieces.some(p => p.row === row && p.col === col)
+  if (!noThrone && isThrone(row, col, center)) return !grid.has(row * boardSize + col)
   return false
 }
 
@@ -338,7 +347,8 @@ export function getValidMoves(
   center: number,
   noThrone = false
 ): [number, number][] {
-  const occupied = new Set(allPieces.map(p => `${p.row},${p.col}`))
+  const occupied = new Set<number>()
+  for (const p of allPieces) occupied.add(p.row * boardSize + p.col)
   const moves: [number, number][] = []
 
   for (const [dr, dc] of DIRS) {
@@ -347,7 +357,7 @@ export function getValidMoves(
       const c = piece.col + dc * step
 
       if (r < 0 || r >= boardSize || c < 0 || c >= boardSize) break
-      if (occupied.has(`${r},${c}`)) break
+      if (occupied.has(r * boardSize + c)) break
 
       // Corners and (unless noThrone) throne block non-king movement; king can land on them
       if (isCorner(r, c, boardSize) || (!noThrone && isThrone(r, c, center))) {
@@ -366,7 +376,7 @@ export function getValidMoves(
 // is adjacent to the king. This prevents a pre-existing sandwich (formed when the king
 // walked between two existing attackers on the defender's turn) from being incorrectly
 // claimed by an unrelated attacker move elsewhere on the board.
-function checkKingCaptured(king: Piece, pieces: Piece[], boardSize: number, center: number, weakKing: boolean, noThrone = false, moverRow = -1, moverCol = -1): boolean {
+function checkKingCaptured(king: Piece, grid: Map<number, Piece>, boardSize: number, center: number, weakKing: boolean, noThrone = false, moverRow = -1, moverCol = -1): boolean {
   const moverAdjacentToKing = Math.abs(moverRow - king.row) + Math.abs(moverCol - king.col) === 1
 
   // Weak king off the throne (or when there is no throne): sandwiched on any axis like a normal piece
@@ -374,10 +384,10 @@ function checkKingCaptured(king: Piece, pieces: Piece[], boardSize: number, cent
     for (const [dr, dc] of DIRS) {
       const r1 = king.row + dr, c1 = king.col + dc
       const r2 = king.row - dr, c2 = king.col - dc
-      const h1 = pieces.find(p => p.row === r1 && p.col === c1)?.type === 'attacker'
-             || isHostile(r1, c1, boardSize, center, pieces)
-      const h2 = pieces.find(p => p.row === r2 && p.col === c2)?.type === 'attacker'
-             || isHostile(r2, c2, boardSize, center, pieces)
+      const h1 = grid.get(r1 * boardSize + c1)?.type === 'attacker'
+             || isHostile(r1, c1, boardSize, center, grid)
+      const h2 = grid.get(r2 * boardSize + c2)?.type === 'attacker'
+             || isHostile(r2, c2, boardSize, center, grid)
       if (h1 && h2) {
         // Only claim the capture if the mover is one of the two sandwiching pieces
         const moverIsH1 = moverRow === r1 && moverCol === c1
@@ -396,8 +406,8 @@ function checkKingCaptured(king: Piece, pieces: Piece[], boardSize: number, cent
     const c = king.col + dc
     // Board edges count as hostile — a king against the edge is surrounded on that side
     if (r < 0 || r >= boardSize || c < 0 || c >= boardSize) { surrounded++; continue }
-    const neighbor = pieces.find(p => p.row === r && p.col === c)
-    if (neighbor?.type === 'attacker' || isHostile(r, c, boardSize, center, pieces)) surrounded++
+    const neighbor = grid.get(r * boardSize + c)
+    if (neighbor?.type === 'attacker' || isHostile(r, c, boardSize, center, grid)) surrounded++
   }
   return surrounded === 4
 }
@@ -498,8 +508,13 @@ export function applyMove(
   noThrone = false
 ): MoveResult {
   // Move piece
-  const moved = pieces.map(p => p.id === pieceId ? { ...p, row: toRow, col: toCol } : p)
-  const mover = moved.find(p => p.id === pieceId)!
+  let mover!: Piece
+  const moved = pieces.map(p => {
+    if (p.id !== pieceId) return p
+    mover = { ...p, row: toRow, col: toCol }
+    return mover
+  })
+  const grid = squareIndex(moved, boardSize)
   const moverIsAttacker = mover.type === 'attacker'
 
   // Custodian captures — skip the king (needs full surround, handled separately)
@@ -507,13 +522,13 @@ export function applyMove(
   for (const [dr, dc] of DIRS) {
     const nr = toRow + dr
     const nc = toCol + dc
-    const neighbor = moved.find(p => p.row === nr && p.col === nc)
+    const neighbor = grid.get(nr * boardSize + nc)
     if (!neighbor || isFriendly(mover, neighbor) || neighbor.type === 'king') continue
 
     const br = nr + dr
     const bc = nc + dc
-    const beyond = moved.find(p => p.row === br && p.col === bc)
-    if ((beyond && isFriendly(mover, beyond)) || isHostile(br, bc, boardSize, center, moved, noThrone)) {
+    const beyond = grid.get(br * boardSize + bc)
+    if ((beyond && isFriendly(mover, beyond)) || isHostile(br, bc, boardSize, center, grid, noThrone)) {
       capturedIds.push(neighbor.id)
     }
   }
@@ -525,9 +540,11 @@ export function applyMove(
     }
   }
 
-  const remaining = moved.filter(p => !capturedIds.includes(p.id))
+  const capturedSet = new Set(capturedIds)
+  const remaining = capturedSet.size === 0 ? moved : moved.filter(p => !capturedSet.has(p.id))
 
   // Win checks
+  const remainingGrid = capturedSet.size === 0 ? grid : squareIndex(remaining, boardSize)
   const king = remaining.find(p => p.type === 'king')
   if (!king) return { pieces: remaining, capturedIds, winner: 'attacker', winReason: 'king-captured' }
 
@@ -538,7 +555,7 @@ export function applyMove(
     return { pieces: remaining, capturedIds, winner: 'defender', winReason: 'king-escaped' }
   }
 
-  if (moverIsAttacker && checkKingCaptured(king, remaining, boardSize, center, weakKing, noThrone, toRow, toCol)) {
+  if (moverIsAttacker && checkKingCaptured(king, remainingGrid, boardSize, center, weakKing, noThrone, toRow, toCol)) {
     return { pieces: remaining.filter(p => p.type !== 'king'), capturedIds: [...capturedIds, king.id], winner: 'attacker', winReason: 'king-captured' }
   }
 

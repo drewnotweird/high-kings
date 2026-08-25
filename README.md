@@ -127,7 +127,10 @@ The transposition table and move ordering both persist across iterations, so eac
 |---|---|---|---|---|
 | Easy | 1 (no lookahead) | 1 | 1 | 1 |
 | Medium | 3 | 2 | 2 | 2 |
-| Hard | 5 | 4 | 3 | 2 |
+| Hard | 6 | 5 | 4 | 3 |
+
+Raising a cap is safe: iterative deepening keeps the last *completed* depth's
+move, so a depth that doesn't finish inside the budget simply isn't used.
 
 Smaller boards have a much lower branching factor so deeper search is affordable within the budget. On a 7×7 Brandub game, hard mode routinely reaches depth 5 or beyond.
 
