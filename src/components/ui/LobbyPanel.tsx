@@ -12,9 +12,10 @@ interface Props {
   onAccept: (challenge: Challenge) => void
   onWatch: (game: ActiveGame) => void
   onClose: () => void
+  error?: string | null
 }
 
-export function LobbyPanel({ challenges, activeGames, myChallenge, draftRules, draftBoardSize, draftSide, onHost, onCancel, onAccept, onWatch, onClose }: Props) {
+export function LobbyPanel({ challenges, activeGames, myChallenge, draftRules, draftBoardSize, draftSide, onHost, onCancel, onAccept, onWatch, onClose, error }: Props) {
   return (
     <div className="lobby-backdrop" onClick={e => { if (e.target === e.currentTarget && !myChallenge) onClose() }}>
       <div className="lobby-panel">
@@ -22,6 +23,8 @@ export function LobbyPanel({ challenges, activeGames, myChallenge, draftRules, d
           <span className="lobby-panel__title">Game Lobby</span>
           {!myChallenge && <button className="lobby-panel__close" onClick={onClose}>✕</button>}
         </div>
+
+        {error && <p className="lobby-panel__error" role="alert">{error}</p>}
 
         {myChallenge ? (
           <div className="lobby-panel__mine">

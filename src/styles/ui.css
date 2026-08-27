@@ -1256,6 +1256,7 @@ h1, h2, h3,
 .auth-modal__btn--ghost:hover { border-color: var(--edge); color: var(--gold-dim); }
 .auth-modal__cancel { flex-shrink: 0; }
 .auth-modal__divider { text-align: center; font-size: var(--fs-micro); color: rgba(200,180,140,0.3); letter-spacing: 1px; margin: 2px 0; }
+.lobby-panel__error { color: var(--warn); font-size: var(--fs-small); letter-spacing: 0.5px; text-align: center; margin: 0 0 var(--sp-3); }
 .auth-modal__error { color: var(--warn); font-size: var(--fs-micro); letter-spacing: 0.5px; text-align: center; }
 /* Same message, parchment surface: --warn is 2.46:1 on cream. */
 .profile-scroll__error { color: var(--warn-parch); font-size: var(--fs-micro); letter-spacing: 0.5px; text-align: center; margin: var(--sp-2) 0 0; }

@@ -27,6 +27,7 @@ export function useLobby(
   onGameStart: (gameId: string, mySide: 'attacker' | 'defender', rules: string, boardSize: number) => void
 ) {
   const [challenges, setChallenges] = useState<Challenge[]>([])
+  const [lobbyError, setLobbyError] = useState<string | null>(null)
   const [myChallenge, setMyChallenge] = useState<Challenge | null>(null)
   const [activeGames, setActiveGames] = useState<ActiveGame[]>([])
   const onGameStartRef = useRef(onGameStart)
@@ -119,14 +120,20 @@ export function useLobby(
   const hostChallenge = useCallback(async (rules: string, boardSize: number, side: 'attacker' | 'defender') => {
     if (!userId || !username) return
     await (await getSupabase()).from('challenges').delete().eq('host_id', userId)
-    const { data } = await (await getSupabase()).from('challenges').insert({
+    setLobbyError(null)
+    const { data, error } = await (await getSupabase()).from('challenges').insert({
       host_id: userId,
       host_name: username,
       host_side: side,
       rules,
       board_size: boardSize,
     }).select().single()
-    if (data) setMyChallenge(data)
+    if (error || !data) {
+      console.error('hostChallenge:', error?.message)
+      setLobbyError("Couldn't post your challenge. Check your connection and try again.")
+      return
+    }
+    setMyChallenge(data)
   }, [userId, username])
 
   const cancelChallenge = useCallback(async () => {
@@ -145,8 +152,14 @@ export function useLobby(
     // Only one concurrent acceptor will get a row back — the other gets nothing and bails.
     const { data: claimed, error: claimError } = await (await getSupabase())
       .from('challenges').delete().eq('id', challenge.id).select().single()
+    setLobbyError(null)
     if (claimError) console.error('acceptChallenge: delete failed', claimError)
-    if (!claimed) return // Another player got there first (or RLS blocked the delete)
+    if (!claimed) {
+      // Another player got there first (or RLS blocked the delete). Either way
+      // the click did nothing visible before this.
+      setLobbyError('That challenge was already taken.')
+      return
+    }
 
     const { data: game, error } = await (await getSupabase()).from('games').insert({
       attacker_id: attackerId,
@@ -156,10 +169,19 @@ export function useLobby(
       status: 'active',
     }).select().single()
 
-    if (error || !game) { console.error('Failed to create game', error); return }
+    if (error || !game) {
+      console.error('Failed to create game', error)
+      // The challenge was already deleted to claim it, so bailing here would
+      // destroy it for everyone and start nothing. Put it back.
+      const restored: Partial<Challenge> = { ...challenge }
+      delete restored.id   // let the table mint a fresh one
+      await (await getSupabase()).from('challenges').insert(restored)
+      setLobbyError("Couldn't start that game. The challenge has been put back.")
+      return
+    }
 
     onGameStartRef.current(game.id, mySide, challenge.rules, challenge.board_size)
   }, [userId])
 
-  return { challenges, myChallenge, activeGames, hostChallenge, cancelChallenge, acceptChallenge }
+  return { challenges, myChallenge, activeGames, hostChallenge, cancelChallenge, acceptChallenge, lobbyError, clearLobbyError: () => setLobbyError(null) }
 }

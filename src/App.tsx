@@ -118,7 +118,7 @@ function App() {
     }
   }, [setSetting, setPlayerMode, resetGame, startGame, setElo, setOnlineStatus])
 
-  const { challenges, myChallenge, activeGames, hostChallenge, cancelChallenge, acceptChallenge } = useLobby(userId, username ?? null, handleGameStart)
+  const { challenges, myChallenge, activeGames, hostChallenge, cancelChallenge, acceptChallenge, lobbyError } = useLobby(userId, username ?? null, handleGameStart)
 
   const handleWatch = useCallback(async (game: import('./hooks/useLobby').ActiveGame) => {
     setSetting('rules', game.rules as Rules)
@@ -635,6 +635,7 @@ function App() {
           onHost={() => hostChallenge(lobbyDraft.rules, lobbyDraft.boardSize, lobbyDraft.side)}
           onCancel={() => cancelChallenge()}
           onAccept={acceptChallenge}
+          error={lobbyError}
           onWatch={handleWatch}
           onClose={() => { cancelChallenge(); setShowLobby(false) }}
         />
