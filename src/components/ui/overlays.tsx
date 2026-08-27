@@ -93,7 +93,12 @@ export function WinnerOverlay({ winner, winReason, playerMode, powerSaving, onNe
   const isDefeat = !isPlayer && playerMode !== '2player'
   const title = playerMode === '2player' ? 'Victory' : isPlayer ? 'Victory' : 'Defeat'
   const label = winner === 'defender' ? 'Defenders Win' : 'Attackers Win'
-  const subtitle = playerMode !== '2player' ? (isPlayer ? 'You Win' : 'You Lose') : null
+  // There must always be something in the big slot. Against the machine that's
+  // "You Win"/"You Lose"; in a local two-player game there's no "you", so the
+  // winning side is promoted into it rather than leaving the screen headline-less.
+  const solo = playerMode !== '2player'
+  const headline = solo ? (isPlayer ? 'You Win' : 'You Lose') : label
+  const sideLine = solo ? label : null
   // Name the losing side for the two endings players find least obvious
   const loser = winner === 'defender' ? 'Attackers' : 'Defenders'
   const reason = winReason && {
@@ -122,10 +127,10 @@ export function WinnerOverlay({ winner, winReason, playerMode, powerSaving, onNe
       ))}
       <div className="winner-overlay__content">
         <p className="winner-overlay__title">{title}</p>
-        {subtitle && <p className={`winner-overlay__name winner-overlay__name--${winner}`}>{subtitle}</p>}
-        <p style={{ margin: 0, fontSize: 13, letterSpacing: 2, textTransform: 'uppercase', color: '#a09070' }}>{label}</p>
+        <p className={`winner-overlay__name winner-overlay__name--${winner}`}>{headline}</p>
+        {sideLine && <p className="winner-overlay__side">{sideLine}</p>}
         {reason && <p className="winner-overlay__reason">{reason}</p>}
-        <button className="menu-overlay__item" style={{ maxWidth: 280 }} onClick={onNewGame}>New Game</button>
+        <button className="menu-overlay__item menu-overlay__item--primary winner-overlay__action" onClick={onNewGame}>New Game</button>
         <button className="winner-overlay__dismiss" onClick={onDismiss}>
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             <line x1="4" y1="4" x2="16" y2="16" /><line x1="16" y1="4" x2="4" y2="16" />

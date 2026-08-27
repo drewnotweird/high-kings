@@ -643,7 +643,15 @@ separate products.
   still use `clamp()`.
 - **Ink ramps** — `--ink`/`--ink-2`/`--ink-dim`/`--ink-faint` on the dark
   overlays, `--parch-ink*` on the parchment scrolls. Every muted tone is pinned
-  at >=4.5:1 against its own surface.
+  at >=4.5:1 against its own surface. **The two ramps are not interchangeable**:
+  the dark-surface inks are light, so using one on parchment inverts the
+  contrast. The leaderboard's 2nd/3rd place ranks did exactly that and measured
+  2.70:1 and 2.26:1.
+- **Edges** — `--edge` (resting), `--edge-strong` (hover), `--edge-faint`
+  (dividers) on dark surfaces, `--edge-parch` on the scrolls. Before these,
+  56 border declarations used 13 different colours across two competing golds.
+- **Spacing** — `--sp-1` (4px) to `--sp-5` (24px). Applied to the modal button
+  padding so far; most panel/layout padding is still literal.
 - **Two faces** — `--font-display` (MedievalSharp) for titles, headings, variant
   names and the primary buttons; `--font-ui` (Alegreya Sans, self-hosted in
   `public/fonts/`) for everything else. MedievalSharp is a display type and stops
@@ -680,7 +688,22 @@ Audited against WCAG 2.1 AA. Rules to keep it there:
   There is a narrow window here: lighter golds fail 4.5:1 against cream, and
   golds dark enough for the standard `--ink` cream drop the fill below 3:1
   against the panel, so the selected state stops reading as selected (1.4.11).
-  `--brand` (#c8880a) is for borders and markers only — never behind text.
+  `--brand` (#c8880a) is for borders and markers only — never behind text,
+  and never *as* text on parchment: it measures 2.38:1 there. Use
+  `--brand-parch` (#85590a, 4.89:1) for gold text on a scroll. The comment on
+  `--brand` said "non-text use" long before this was true of the code — seven
+  parchment rules used it as a text colour, including every ELO figure on the
+  leaderboard.
+- **Measure against the lightest pixel** — the parchment is an image
+  (`pagescroll.webp`), not a flat fill. Its lightest pixel is rgb(239,229,207),
+  L=0.789, so parchment text needs luminance <=0.136 to clear 4.5:1. Sampling
+  the image beats eyeballing a hex value.
+- **One primary button** — `.menu-overlay__item--primary` and its five aliases
+  share a single rule at the *end* of `ui.css`. It must stay last: the
+  per-screen base classes (`.auth-modal__btn`, `.guest-login-modal__btn`) are
+  declared later in the file and reset `background`/`border`, so an earlier
+  definition loses the cascade. Four screens each had their own gradient
+  before this, and two of them put cream text on #c8880a at 2.84:1.
 - **Focus** — a global `:focus-visible` ring lives at the end of `ui.css`.
   Don't remove outlines. If a control sits inside an `overflow: hidden`
   container (like `.segmented`), give it `outline-offset: -3px` so the ring
