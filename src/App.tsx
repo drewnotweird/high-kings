@@ -8,7 +8,8 @@ import { useLobby } from './hooks/useLobby'
 import { useGameSlice, useGameStore } from './store/gameStore'
 import type { PlayerSide, Rules } from './store/gameStore'
 import { requestBestMove } from './game/aiClient'
-import { getBoardConfig } from './game/hnefatafl'
+import { getBoardConfig, getValidMoves } from './game/hnefatafl'
+import type { Piece } from './game/hnefatafl'
 import { rulesFromSlug, defaultSizeFor, BOARD_SIZE_RULES, ALL_BOARD_SIZES } from './game/variants'
 import { useBoardKeyboard } from './hooks/useBoardKeyboard'
 import { getSupabase, hasStoredSession, whenSupabaseReady } from './lib/supabase'
@@ -31,6 +32,25 @@ const LeaderboardScroll = lazy(() => import('./components/ui/LeaderboardScroll')
 const AuthModal = lazy(() => import('./components/ui/AuthModal').then(m => ({ default: m.AuthModal })))
 const LobbyPanel = lazy(() => import('./components/ui/LobbyPanel').then(m => ({ default: m.LobbyPanel })))
 const AvatarDevSandbox = lazy(() => import('./components/ui/AvatarDevSandbox').then(m => ({ default: m.AvatarDevSandbox })))
+
+
+// Last-resort move for when the AI worker fails. Deliberately uses only the
+// rules engine (already in the main bundle) rather than importing ai.ts, which
+// would pull the whole search into the initial download.
+function firstLegalMove(
+  pieces: Piece[], side: 'attacker' | 'defender', boardSize: number, center: number, noThrone?: boolean,
+): { id: string; row: number; col: number } | null {
+  for (const p of pieces) {
+    const onSide = side === 'attacker' ? p.type === 'attacker' : (p.type === 'defender' || p.type === 'king')
+    if (!onSide) continue
+    const moves = getValidMoves(p, pieces, boardSize, center, noThrone)
+    if (moves.length) {
+      const [row, col] = moves[Math.floor(Math.random() * moves.length)]
+      return { id: p.id, row, col }
+    }
+  }
+  return null
+}
 
 function App() {
   const [introStarted, setIntroStarted] = useState(false)
@@ -275,9 +295,15 @@ function App() {
       const posHistory = useGameStore.getState().history.map(h => h.posKey)
       requestBestMove({ pieces: alivePieces, side: machineSide, boardSize, center, difficulty, kingEscapeEdge, shieldwall, weakKing, noThrone, positionHistory: posHistory }).then(move => {
         // Search ran off-thread — re-check the game hasn't moved on before applying
-        const { currentTurn: nowTurn, winner: nowWinner, gameKey: nowGameKey } = useGameStore.getState()
+        const { currentTurn: nowTurn, winner: nowWinner, gameKey: nowGameKey, pieces: nowPieces } = useGameStore.getState()
         if (nowWinner || nowTurn !== machineSide || nowGameKey !== freshGameKey) return
-        if (move) machineMove(move.pieceId, move.toRow, move.toCol)
+        if (move) { machineMove(move.pieceId, move.toRow, move.toCol); return }
+        // No move came back but it is still the machine's turn and the game is
+        // live, so the worker failed. Without this the machine never moves and
+        // the game is stuck for good — the human can't play out of it either.
+        // Any legal move beats a dead board; the worker is rebuilt next turn.
+        const fallback = firstLegalMove(nowPieces, machineSide, boardSize, center, noThrone)
+        if (fallback) machineMove(fallback.id, fallback.row, fallback.col)
       })
     }
     const timer = setTimeout(fire, 2200)

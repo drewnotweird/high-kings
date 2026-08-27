@@ -32,6 +32,11 @@ function getWorker(): Worker {
       console.error('AI worker error:', err.message)
       pending.forEach(resolve => resolve(null))
       pending.clear()
+      // Drop the broken worker: an errored module worker doesn't recover, and
+      // keeping it means every later turn posts into the void and never
+      // resolves. The next request builds a fresh one.
+      worker?.terminate()
+      worker = null
     }
   }
   return worker
