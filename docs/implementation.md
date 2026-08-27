@@ -694,6 +694,16 @@ Audited against WCAG 2.1 AA. Rules to keep it there:
   `--brand` said "non-text use" long before this was true of the code — seven
   parchment rules used it as a text colour, including every ELO figure on the
   leaderboard.
+- **Illustrations are content, not decoration** — the How To Play board
+  diagrams are graphics required to understand the text, so WCAG 1.4.11's 3:1
+  applies to their grid and outlines. They were drawn with the dark-surface
+  palette on parchment: the accent gold #c8a96e was 1.79:1 and the 0.22-alpha
+  grid was 1.54:1, so the boards were nearly invisible. `HowToPlayScroll.tsx`
+  keeps its palette in named constants at the top — if you add an illustration,
+  reuse them rather than picking a colour by eye.
+- **Alpha is a contrast trap** — a translucent text colour composites against
+  whatever is behind it. The illustration captions at `rgba(60,28,0,0.5)` looked
+  like a reasonable brown but measured 2.98:1 on parchment. Prefer solid inks.
 - **Measure against the lightest pixel** — the parchment is an image
   (`pagescroll.webp`), not a flat fill. Its lightest pixel is rgb(239,229,207),
   L=0.789, so parchment text needs luminance <=0.136 to clear 4.5:1. Sampling

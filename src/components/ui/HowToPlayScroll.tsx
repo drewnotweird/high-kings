@@ -4,9 +4,9 @@ import { ScrollPage } from './ScrollPage'
 const ATK = '#3d1e0a'    // dark brown attacker fill
 const DEF = '#7a5228'    // darker tan defender (contrasts parchment)
 const KING_FILL = '#8c6518' // deep gold king fill
-const KING_C = '#c8a96e'  // gold accent colour
-const GRID = 'rgba(60,28,0,0.22)'
-const SPECIAL = 'rgba(200,169,110,0.35)'
+const KING_C = '#85590a'  // gold accent, readable on parchment (4.89:1)
+const GRID = 'rgba(60,28,0,0.55)'   // 3.44:1 — the grid IS the diagram
+const SPECIAL = 'rgba(133,89,10,0.20)'  // warm wash that darkens parchment
 
 function Piece({ cx, cy, r = 10, type = 'atk' }: { cx: number; cy: number; r?: number; type?: 'atk' | 'def' | 'king' }) {
   const fill = type === 'atk' ? ATK : type === 'king' ? KING_FILL : DEF
@@ -58,7 +58,7 @@ function Illustration({ label }: { label: string }) {
           .im-r3{stroke-dasharray:180;animation:im-route 5s ease-in-out infinite;animation-delay:3.2s;}
           .im-ship{animation:im-ship 5s ease-in-out infinite;}
           .im-dot{animation:im-dot 3s ease-in-out infinite;}
-          .im-ring{animation:im-ring 2s ease-out infinite;fill:none;stroke:#c8a96e;stroke-width:1.2;}
+          .im-ring{animation:im-ring 2s ease-out infinite;fill:none;stroke:#85590a;stroke-width:1.2;}
         `}</style>
         {/* Scandinavia */}
         <path d="M190 40 Q205 28 225 38 Q245 28 258 50 Q270 75 255 100 Q268 122 252 145 Q235 168 215 158 Q198 174 182 158 Q162 142 167 118 Q148 100 162 78 Q145 55 190 40Z" fill="none" stroke={KING_C} strokeWidth="1.5" opacity="0.22"/>
@@ -104,11 +104,11 @@ function Illustration({ label }: { label: string }) {
         <rect className="bo-c2" x={21+6*30} y={21} width={28} height={28} fill={SPECIAL} stroke={KING_C} strokeWidth={2} rx={3}/>
         <rect className="bo-c3" x={21} y={21+6*30} width={28} height={28} fill={SPECIAL} stroke={KING_C} strokeWidth={2} rx={3}/>
         <rect className="bo-c4" x={21+6*30} y={21+6*30} width={28} height={28} fill={SPECIAL} stroke={KING_C} strokeWidth={2} rx={3}/>
-        <rect className="bo-throne" x={21+3*30} y={21+3*30} width={28} height={28} fill="rgba(200,169,110,0.18)" stroke={KING_C} strokeWidth={1.5} rx={3}/>
+        <rect className="bo-throne" x={21+3*30} y={21+3*30} width={28} height={28} fill="rgba(133,89,10,0.14)" stroke={KING_C} strokeWidth={1.5} rx={3}/>
         <Piece cx={20+3*30+14} cy={20+3*30+14} r={7} type="king"/>
         <text x="35" y="14" textAnchor="middle" fill={KING_C} fontSize="8.5" fontFamily="MedievalSharp,cursive">escape</text>
         <line x1="35" y1="16" x2="35" y2="21" stroke={KING_C} strokeWidth="1" opacity="0.5"/>
-        <text x="130" y="240" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Throne · Corners are escape squares</text>
+        <text x="130" y="240" textAnchor="middle" fill="#7a5228" fontSize="9" fontFamily="MedievalSharp,cursive">Throne · Corners are escape squares</text>
       </svg>
     ),
     'two-sides': (
@@ -128,7 +128,7 @@ function Illustration({ label }: { label: string }) {
           <Piece cx={39} cy={105} r={11} type="atk"/>
           <Piece cx={65} cy={105} r={11} type="atk"/>
           <Piece cx={91} cy={105} r={11} type="atk"/>
-          <text x="80" y="142" textAnchor="middle" fill="rgba(60,28,0,0.55)" fontSize="10" fontFamily="MedievalSharp,cursive">More pieces · Surround</text>
+          <text x="86" y="142" textAnchor="middle" fill="#7a5228" fontSize="10" fontFamily="MedievalSharp,cursive">More pieces · Surround</text>
         </g>
         <text x="190" y="95" textAnchor="middle" fill={KING_C} fontSize="22" fontFamily="MedievalSharp,cursive">vs</text>
         <g className="ts-d">
@@ -140,7 +140,7 @@ function Illustration({ label }: { label: string }) {
           <Piece cx={274} cy={105} r={11} type="def"/>
           <Piece cx={300} cy={105} r={13} type="king"/>
           <Piece cx={326} cy={105} r={11} type="def"/>
-          <text x="300" y="142" textAnchor="middle" fill="rgba(60,28,0,0.55)" fontSize="10" fontFamily="MedievalSharp,cursive">Fewer · Escort the King</text>
+          <text x="294" y="142" textAnchor="middle" fill="#7a5228" fontSize="10" fontFamily="MedievalSharp,cursive">Fewer · Escort the King</text>
         </g>
       </svg>
     ),
@@ -156,17 +156,17 @@ function Illustration({ label }: { label: string }) {
         `}</style>
         {[0,1,2,3,4,5,6].map(c=>(
           <rect key={c} x={10+c*46} y={50} width={45} height={45}
-            fill={c===5?'rgba(200,169,110,0.18)':'rgba(60,28,0,0.04)'}
+            fill={c===5?'rgba(133,89,10,0.14)':'rgba(60,28,0,0.04)'}
             stroke={c===5?KING_C:GRID} strokeWidth={c===5?1.5:0.8} rx={c===5?2:0}/>
         ))}
         <line className="mv-trail" x1="32" y1="72" x2="262" y2="72" stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
         <g className="mv-dest">
-          <rect x={241} y={51} width={43} height={43} fill="rgba(200,169,110,0.2)" stroke={KING_C} strokeWidth="1.5" strokeDasharray="4 2" rx={2}/>
+          <rect x={241} y={51} width={43} height={43} fill="rgba(133,89,10,0.16)" stroke={KING_C} strokeWidth="1.5" strokeDasharray="4 2" rx={2}/>
         </g>
         <g className="mv-piece">
           <Piece cx={32} cy={72} r={11} type="atk"/>
         </g>
-        <text x="170" y="130" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Any distance · Straight lines · No jumping</text>
+        <text x="170" y="130" textAnchor="middle" fill="#7a5228" fontSize="9" fontFamily="MedievalSharp,cursive">Any distance · Straight lines · No jumping</text>
       </svg>
     ),
     'capture': (
@@ -192,9 +192,9 @@ function Illustration({ label }: { label: string }) {
               x2={150+Math.cos(a*Math.PI/180)*24} y2={87+Math.sin(a*Math.PI/180)*24}
               stroke={KING_C} strokeWidth="2.5" strokeLinecap="round"/>
           ))}
-          <circle cx="150" cy="87" r="11" fill="rgba(200,169,110,0.35)" stroke={KING_C} strokeWidth="1.5"/>
+          <circle cx="150" cy="87" r="11" fill="rgba(133,89,10,0.20)" stroke={KING_C} strokeWidth="1.5"/>
         </g>
-        <text x="150" y="148" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Sandwich between two of your own</text>
+        <text x="150" y="148" textAnchor="middle" fill="#7a5228" fontSize="9" fontFamily="MedievalSharp,cursive">Sandwich between two of your own</text>
       </svg>
     ),
     'hostile-squares': (
@@ -217,10 +217,10 @@ function Illustration({ label }: { label: string }) {
         {/* Cell 2 = attacker */}
         <Piece cx={185} cy={89} r={15} type="atk"/>
         {/* Cell 3 = empty throne */}
-        <rect x={221} y={56} width={67} height={67} fill="rgba(200,169,110,0.2)" stroke={KING_C} strokeWidth="1.5" strokeDasharray="4 2" rx={3}/>
+        <rect x={221} y={56} width={67} height={67} fill="rgba(133,89,10,0.16)" stroke={KING_C} strokeWidth="1.5" strokeDasharray="4 2" rx={3}/>
         <text x="255" y="88" textAnchor="middle" fill={KING_C} fontSize="9" fontFamily="MedievalSharp,cursive">Throne</text>
         {/* Ring burst */}
-        <text x="150" y="168" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Empty corner or Throne counts as captor</text>
+        <text x="150" y="168" textAnchor="middle" fill="#7a5228" fontSize="9" fontFamily="MedievalSharp,cursive">Empty corner or Throne counts as captor</text>
       </svg>
     ),
     'king-capture': (
@@ -237,7 +237,7 @@ function Illustration({ label }: { label: string }) {
         <Piece cx={160} cy={120} r={11} type="atk"/>
         <g className="kc-mover"><Piece cx={80} cy={120} r={11} type="atk"/></g>
         <g className="kc-king"><Piece cx={120} cy={120} r={12} type="king"/></g>
-        <text x="120" y="242" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Final attacker seals all four sides</text>
+        <text x="120" y="242" textAnchor="middle" fill="#7a5228" fontSize="9" fontFamily="MedievalSharp,cursive">Final attacker seals all four sides</text>
       </svg>
     ),
     'king-escape': (
@@ -260,7 +260,7 @@ function Illustration({ label }: { label: string }) {
         <g className="ke-king" style={{transformOrigin:'120px 200px'}}>
           <Piece cx={120} cy={200} r={13} type="king"/>
         </g>
-        <text x="120" y="242" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">King at a corner · Defenders win</text>
+        <text x="120" y="242" textAnchor="middle" fill="#7a5228" fontSize="9" fontFamily="MedievalSharp,cursive">King at a corner · Defenders win</text>
       </svg>
     ),
     'shieldwall': (
@@ -274,7 +274,7 @@ function Illustration({ label }: { label: string }) {
           .sw-d3{animation:sw-die 3s ease-in-out .14s infinite;transform-box:fill-box;transform-origin:center;}
         `}</style>
         <rect x={20} y={25} width={280} height={10} fill={ATK} opacity="0.35" rx="2"/>
-        <text x="160" y="20" textAnchor="middle" fill="rgba(60,28,0,0.4)" fontSize="8" fontFamily="MedievalSharp,cursive">Board edge</text>
+        <text x="160" y="20" textAnchor="middle" fill="#7a5228" fontSize="8" fontFamily="MedievalSharp,cursive">Board edge</text>
         {[0,1,2,3,4].map(c=>(
           <rect key={c} x={20+c*56} y={35} width={55} height={55} fill="rgba(60,28,0,0.04)" stroke={GRID} strokeWidth="0.8"/>
         ))}
@@ -283,7 +283,7 @@ function Illustration({ label }: { label: string }) {
         <g className="sw-d3"><Piece cx={216} cy={62} r={14} type="def"/></g>
         <g className="sw-mover"><Piece cx={48} cy={62} r={14} type="atk"/></g>
         <Piece cx={272} cy={62} r={14} type="atk"/>
-        <text x="160" y="160" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Flank both ends · Whole line wiped</text>
+        <text x="160" y="160" textAnchor="middle" fill="#7a5228" fontSize="9" fontFamily="MedievalSharp,cursive">Flank both ends · Whole line wiped</text>
       </svg>
     ),
     'edge-escape': (
@@ -305,7 +305,7 @@ function Illustration({ label }: { label: string }) {
         <g className="ee-king" style={{transformOrigin:'120px 120px'}}>
           <Piece cx={120} cy={120} r={13} type="king"/>
         </g>
-        <text x="120" y="242" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Tawlbwrdd · Reach any edge to win</text>
+        <text x="120" y="242" textAnchor="middle" fill="#7a5228" fontSize="9" fontFamily="MedievalSharp,cursive">Tawlbwrdd · Reach any edge to win</text>
       </svg>
     ),
     'weak-king': (
@@ -322,7 +322,7 @@ function Illustration({ label }: { label: string }) {
         <Piece cx={89} cy={84} r={14} type="atk"/>
         <g className="wk-king" style={{transformOrigin:'150px 84px'}}><Piece cx={150} cy={84} r={14} type="king"/></g>
         <g className="wk-in"><Piece cx={211} cy={84} r={14} type="atk"/></g>
-        <text x="150" y="148" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">Weak king — sandwiched like any other piece</text>
+        <text x="150" y="148" textAnchor="middle" fill="#7a5228" fontSize="9" fontFamily="MedievalSharp,cursive">Weak king — sandwiched like any other piece</text>
       </svg>
     ),
     'saami-start': (() => {
@@ -335,7 +335,7 @@ function Illustration({ label }: { label: string }) {
           {defs.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={7} type="def"/>)}
           {atks.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={6} type="atk"/>)}
           <Piece cx={OX+4*S+S/2} cy={OY+4*S+S/2} r={8} type="king"/>
-          <text x="101" y="210" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">9 defenders · 16 attackers</text>
+          <text x="101" y="210" textAnchor="middle" fill="#7a5228" fontSize="9" fontFamily="MedievalSharp,cursive">9 defenders · 16 attackers</text>
         </svg>
       )
     })(),
@@ -349,7 +349,7 @@ function Illustration({ label }: { label: string }) {
           {defs.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={8} type="def"/>)}
           {atks.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={7} type="atk"/>)}
           <Piece cx={OX+3*S+S/2} cy={OY+3*S+S/2} r={9} type="king"/>
-          <text x="98" y="199" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">4 defenders · 8 attackers</text>
+          <text x="98" y="199" textAnchor="middle" fill="#7a5228" fontSize="9" fontFamily="MedievalSharp,cursive">4 defenders · 8 attackers</text>
         </svg>
       )
     })(),
@@ -363,7 +363,7 @@ function Illustration({ label }: { label: string }) {
           {defs.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={7} type="def"/>)}
           {atks.map(([r,c],i)=><Piece key={i} cx={OX+c*S+S/2} cy={OY+r*S+S/2} r={6} type="atk"/>)}
           <Piece cx={OX+3*S+S/2} cy={OY+3*S+S/2} r={9} type="king"/>
-          <text x="98" y="199" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="9" fontFamily="MedievalSharp,cursive">8 defenders · 12 attackers</text>
+          <text x="98" y="199" textAnchor="middle" fill="#7a5228" fontSize="9" fontFamily="MedievalSharp,cursive">8 defenders · 12 attackers</text>
         </svg>
       )
     })(),
@@ -387,7 +387,7 @@ function Illustration({ label }: { label: string }) {
           <circle {...pc(9,9)} r={4} fill={KING_C} stroke="#8a6020" strokeWidth="1"/>
           <circle {...pc(9,9)} r={1.5} fill="#8a6020"/>
         </g>
-        <text x="120" y="213" textAnchor="middle" fill="rgba(60,28,0,0.5)" fontSize="8" fontFamily="MedievalSharp,cursive">72 attackers · 24 defenders · 1 king</text>
+        <text x="120" y="213" textAnchor="middle" fill="#7a5228" fontSize="8" fontFamily="MedievalSharp,cursive">72 attackers · 24 defenders · 1 king</text>
       </svg>
       )
     })(),
