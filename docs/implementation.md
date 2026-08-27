@@ -96,7 +96,7 @@ supabase/
     002_online_matches.sql     — games, game_results tables, RLS, Realtime
     003_elo_improvements.sql   — ELO trigger, side_bias table, improved K-factor
     004_challenges_table.sql   — challenges table, RLS (two delete policies), games insert policy, Realtime
-    005_avatar_column.sql      — ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar jsonb
+    005_avatar.sql             — ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar jsonb
                                  (must be run manually in Supabase dashboard — not yet applied)
 ```
 
@@ -542,7 +542,11 @@ Hair and facial-hair SVGs must have **no `fill` attribute** on their paths — t
 
 ### Database
 
-`profiles.avatar jsonb` column stores the serialised `AvatarConfig`. Migration `005_avatar_column.sql` adds this column — must be applied manually in the Supabase dashboard.
+`profiles.avatar jsonb` column stores the serialised `AvatarConfig`. Migration `005_avatar.sql` adds this column — must be applied manually in the
+Supabase dashboard. If it hasn't been, saving an avatar now fails *visibly*:
+the maker stays open and shows "This server can't store avatars yet". It used
+to log to the console, set the avatar in the store and close, so the UI claimed
+success and the change silently vanished on the next load.
 
 ---
 

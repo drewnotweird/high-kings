@@ -15,6 +15,7 @@ export function ProfileScroll({ onClose, onSignIn, onPlayOnline }: { onClose: ()
   const [nameSaving, setNameSaving] = useState(false)
   const [stats, setStats] = useState<StatRow[]>([])
   const [editingAvatar, setEditingAvatar] = useState(false)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
   const { userId, username, elo, avatar, setAuth, setUsername, setAvatar } = useGameSlice('userId', 'username', 'elo', 'avatar', 'setAuth', 'setUsername', 'setAvatar')
 
   useEffect(() => {
@@ -55,15 +56,29 @@ export function ProfileScroll({ onClose, onSignIn, onPlayOnline }: { onClose: ()
     setUsername(trimmed)
     // Save avatar separately (column may not exist until migration 005 is run)
     const newAvatar = avatar ?? randomAvatar()
-    await (await getSupabase()).from('profiles').update({ avatar: newAvatar }).eq('id', userId)
-    if (!avatar) setAvatar(newAvatar)
+    const { error: avatarErr } = await (await getSupabase())
+      .from('profiles').update({ avatar: newAvatar }).eq('id', userId)
+    // The name saved fine, so don't block on this — just don't claim an avatar
+    // was stored when it wasn't.
+    if (!avatarErr && !avatar) setAvatar(newAvatar)
     setNameSaving(false)
     setEditingName(false)
   }
   const handleSaveAvatar = async (newConfig: import('../../lib/avatarConfig').AvatarConfig) => {
     if (!userId) return
-    await (await getSupabase()).from('profiles').update({ avatar: newConfig }).eq('id', userId)
-      .then(({ error }) => { if (error) console.error('avatar save:', error.message) })
+    setAvatarError(null)
+    const { error } = await (await getSupabase())
+      .from('profiles').update({ avatar: newConfig }).eq('id', userId)
+    if (error) {
+      // Keep the maker open so the work isn't lost. The usual cause is
+      // migration 005_avatar.sql not having been run on this project.
+      setAvatarError(
+        /column .*avatar/i.test(error.message)
+          ? "This server can't store avatars yet (migration 005 not applied)."
+          : `Couldn't save your avatar: ${error.message}`
+      )
+      return
+    }
     setAvatar(newConfig)
     setEditingAvatar(false)
   }
@@ -72,7 +87,10 @@ export function ProfileScroll({ onClose, onSignIn, onPlayOnline }: { onClose: ()
       {userId ? (
         <>
           {editingAvatar && avatar && (
-            <AvatarMaker initial={avatar} onSave={handleSaveAvatar} onCancel={() => setEditingAvatar(false)} />
+            <>
+              <AvatarMaker initial={avatar} onSave={handleSaveAvatar} onCancel={() => { setAvatarError(null); setEditingAvatar(false) }} />
+              {avatarError && <p className="profile-scroll__error" role="alert">{avatarError}</p>}
+            </>
           )}
           {!editingAvatar && <div className="profile-scroll__hero">
             {avatar && (
@@ -92,7 +110,7 @@ export function ProfileScroll({ onClose, onSignIn, onPlayOnline }: { onClose: ()
                   maxLength={20}
                   autoFocus
                 />
-                {nameError && <p className="auth-modal__error">{nameError}</p>}
+                {nameError && <p className="profile-scroll__error">{nameError}</p>}
                 <div className="profile-scroll__name-actions">
                   <button className="profile-scroll__btn profile-scroll__btn--primary" onClick={handleSaveName} disabled={nameSaving}>
                     {nameSaving ? 'Saving…' : 'Save'}

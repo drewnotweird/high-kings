@@ -45,7 +45,8 @@
   /* Semantic */
   --win:  #3a7a3a;
   --loss: #7a2020;
-  --warn: #e87040;
+  --warn: #e87040;        /* on dark surfaces */
+  --warn-parch: #a3300c;  /* the same role on parchment (5.62:1) */
 
   /* Edges. Everything bordered on a dark surface uses one of these three;
      before this there were two different golds across ten opacities. */
@@ -1256,6 +1257,8 @@ h1, h2, h3,
 .auth-modal__cancel { flex-shrink: 0; }
 .auth-modal__divider { text-align: center; font-size: var(--fs-micro); color: rgba(200,180,140,0.3); letter-spacing: 1px; margin: 2px 0; }
 .auth-modal__error { color: var(--warn); font-size: var(--fs-micro); letter-spacing: 0.5px; text-align: center; }
+/* Same message, parchment surface: --warn is 2.46:1 on cream. */
+.profile-scroll__error { color: var(--warn-parch); font-size: var(--fs-micro); letter-spacing: 0.5px; text-align: center; margin: var(--sp-2) 0 0; }
 .auth-user-chip {
   display: flex; align-items: center; gap: 8px;
   padding: 6px 12px;
@@ -1325,11 +1328,7 @@ h1, h2, h3,
   border: 1px solid var(--edge);
   color: var(--gold-dim);
 }
-.onboard-nudge__btn--primary {
-  background: linear-gradient(135deg, #c8880a, #a06808);
-  color: var(--on-brand);
-  border: none;
-}
+.onboard-nudge__btn--primary { border: none; }
 .onboard-nudge__btn:hover { filter: brightness(1.15); }
 
 /* Winner overlay — why the game ended */
@@ -1581,6 +1580,7 @@ h1, h2, h3,
 .profile-scroll__btn--primary,
 .profile-scroll__play-online-btn,
 .avatar-maker__save,
+.onboard-nudge__btn--primary,
 .guest-login-modal__btn--primary {
   background: linear-gradient(135deg, var(--brand-fill), #5a3e08, var(--brand-fill));
   border: 1px solid #c89a30;
@@ -1593,6 +1593,7 @@ h1, h2, h3,
 .profile-scroll__btn--primary:hover,
 .profile-scroll__play-online-btn:hover,
 .avatar-maker__save:hover,
+.onboard-nudge__btn--primary:hover,
 .guest-login-modal__btn--primary:hover {
   background: linear-gradient(135deg, #a67c16, #6d4c0a, #a67c16);
   border-color: #f0d060;
