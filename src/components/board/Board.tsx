@@ -79,6 +79,11 @@ const uvGenerator = {
 interface BoardProps {
   theme: ThemeConfig
   menuPhase?: 'idle' | 'hiding' | 'hidden' | 'appearing'
+  // Piece under the cursor, published for PiecesLayer. Instanced pieces can't
+  // rely on their own pointer events (see PiecesLayer), so hover is derived
+  // from the board raycast — the same lookup that already drives selection in
+  // handleBoardClick. A ref, not state: this updates on every pointermove.
+  hoveredPieceRef?: React.MutableRefObject<string | null>
 }
 
 const phaseCache = new Map<string, number>()
@@ -293,7 +298,7 @@ function LastMovePathGlow({ path, boardOffset }: { path: [number, number][]; boa
   )
 }
 
-export function Board({ theme, menuPhase }: BoardProps) {
+export function Board({ theme, menuPhase, hoveredPieceRef }: BoardProps) {
   const { rules, boardSize: storedBoardSize, pieces, validMoves, cautionMoves, selectedId, selectPiece, movePiece, gameKey, powerSaving, lastMovePath, cursor, keyboardMode } = useGameSlice('rules', 'boardSize', 'pieces', 'validMoves', 'cautionMoves', 'selectedId', 'selectPiece', 'movePiece', 'gameKey', 'powerSaving', 'lastMovePath', 'cursor', 'keyboardMode')
   const { boardSize, center, attackerStarts, defenderStarts, kingEscapeEdge } = getBoardConfig(rules, storedBoardSize)
   useEffect(() => { clearPhaseCache() }, [gameKey])
@@ -521,6 +526,12 @@ export function Board({ theme, menuPhase }: BoardProps) {
   const handleBoardPointerMove = (e: ThreeEvent<PointerEvent>) => {
     if (powerSaving) return
     const sq = pointToSquare(e)
+    if (hoveredPieceRef) {
+      // Same lookup as handleBoardClick, and it skips the king for the same
+      // reason: the king is a real mesh and handles its own hover.
+      const over = sq && pieces.find(p => p.row === sq.row && p.col === sq.col && p.type !== 'king')
+      hoveredPieceRef.current = over ? over.id : null
+    }
     const next = sq && isValidMove(sq.row, sq.col, validMoves) ? { x: sq.x, z: sq.z } : null
     setHoveredTile(prev => (prev?.x === next?.x && prev?.z === next?.z) ? prev : next)
   }
@@ -542,7 +553,7 @@ export function Board({ theme, menuPhase }: BoardProps) {
         receiveShadow
         onClick={handleBoardClick}
         onPointerMove={handleBoardPointerMove}
-        onPointerLeave={() => setHoveredTile(null)}
+        onPointerLeave={() => { setHoveredTile(null); if (hoveredPieceRef) hoveredPieceRef.current = null }}
       >
         <meshStandardMaterial
           map={tileAtlas}

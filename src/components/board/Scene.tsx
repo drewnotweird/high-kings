@@ -652,6 +652,10 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
     ...pieces.filter(p => p.type === 'attacker'),
   ]
   const delayMap = new Map(ordered.map((p, i) => [p.id, BOARD_ARRIVE + i * PIECE_STAGGER]))
+  // Which non-king piece the cursor is over. Board publishes it from its own
+  // raycast; PiecesLayer reads it to drive the hover lift. A ref so a
+  // pointermove doesn't re-render the scene.
+  const hoveredPieceRef = useRef<string | null>(null)
 
   return (
     <>
@@ -661,7 +665,7 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
       {!powerSaving && <CaptureFlashLight />}
       {!powerSaving && <LightningFlash />}
       <AnimatedBoard menuOpen={boardFlipOpen} snapFlipRef={snapFlipRef} undoTrigger={undoTrigger}>
-        <Board theme={theme} menuPhase={menuPhase} />
+        <Board theme={theme} menuPhase={menuPhase} hoveredPieceRef={hoveredPieceRef} />
       </AnimatedBoard>
       {/* King — individual mesh (unique geometry, spotlight tracking, single piece) */}
       {pieces.filter(p => p.type === 'king').map((piece) => (
@@ -683,6 +687,7 @@ function SceneInner({ menuOpen, dropStartMs, dropKey }: SceneInnerProps) {
         dropStartMs={dropStartMs}
         delayMap={delayMap}
         menuPhase={menuPhase}
+        hoveredPieceRef={hoveredPieceRef}
       />
       {bolts.map(b => (
         <LightningBolt

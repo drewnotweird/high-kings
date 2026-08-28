@@ -53,9 +53,10 @@ interface PiecesLayerProps {
   dropStartMs: number | null
   delayMap: Map<string, number>
   menuPhase: MenuPhase
+  hoveredPieceRef?: React.MutableRefObject<string | null>
 }
 
-export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }: PiecesLayerProps) {
+export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase, hoveredPieceRef }: PiecesLayerProps) {
   const {
     rules, boardSize: storedBoardSize, powerSaving, captorIds, undoTrigger,
     currentTurn, playerMode, winner, selectedId, selectPiece, roleSelectOpen,
@@ -222,7 +223,7 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
             ? pieceIsDefender && currentTurn === 'defender'
             : !pieceIsDefender && currentTurn === 'attacker'
       )
-      anim.hovered = anim.isHoverable && hoveredPieceId.current === id
+      anim.hovered = anim.isHoverable && (hoveredPieceRef?.current ?? hoveredPieceId.current) === id
 
       // Intro drop
       const dropT = dropStartMs ? (now - dropStartMs) / 1000 : -1
@@ -319,14 +320,15 @@ export function PiecesLayer({ nonKingPieces, dropStartMs, delayMap, menuPhase }:
     const id = slots[instanceId as number]
     if (id) selectPiece(id)
   }
-  // Track which piece the cursor is currently over (updated every pointermove).
-  // Avoids R3F's onPointerEnter being consumed before isHoverable is true.
+  // Fallback only. Hover now comes from the board raycast via hoveredPieceRef,
+  // because the InstancedMesh pointer events below were not reliably firing —
+  // the king (a real mesh) was the only piece that lifted. Selection already
+  // worked through the board for the same reason, which is why this went
+  // unnoticed: clicking was fine, only hover was dead.
   const hoveredPieceId = useRef<string | null>(null)
   const handleMove = (slots: (string | null)[]) => (e: any) => {
     hoveredPieceId.current = slots[e.instanceId as number] ?? null
   }
-  // Only clear if this specific piece is still the active one — avoids leave-after-move ordering issues
-  // when the cursor transitions between the two InstancedMeshes (attacker ↔ defender).
   const handleLeave = (slots: (string | null)[]) => (e: any) => {
     const id = slots[e.instanceId as number]
     if (id && hoveredPieceId.current === id) hoveredPieceId.current = null
