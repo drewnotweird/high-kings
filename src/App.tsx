@@ -118,7 +118,19 @@ function App() {
     }
   }, [])
 
-  const { startGame, watchGame, stopWatching, sendMove, endGame } = useOnlineGame(handleOnlineStatusChange)
+  const [rematch, setRematch] = useState<import('./hooks/useOnlineGame').RematchState>({ type: 'none' })
+  // handleGameStart is defined below this call, so route through a ref rather
+  // than reordering the whole block.
+  const rematchStartRef = useRef<((gameId: string, side: 'attacker' | 'defender', rules: string, boardSize: number) => void) | null>(null)
+  const { startGame, watchGame, stopWatching, sendMove, endGame, offerRematch, declineRematch, leaveGame } = useOnlineGame(
+    handleOnlineStatusChange,
+    setRematch,
+    (gameId, side, gameRules, gameBoardSize) => {
+      setRematch({ type: 'none' })
+      setWinnerDismissed(false)
+      rematchStartRef.current?.(gameId, side, gameRules, gameBoardSize)
+    },
+  )
 
   const handleGameStart = useCallback(async (gameId: string, mySide: 'attacker' | 'defender', gameRules: string, gameBoardSize: number) => {
     setSetting('rules', gameRules as Rules)
@@ -143,6 +155,8 @@ function App() {
       setOnlineStatus({ type: 'matched', gameId, opponentName: opp?.username ?? '…', opponentElo: opp?.elo ?? null, opponentId: oppId ?? null })
     }
   }, [setSetting, setPlayerMode, resetGame, startGame, setElo, setOnlineStatus])
+
+  useEffect(() => { rematchStartRef.current = handleGameStart }, [handleGameStart])
 
   const { challenges, myChallenge, activeGames, hostChallenge, cancelChallenge, acceptChallenge, lobbyError } = useLobby(userId, username ?? null, handleGameStart)
 
@@ -638,7 +652,11 @@ function App() {
           winReason={winReason}
           playerMode={playerMode}
           powerSaving={powerSaving}
-          onNewGame={() => { resetGame(); startSetupAnim() }}
+          // Rematch is only meaningful once an online game has finished.
+          rematch={onlineStatus.type === 'ended' ? rematch : null}
+          onOfferRematch={offerRematch}
+          onDeclineRematch={declineRematch}
+          onNewGame={() => { leaveGame(); resetGame(); startSetupAnim() }}
           onDismiss={() => setWinnerDismissed(true)}
         />
       )}

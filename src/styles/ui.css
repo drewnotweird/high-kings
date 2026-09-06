@@ -843,6 +843,26 @@ h1, h2, h3,
   color: var(--ink-2);
 }
 .winner-overlay__action { max-width: 280px; }
+/* Rematch negotiation on the online end screen. */
+.winner-overlay__rematch {
+  display: flex; flex-direction: column; align-items: center;
+  gap: var(--sp-3); width: 100%; max-width: 320px;
+}
+.winner-overlay__rematch-label {
+  margin: 0; font-size: var(--fs-body); letter-spacing: 2px;
+  text-transform: uppercase; color: var(--ink-2);
+}
+.winner-overlay__rematch-status {
+  margin: 0; font-size: var(--fs-body); color: var(--ink-dim);
+  text-align: center; max-width: 30ch; line-height: 1.5;
+}
+.winner-overlay__rematch-status--ask { color: var(--gold); }
+.winner-overlay__rematch-status--no { color: var(--ink-2); }
+.winner-overlay__rematch-actions { display: flex; gap: var(--sp-2); width: 100%; }
+.winner-overlay__rematch-actions .menu-overlay__item { flex: 1; }
+@media (max-width: 480px) {
+  .winner-overlay__rematch-actions { flex-direction: column; }
+}
 .winner-overlay__name {
   font-size: clamp(28px, 6vw, 52px);
   letter-spacing: 3px;

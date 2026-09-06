@@ -1,5 +1,6 @@
 import type { PlayerSide, GameMode } from '../../store/gameStore'
 import type { WinReason } from '../../game/hnefatafl'
+import type { RematchState } from '../../hooks/useOnlineGame'
 import { Ember } from './buttons'
 import { DefeatFire } from './DefeatFire'
 
@@ -81,11 +82,15 @@ export function RepetitionWarning({ onConfirm, onCancel }: { onConfirm: () => vo
   )
 }
 
-export function WinnerOverlay({ winner, winReason, playerMode, powerSaving, onNewGame, onDismiss }: {
+export function WinnerOverlay({ winner, winReason, playerMode, powerSaving, rematch, onOfferRematch, onDeclineRematch, onNewGame, onDismiss }: {
   winner: 'attacker' | 'defender'
   winReason: WinReason | null
   playerMode: GameMode
   powerSaving: boolean
+  /** Null for offline games — rematch only applies to a finished online match. */
+  rematch?: RematchState | null
+  onOfferRematch?: () => void
+  onDeclineRematch?: () => void
   onNewGame: () => void
   onDismiss: () => void
 }) {
@@ -130,7 +135,42 @@ export function WinnerOverlay({ winner, winReason, playerMode, powerSaving, onNe
         <p className={`winner-overlay__name winner-overlay__name--${winner}`}>{headline}</p>
         {sideLine && <p className="winner-overlay__side">{sideLine}</p>}
         {reason && <p className="winner-overlay__reason">{reason}</p>}
-        <button className="menu-overlay__item menu-overlay__item--primary winner-overlay__action" onClick={onNewGame}>New Game</button>
+        {rematch ? (
+          <div className="winner-overlay__rematch">
+            {rematch.type === 'offered' && (
+              <p className="winner-overlay__rematch-status">Rematch offered — waiting for your opponent…</p>
+            )}
+            {rematch.type === 'declined' && (
+              <p className="winner-overlay__rematch-status winner-overlay__rematch-status--no">
+                Your opponent declined the rematch.
+              </p>
+            )}
+            {rematch.type === 'unavailable' && (
+              <p className="winner-overlay__rematch-status winner-overlay__rematch-status--no">
+                Your opponent has left.
+              </p>
+            )}
+            {rematch.type === 'received' && (
+              <p className="winner-overlay__rematch-status winner-overlay__rematch-status--ask">
+                Your opponent wants a rematch.
+              </p>
+            )}
+            {(rematch.type === 'none' || rematch.type === 'received') && (
+              <>
+                <p className="winner-overlay__rematch-label">Play again?</p>
+                <div className="winner-overlay__rematch-actions">
+                  <button className="menu-overlay__item menu-overlay__item--primary" onClick={onOfferRematch}>Yes</button>
+                  <button className="menu-overlay__item" onClick={onDeclineRematch}>No</button>
+                </div>
+              </>
+            )}
+            {(rematch.type === 'declined' || rematch.type === 'unavailable') && (
+              <button className="menu-overlay__item menu-overlay__item--primary winner-overlay__action" onClick={onNewGame}>New Game</button>
+            )}
+          </div>
+        ) : (
+          <button className="menu-overlay__item menu-overlay__item--primary winner-overlay__action" onClick={onNewGame}>New Game</button>
+        )}
         <button className="winner-overlay__dismiss" onClick={onDismiss}>
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             <line x1="4" y1="4" x2="16" y2="16" /><line x1="16" y1="4" x2="4" y2="16" />

@@ -680,6 +680,32 @@ the screen title (`.credits-page__title, .setup__title`) and the dismiss control
 Don't style a new overlay's title or close button from scratch — reuse those, and
 pick the surface by asking whether the screen is for reading or deciding.
 
+## Rematch negotiation
+
+Two clients have to agree, over the realtime channel, with no server refereeing
+them. The protocol (`useOnlineGame.ts`):
+
+- Each side answers yes or no. `rematch_offer` and `rematch_decline` are
+  broadcast; the game only restarts when **both** have offered.
+- A decline must be transmitted. Otherwise whoever said yes waits forever on
+  "waiting for opponent" with no way to tell refusal from a slow connection.
+- **The channel outlives the game.** `endGame` used to call `cleanup()`, which
+  removed the channel — so the two clients had no way to talk once a game
+  finished. It now sets `finished` instead, and teardown moves to
+  `declineRematch` / `leaveGame` / unmount.
+- `finished` also stops the presence-leave handler starting the 30s abandon
+  countdown after a game is already over. Without it, an opponent closing their
+  tab post-game rewrote a *completed* row as `abandoned` with the wrong winner.
+- **Only one side inserts the new row.** Both agreeing simultaneously would
+  otherwise create two games. The player with the lower user id creates it and
+  broadcasts `rematch_start` with the id; the other reads the row to learn
+  which side it is on.
+- **Sides swap.** Attacker and defender are asymmetric, so a rematch on the
+  same sides isn't a fair return fixture.
+
+Untested end to end at the time of writing — it needs two authenticated
+clients. The four UI states were verified by rendering them directly.
+
 ## Database migrations are applied by hand — check, don't assume
 
 There is no automated migration runner. Migrations in `supabase/migrations/`
