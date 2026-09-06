@@ -83,6 +83,9 @@ function App() {
   const [menuVisible, setMenuVisible] = useState(false)
   const [hudMinimized, setHudMinimized] = useState(() => localStorage.getItem('highkings-hud-minimized') === '1')
   const [showCredits, setShowCredits] = useState(false)
+  // Declining hides the invite for this player only — deleting the challenge
+  // would cancel it for the host and every other player in the lobby.
+  const [declinedInvites, setDeclinedInvites] = useState<string[]>([])
   const [showHowToPlay, setShowHowToPlay] = useState(false)
   const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [winnerDismissed, setWinnerDismissed] = useState(false)
@@ -680,19 +683,36 @@ function App() {
           <button className="spectator-bar__leave" onClick={() => { stopWatching(); setOnlineStatus({ type: 'idle' }); resetGame() }}>Leave</button>
         </div>
       )}
-      {userId && onlineStatus.type !== 'matched' && !showLobby && challenges.length > 0 && (
-        <div className="challenge-invites">
-          {challenges.map(c => (
-            <div key={c.id} className="challenge-invite">
-              <p className="challenge-invite__label">Challenge received</p>
-              <p className="challenge-invite__host">{c.host_name}</p>
-              <p className="challenge-invite__detail">{c.rules} · {c.board_size}×{c.board_size}</p>
-              <p className="challenge-invite__side">You play: <strong>{c.host_side === 'attacker' ? 'Defender' : 'Attacker'}</strong></p>
-              <button className="challenge-invite__accept" onClick={() => acceptChallenge(c)}>Accept</button>
+      {/* Only while playing the machine: playerMode is a side (not 2-player) and
+          there's no online game in progress or being watched. One at a time —
+          it's a centred dialog now, so a stack of them would fight for the
+          same space. */}
+      {(() => {
+        const invite = challenges.find(c => !declinedInvites.includes(c.id))
+        if (!userId || playerMode === '2player' || onlineStatus.type !== 'idle' || showLobby || !invite) return null
+        return (
+          <div className="challenge-invite-backdrop">
+            <div className="challenge-invite" role="dialog" aria-modal="true" aria-labelledby="challenge-invite-title">
+              <p className="challenge-invite__label" id="challenge-invite-title">Challenge received</p>
+              <p className="challenge-invite__host">{invite.host_name}</p>
+              <p className="challenge-invite__detail">{invite.rules} · {invite.board_size}×{invite.board_size}</p>
+              <p className="challenge-invite__side">
+                You play <strong>{invite.host_side === 'attacker' ? 'Defender' : 'Attacker'}</strong>
+              </p>
+              <div className="challenge-invite__actions">
+                <button
+                  className="menu-overlay__item menu-overlay__item--primary"
+                  onClick={() => acceptChallenge(invite)}
+                >Accept</button>
+                <button
+                  className="menu-overlay__item"
+                  onClick={() => setDeclinedInvites(prev => [...prev, invite.id])}
+                >Decline</button>
+              </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        )
+      })()}
       {onlineStatus.type === 'opponent_disconnected' && (
         <div className="disconnect-banner">
           Opponent disconnected — waiting {onlineStatus.secondsLeft}s…
