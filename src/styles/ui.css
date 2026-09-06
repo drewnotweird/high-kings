@@ -650,6 +650,21 @@ h1, h2, h3,
   text-transform: uppercase;
   color: var(--parch-ink);
 }
+/* Contributors who weren't part of the original three. Kept visually distinct
+   from the makers list so the "three friends" line above stays accurate. */
+.credits-page__thanks {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 32px;
+}
+.credits-page__thanks-label {
+  font-size: var(--fs-micro);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--parch-ink-3);
+}
 .credits-page__rule {
   border: none;
   height: 1px;

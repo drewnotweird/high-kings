@@ -102,6 +102,10 @@ export function CreditsScroll({ onClose }: { onClose: () => void }) {
         <span className="credits-page__name">Lewis MacKenzie</span>
         <span className="credits-page__name">Andrew Nicolson</span>
       </div>
+      <div className="credits-page__thanks">
+        <span className="credits-page__thanks-label">With thanks to</span>
+        <span className="credits-page__name">Gordon Rattray</span>
+      </div>
     </ScrollPage>
   )
 }
