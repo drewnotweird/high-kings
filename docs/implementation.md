@@ -701,10 +701,18 @@ the wrapped square, and it let a weak king on those edges be captured outright.
 Top and bottom edges were unaffected — those indices go negative or past the
 end, so they don't collide.
 
-`scripts/` has no test runner; the check used was an exhaustive sweep of victim
-/ mover / third-piece placements across 7 variants (718,080 configurations)
-compared against a geometric predicate. It reports 5 mismatches on the broken
-code and 0 on the fixed code.
+`src/game/hnefatafl.test.ts` guards this. Its sweep places a victim on every
+square, brings an attacker in from each direction, and parks a spare attacker
+on every other square in turn, asserting a capture happens exactly when the
+square beyond the victim is on the board and is either hostile or holds the
+spare — 718,080 configurations across 7 variants, in about 0.4s.
+
+The suite is checked against the bug it exists for: deleting the bounds guard
+in `at()` fails 11 of the 18 tests, including every variant sweep. If you
+change the capture code, do that mutation check again rather than trusting a
+green run — the sweep's value is entirely in its coverage, so a refactor that
+quietly narrows the loop would still pass. There is a floor assertion on the
+iteration count for that reason.
 
 ## Accessibility
 

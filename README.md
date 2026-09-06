@@ -89,7 +89,10 @@ npm run dev
 ```
 
 Other scripts:
-- `npm run build` — type-check + production build
+- `npm test` — engine tests (vitest, ~0.4s). Runs in CI before the build, so a
+  rules regression can't deploy.
+- `npm run build` — type-check + production build (this type-checks the test
+  files too — they're under `src`)
 - `npm run build:compressed` — build plus precompressed `.gz`/`.br` files (only useful on hosts with `gzip_static`/`brotli_static`)
 - `node scripts/convert-webp.mjs` — convert any new `public/` images to WebP in place
 
