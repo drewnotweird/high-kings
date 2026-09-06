@@ -680,6 +680,33 @@ the screen title (`.credits-page__title, .setup__title`) and the dismiss control
 Don't style a new overlay's title or close button from scratch — reuse those, and
 pick the surface by asking whether the screen is for reading or deciding.
 
+## Database migrations are applied by hand — check, don't assume
+
+There is no automated migration runner. Migrations in `supabase/migrations/`
+are applied manually in the Supabase dashboard, and two had silently never been
+applied to the live project. Both were found on 2026-09-06:
+
+- **005_avatar.sql** — `profiles.avatar` doesn't exist. Avatar saving fails, and
+  it also broke login until `loadProfile` stopped selecting the column in the
+  same query as `username` (see App.tsx).
+- **006_elo_trigger.sql** — `update_elo()` was defined by 003 but no migration
+  ever ran `CREATE TRIGGER`, so it was attached to nothing. Every online game
+  has completed with a winner recorded and no rating change.
+
+Neither failed loudly. The avatar one surfaced as an unrelated login bug; the
+ELO one only surfaced by playing a real online game and watching the rows.
+
+To check what's actually live, query with the anon key rather than reading the
+migration files — the files say what *should* be there:
+
+```
+curl -s "$VITE_SUPABASE_URL/rest/v1/profiles?select=avatar&limit=1" \
+  -H "apikey: $VITE_SUPABASE_ANON_KEY" -H "Authorization: Bearer $VITE_SUPABASE_ANON_KEY"
+```
+
+A missing column returns 400 `column ... does not exist`. For the trigger there
+is no direct anon check: complete a game and confirm both ratings moved.
+
 ## Square indexing — read this before touching the engine
 
 `squareIndex` encodes a square as `row * boardSize + col`. That encoding is not
