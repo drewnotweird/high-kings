@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { getSupabase } from '../../lib/supabase'
 import { useGameSlice, useGameStore } from '../../store/gameStore'
+import { withTimeout, TIMED_OUT, TIMEOUT_MESSAGE } from '../../lib/withTimeout'
 
 type AuthScreen = 'login' | 'signup' | 'confirm' | 'username' | 'forgot'
 
@@ -21,24 +22,37 @@ export function AuthModal({ onClose, initialScreen = 'login' }: {
 
   const handleLogin = async () => {
     setLoading(true); setError(null)
-    const { error } = await (await getSupabase()).auth.signInWithPassword({ email, password })
-    setLoading(false)
-    if (error) { setError(error.message); return }
-    // onAuthStateChange in App.tsx handles profile fetch and setAuth
-    onClose()
+    try {
+      const res = await withTimeout(async () =>
+        (await getSupabase()).auth.signInWithPassword({ email, password }))
+      if (res === TIMED_OUT) { setError(TIMEOUT_MESSAGE); return }
+      if (res.error) { setError(res.error.message); return }
+      // onAuthStateChange in App.tsx handles profile fetch and setAuth
+      onClose()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : TIMEOUT_MESSAGE)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSignup = async () => {
     setLoading(true); setError(null)
-    const { data, error } = await (await getSupabase()).auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: window.location.origin + import.meta.env.BASE_URL },
-    })
-    if (error) { setError(error.message); setLoading(false); return }
-    if (data.user) setAuth(data.user.id, null)
-    setScreen('confirm')
-    setLoading(false)
+    try {
+      const res = await withTimeout(async () => (await getSupabase()).auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: window.location.origin + import.meta.env.BASE_URL },
+      }))
+      if (res === TIMED_OUT) { setError(TIMEOUT_MESSAGE); return }
+      if (res.error) { setError(res.error.message); return }
+      if (res.data.user) setAuth(res.data.user.id, null)
+      setScreen('confirm')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : TIMEOUT_MESSAGE)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleUsername = async () => {
@@ -48,24 +62,38 @@ export function AuthModal({ onClose, initialScreen = 'login' }: {
     setLoading(true); setError(null)
     const { userId } = useGameStore.getState()
     if (!userId) { setError('Session lost — please sign in again'); setLoading(false); return }
-    const { error } = await (await getSupabase()).from('profiles').upsert({ id: userId, username: trimmed })
-    if (error) {
-      setError(error.message.includes('unique') ? 'That name is taken' : error.message)
-      setLoading(false); return
+    try {
+      const res = await withTimeout(async () =>
+        (await getSupabase()).from('profiles').upsert({ id: userId, username: trimmed }))
+      if (res === TIMED_OUT) { setError(TIMEOUT_MESSAGE); return }
+      if (res.error) {
+        setError(res.error.message.includes('unique') ? 'That name is taken' : res.error.message)
+        return
+      }
+      storeSetUsername(trimmed)
+      onClose()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : TIMEOUT_MESSAGE)
+    } finally {
+      setLoading(false)
     }
-    storeSetUsername(trimmed)
-    setLoading(false)
-    onClose()
   }
 
   const handleForgot = async () => {
     setLoading(true); setError(null)
-    const { error } = await (await getSupabase()).auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + import.meta.env.BASE_URL,
-    })
-    if (error) { setError(error.message); setLoading(false); return }
-    setForgotSent(true)
-    setLoading(false)
+    try {
+      const res = await withTimeout(async () =>
+        (await getSupabase()).auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + import.meta.env.BASE_URL,
+        }))
+      if (res === TIMED_OUT) { setError(TIMEOUT_MESSAGE); return }
+      if (res.error) { setError(res.error.message); return }
+      setForgotSent(true)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : TIMEOUT_MESSAGE)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
