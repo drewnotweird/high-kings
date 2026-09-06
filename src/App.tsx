@@ -37,6 +37,29 @@ const AvatarDevSandbox = lazy(() => import('./components/ui/AvatarDevSandbox').t
 // Last-resort move for when the AI worker fails. Deliberately uses only the
 // rules engine (already in the main bundle) rather than importing ai.ts, which
 // would pull the whole search into the initial download.
+// Load a profile without letting one optional column cost the user their name.
+//
+// `avatar` only exists once migration 005 has been applied. Selecting it
+// alongside `username` meant that on a project without it, PostgREST failed the
+// whole query with 400 "column profiles.avatar does not exist" — so an existing
+// account logged in as nameless and was offered a rename, which the upsert
+// would have carried out.
+//
+// maybeSingle (not single) so "no profile row yet" is data:null with no error,
+// which is a genuinely nameless user; an actual error stays an error.
+async function loadProfile(sb: Awaited<ReturnType<typeof getSupabase>>, userId: string) {
+  const { data, error } = await sb
+    .from('profiles').select('username, elo').eq('id', userId).maybeSingle()
+  if (error) return { ok: false as const, username: null, elo: null, avatar: null }
+  let avatar = null
+  try {
+    const { data: av } = await sb
+      .from('profiles').select('avatar').eq('id', userId).maybeSingle()
+    avatar = av?.avatar ?? null
+  } catch { /* pre-migration-005 project; the rest of the profile is still good */ }
+  return { ok: true as const, username: data?.username ?? null, elo: data?.elo ?? null, avatar }
+}
+
 function firstLegalMove(
   pieces: Piece[], side: 'attacker' | 'defender', boardSize: number, center: number, noThrone?: boolean,
 ): { id: string; row: number; col: number } | null {
@@ -142,9 +165,10 @@ function App() {
         .then(sb => sb.auth.getSession().then(async ({ data: { session } }) => {
           clearTimeout(authTimeout)
           if (session?.user) {
-            const { data: profile } = await sb
-              .from('profiles').select('username, elo, avatar').eq('id', session.user.id).single()
-            setAuth(session.user.id, profile?.username ?? null, profile?.elo ?? null, profile?.avatar ?? null)
+            const profile = await loadProfile(sb, session.user.id)
+            // A failed lookup must not blank a name we already have.
+            if (profile.ok) setAuth(session.user.id, profile.username, profile.elo, profile.avatar)
+            else setAuth(session.user.id, useGameStore.getState().username, useGameStore.getState().elo)
           }
           setAuthReady(true)
         }))
@@ -156,12 +180,14 @@ function App() {
       const { data: { subscription } } = sb.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_OUT') { setAuth(null, null); return }
         if (session?.user) {
-          const { data: profile } = await sb
-            .from('profiles').select('username, elo, avatar').eq('id', session.user.id).single()
-          const resolvedUsername = profile?.username ?? null
-          setAuth(session.user.id, resolvedUsername, profile?.elo ?? null, profile?.avatar ?? null)
-          // After email confirmation, username will be null — prompt them to choose one
-          if (event === 'SIGNED_IN' && !resolvedUsername) {
+          const profile = await loadProfile(sb, session.user.id)
+          if (profile.ok) setAuth(session.user.id, profile.username, profile.elo, profile.avatar)
+          else setAuth(session.user.id, useGameStore.getState().username, useGameStore.getState().elo)
+          // After email confirmation, username will be null — prompt them to choose one.
+          // Only when the lookup actually succeeded: prompting on a failed read
+          // offers a rename to someone who already has a name, and the upsert
+          // behind the prompt would apply it.
+          if (event === 'SIGNED_IN' && profile.ok && !profile.username) {
             setShowUsernamePrompt(true)
           }
           // If the user just authenticated to open the lobby, open it now
