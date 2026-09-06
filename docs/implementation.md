@@ -680,6 +680,32 @@ the screen title (`.credits-page__title, .setup__title`) and the dismiss control
 Don't style a new overlay's title or close button from scratch — reuse those, and
 pick the surface by asking whether the screen is for reading or deciding.
 
+## Square indexing — read this before touching the engine
+
+`squareIndex` encodes a square as `row * boardSize + col`. That encoding is not
+injective for off-board coordinates: `col = -1` and `col = boardSize` wrap into
+the neighbouring row. On 7x7, `(4,-1)` is index 27, which is `(3,6)`.
+
+Every capture check steps one or two squares off a piece, so it routinely
+produces those coordinates. Look them up with **`at(grid, row, col, boardSize)`**,
+never `grid.get(...)` directly — `at` rejects off-board coordinates and returns
+undefined. Only two raw `grid.get` calls should exist: the one inside `at`, and
+the king-surround loop, which bounds-checks immediately above it.
+
+This was a live bug (commit 3bd9afe, fixed in the commit that added `at`).
+Converting the engine from `pieces.find(p => p.row === r && p.col === c)` to a
+Map lookup silently introduced it: the `find` form can never match an off-board
+coordinate, the Map form happily does. It let an attacker capture a defender
+against the **left or right** edge whenever a friendly piece happened to sit on
+the wrapped square, and it let a weak king on those edges be captured outright.
+Top and bottom edges were unaffected — those indices go negative or past the
+end, so they don't collide.
+
+`scripts/` has no test runner; the check used was an exhaustive sweep of victim
+/ mover / third-piece placements across 7 variants (718,080 configurations)
+compared against a geometric predicate. It reports 5 mismatches on the broken
+code and 0 on the fixed code.
+
 ## Accessibility
 
 Audited against WCAG 2.1 AA. Rules to keep it there:

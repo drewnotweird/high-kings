@@ -328,12 +328,26 @@ function squareIndex(pieces: Piece[], boardSize: number): Map<number, Piece> {
   return grid
 }
 
+// Read a square, refusing off-board coordinates.
+//
+// The grid encodes a square as row * boardSize + col, which means col = -1 and
+// col = boardSize silently wrap into the neighbouring row: on a 7x7 board
+// (4,-1) resolves to index 27, which is (3,6). Every caller that steps one or
+// two squares off a piece can produce those coordinates, so a lookup without
+// this guard finds a phantom piece on the far side of the board. That is what
+// let an attacker capture a defender against the left edge.
+function at(grid: Map<number, Piece>, row: number, col: number, boardSize: number): Piece | undefined {
+  if (row < 0 || row >= boardSize || col < 0 || col >= boardSize) return undefined
+  return grid.get(row * boardSize + col)
+}
+
 function isFriendly(a: Piece, b: Piece): boolean {
   return (a.type === 'attacker') === (b.type === 'attacker')
 }
 
 // A square that acts as a phantom captor for custodian captures
 function isHostile(row: number, col: number, boardSize: number, center: number, grid: Map<number, Piece>, noThrone = false): boolean {
+  if (row < 0 || row >= boardSize || col < 0 || col >= boardSize) return false
   if (isCorner(row, col, boardSize)) return true
   if (!noThrone && isThrone(row, col, center)) return !grid.has(row * boardSize + col)
   return false
@@ -384,9 +398,9 @@ function checkKingCaptured(king: Piece, grid: Map<number, Piece>, boardSize: num
     for (const [dr, dc] of DIRS) {
       const r1 = king.row + dr, c1 = king.col + dc
       const r2 = king.row - dr, c2 = king.col - dc
-      const h1 = grid.get(r1 * boardSize + c1)?.type === 'attacker'
+      const h1 = at(grid, r1, c1, boardSize)?.type === 'attacker'
              || isHostile(r1, c1, boardSize, center, grid)
-      const h2 = grid.get(r2 * boardSize + c2)?.type === 'attacker'
+      const h2 = at(grid, r2, c2, boardSize)?.type === 'attacker'
              || isHostile(r2, c2, boardSize, center, grid)
       if (h1 && h2) {
         // Only claim the capture if the mover is one of the two sandwiching pieces
@@ -522,12 +536,12 @@ export function applyMove(
   for (const [dr, dc] of DIRS) {
     const nr = toRow + dr
     const nc = toCol + dc
-    const neighbor = grid.get(nr * boardSize + nc)
+    const neighbor = at(grid, nr, nc, boardSize)
     if (!neighbor || isFriendly(mover, neighbor) || neighbor.type === 'king') continue
 
     const br = nr + dr
     const bc = nc + dc
-    const beyond = grid.get(br * boardSize + bc)
+    const beyond = at(grid, br, bc, boardSize)
     if ((beyond && isFriendly(mover, beyond)) || isHostile(br, bc, boardSize, center, grid, noThrone)) {
       capturedIds.push(neighbor.id)
     }
