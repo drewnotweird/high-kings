@@ -177,12 +177,28 @@ function App() {
 
     let unsubscribe = () => {}
     const cancel = whenSupabaseReady(sb => {
-      const { data: { subscription } } = sb.auth.onAuthStateChange(async (event, session) => {
+      // This callback must stay synchronous and must not await Supabase calls.
+      // supabase-js runs it while holding its auth lock, so awaiting a query
+      // here deadlocks whatever else wants that lock — signInWithPassword never
+      // resolves and the button sits on "Logging in…" forever. The profile
+      // fetch is therefore deferred to a later task, after the lock is
+      // released. See the Supabase docs on onAuthStateChange.
+      const { data: { subscription } } = sb.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_OUT') { setAuth(null, null); return }
-        if (session?.user) {
-          const profile = await loadProfile(sb, session.user.id)
-          if (profile.ok) setAuth(session.user.id, profile.username, profile.elo, profile.avatar)
-          else setAuth(session.user.id, useGameStore.getState().username, useGameStore.getState().elo)
+        const user = session?.user
+        if (!user) return
+        // Open the lobby straight away — it doesn't need the profile.
+        if (pendingLobby.current) {
+          const pending = pendingLobby.current
+          pendingLobby.current = null
+          setShowGuestLogin(false)
+          setLobbyDraft(pending)
+          setShowLobby(true)
+        }
+        setTimeout(async () => {
+          const profile = await loadProfile(sb, user.id)
+          if (profile.ok) setAuth(user.id, profile.username, profile.elo, profile.avatar)
+          else setAuth(user.id, useGameStore.getState().username, useGameStore.getState().elo)
           // After email confirmation, username will be null — prompt them to choose one.
           // Only when the lookup actually succeeded: prompting on a failed read
           // offers a rename to someone who already has a name, and the upsert
@@ -190,15 +206,7 @@ function App() {
           if (event === 'SIGNED_IN' && profile.ok && !profile.username) {
             setShowUsernamePrompt(true)
           }
-          // If the user just authenticated to open the lobby, open it now
-          if (pendingLobby.current) {
-            const pending = pendingLobby.current
-            pendingLobby.current = null
-            setShowGuestLogin(false)
-            setLobbyDraft(pending)
-            setShowLobby(true)
-          }
-        }
+        }, 0)
       })
       unsubscribe = () => subscription.unsubscribe()
     })
