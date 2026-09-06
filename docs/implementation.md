@@ -693,6 +693,14 @@ applied to the live project. Both were found on 2026-09-06:
   ever ran `CREATE TRIGGER`, so it was attached to nothing. Every online game
   has completed with a winner recorded and no rating change.
 
+- **007_fix_elo_bias_null.sql** — with the trigger finally attached, the very
+  first game moved both players by the full K-factor. `select coalesce(col, 0)
+  into var from t where ...` assigns NULL when no row matches: the coalesce
+  guards a null column, not a missing row. The NULL bias then hit
+  `greatest(0.01, least(0.99, score + NULL))`, and because Postgres GREATEST and
+  LEAST *ignore* NULL arguments instead of returning NULL, the clamp produced
+  0.99 rather than an obvious error.
+
 Neither failed loudly. The avatar one surfaced as an unrelated login bug; the
 ELO one only surfaced by playing a real online game and watching the rows.
 
